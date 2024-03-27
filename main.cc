@@ -4,6 +4,7 @@
 #include <cmath>
 #include <queue>
 #include <vector>
+#include <algorithm>
 
 typedef float float32_t;
 typedef double score_t;
@@ -109,6 +110,22 @@ void PrintRecord(Record& record) {
     for (uint32_t i = 0; i < vector_num_dimension; i++)
         std::cout << "|" << record.fields[i];
     std::cout << std::endl;
+}
+
+bool operator<(Record& a, Record& b) {
+    if (a.C != b.C)
+        return (a.C < b.C);
+    if (a.T != b.T)
+        return (a.T < b.T);
+    for (uint32_t i = 0; i < vector_num_dimension; i++) {
+        if (a.fields[i] != b.fields[i])
+            return (a.fields[i] < b.fields[i]);
+    }
+    return true;
+}
+
+void IndexDatabase(Database& database) {
+    std::sort(database.records, database.records + database.length);
 }
 
 void PrintQuery(Query& query) {
@@ -228,7 +245,8 @@ int main(int argc, char** args) {
     QuerySet query_set = ReadQuerySet(query_set_path);
     std::cout << "Read query_set, length = " << query_set.length << std::endl;
 
-    SolveForQueries(output_path, database, query_set);
+    IndexDatabase(database);
+    // SolveForQueries(output_path, database, query_set);
 
     FreeDatabase(database);
     FreeQuerySet(query_set);
