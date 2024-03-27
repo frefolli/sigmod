@@ -161,7 +161,11 @@ const auto compare_function = [](Candidate a, Candidate b) { return a.score < b.
 typedef std::priority_queue<Candidate, std::vector<Candidate>, decltype(compare_function)> Scoreboard;
 
 void OutputSolution(FILE* solution, Scoreboard& scoreboard) {
-    static uint32_t* buffer = (uint32_t*) malloc(sizeof(uint32_t) * k_nearest_neighbors);
+    static uint32_t* buffer = nullptr;
+
+    if (buffer = nullptr)
+        buffer = (uint32_t*) malloc(sizeof(uint32_t) * k_nearest_neighbors);
+
     uint32_t i = k_nearest_neighbors - 1;
     while(!scoreboard.empty()) {
         buffer[i] = scoreboard.top().index;
