@@ -163,7 +163,7 @@ typedef std::priority_queue<Candidate, std::vector<Candidate>, decltype(compare_
 void OutputSolution(FILE* solution, Scoreboard& scoreboard) {
     static uint32_t* buffer = nullptr;
 
-    if (buffer = nullptr)
+    if (buffer == nullptr)
         buffer = (uint32_t*) malloc(sizeof(uint32_t) * k_nearest_neighbors);
 
     uint32_t i = k_nearest_neighbors - 1;
