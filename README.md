@@ -48,3 +48,14 @@ More details about the datasets can be found in the dedicated Datasets section.
 output.bin format: The evaluation process expects "output.bin" to be a binary file containing |Q| x 100 x id (uint32_t). |Q| is the number of queries in query set Q, 100 is the number of nearest neighbors and id is the index of 100-nearest neighbors in the given dataset D.
 
 Please format "output.bin" accordingly. You can check out our provided baseline solution on how to produce a valid "output.bin".
+
+## Benchmarks
+
+Current solution takes approximately:
+
+- 0.153 sec for dummy-*.bin
+- 20~ min for contest-*-release-1m.bin
+
+## Ideas
+
+Maybe it could be useful to implement a sort of index or to sort elements in order to have a sort of binary search across the fields.

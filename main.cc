@@ -201,6 +201,8 @@ void SolveForQueries(std::string output_path, Database& database, QuerySet& quer
     FILE* solution = fopen(output_path.c_str(), "wb");
     for (uint32_t i = 0; i < query_set.length; i++) {
         FindForQuery(solution, database, query_set.queries[i]);
+        if (i % 1000 == 0)
+            std::cout << "progress = " << i << " of " << query_set.length << std::endl;
     }
 }
 
@@ -222,7 +224,9 @@ int main(int argc, char** args) {
     }
     
     Database database = ReadDatabase(database_path);
+    std::cout << "Read database, length = " << database.length << std::endl;
     QuerySet query_set = ReadQuerySet(query_set_path);
+    std::cout << "Read query_set, length = " << query_set.length << std::endl;
 
     SolveForQueries(output_path, database, query_set);
 
