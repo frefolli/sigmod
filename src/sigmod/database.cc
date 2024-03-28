@@ -51,12 +51,10 @@ bool operator<(Record& a, Record& b) {
     return true;
 }
 
-void IndexDatabase(Database& database) {
+void IndexDatabase(Database& database, std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map) {
     std::sort(database.records, database.records + database.length);
-    
-    std::map<float, std::pair<uint32_t, uint32_t>> C_map = {};
 
-    float cur_C = database.records[0].C;
+    float32_t cur_C = database.records[0].C;
     uint32_t cur_start = 0;
     uint32_t cur_end = 0;
     for (uint32_t i = 1; i < database.length; i++) {

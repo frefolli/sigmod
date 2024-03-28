@@ -3,6 +3,8 @@
 
 #include <sigmod/record.hh>
 #include <string>
+#include <map>
+#include <utility>
 
 struct Database {
     uint32_t length;
@@ -12,6 +14,7 @@ struct Database {
 Database ReadDatabase(std::string input_path);
 void FreeDatabase(Database& database);
 void StatsDatabase(Database& database);
-void IndexDatabase(Database& database);
+void IndexDatabase(Database& database,
+                   std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map);
 
 #endif

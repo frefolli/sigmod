@@ -53,8 +53,8 @@ Please format "output.bin" accordingly. You can check out our provided baseline 
 
 Current solution takes approximately:
 
-- 0.153 sec for dummy-*.bin
-- 20~ min for contest-*-release-1m.bin
+- ~0.80 sec for dummy-*.bin
+- ~10 min for contest-*-release-1m.bin
 
 ## Ideas
 
