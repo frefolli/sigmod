@@ -56,10 +56,8 @@ Current solution takes approximately:
 - ~0.80 sec for dummy-*.bin
 - ~10 min for contest-*-release-1m.bin
 
-## Ideas
+## Approach & Ideas
 
-Maybe it could be useful to implement a sort of index or to sort elements in order to have a sort of binary search across the fields.
+For now i sort the database by C and then index it's values in a $C \rightarrow [start, end]$ mapping. Then if such criterion is used, i restrict the search on those intervals.
 
-I was thinking about something like this:
-
-- divide in sections the values of a column, and 
+I would like to do something similar also for T, but i don't know how to join them.
