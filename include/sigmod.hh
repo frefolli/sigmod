@@ -6,5 +6,7 @@
 #include <sigmod/query_set.hh>
 #include <sigmod/query.hh>
 #include <sigmod/record.hh>
+#include <sigmod/stats.hh>
+#include <sigmod/solution.hh>
 
 #endif

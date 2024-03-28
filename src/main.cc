@@ -7,6 +7,10 @@
 #include <vector>
 #include <map>
 
+inline bool elegible_by_T(const Query& query, const Record& record) {
+    return (query.l >= record.T && record.T <= query.r);
+}
+
 inline score_t distance(const Query& query, const Record& record) {
     score_t sum = 0;
     for (uint32_t i = 0; i < vector_num_dimension; i++) {
@@ -23,30 +27,11 @@ typedef struct {
 const auto compare_function = [](Candidate a, Candidate b) { return a.score < b.score; };
 typedef std::priority_queue<Candidate, std::vector<Candidate>, decltype(compare_function)> Scoreboard;
 
-void OutputSolution(FILE* solution, Scoreboard& scoreboard) {
-    static uint32_t* buffer = nullptr;
-
-    if (buffer == nullptr)
-        buffer = (uint32_t*) malloc(sizeof(uint32_t) * k_nearest_neighbors);
-
-    uint32_t i = k_nearest_neighbors - 1;
-    while(!scoreboard.empty()) {
-        buffer[i] = scoreboard.top().index;
-        scoreboard.pop();
-        i -= 1;
-    }
-    fwrite(solution, sizeof(uint32_t), k_nearest_neighbors, solution);
-}
-
 inline void PushCandidate(Scoreboard& scoreboard, Database& database, Query& query, uint32_t record_index) {
     scoreboard.emplace(Candidate({
         .index = record_index,
         .score = distance(query, database.records[record_index])
     }));
-}
-
-inline bool elegible_by_T(const Query& query, const Record& record) {
-    return (query.l >= record.T && record.T <= query.r);
 }
 
 enum query_t {
@@ -56,7 +41,7 @@ enum query_t {
     BY_C_AND_T = 3
 };
 
-void FindForQuery(FILE* solution, Database& database, std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map, Query& query) {
+void FindForQuery(Result& result, Database& database, std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map, Query& query) {
     const uint32_t query_type = (uint32_t) (query.query_type);
 
     uint32_t start_index = 0;
@@ -81,16 +66,25 @@ void FindForQuery(FILE* solution, Database& database, std::map<float32_t, std::p
         }
     }
 
-    OutputSolution(solution, scoreboard);
+    uint32_t i = k_nearest_neighbors - 1;
+    while(!scoreboard.empty()) {
+        result.data[i] = scoreboard.top().index;
+        scoreboard.pop();
+        i -= 1;
+    }
 }
 
-void SolveForQueries(std::string output_path, Database& database, std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map, QuerySet& query_set) {
-    FILE* solution = fopen(output_path.c_str(), "wb");
+Solution SolveForQueries(Database& database,
+                         std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map,
+                         QuerySet& query_set) {
+    Solution solution = {
+        .length = query_set.length,
+        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+    };
     for (uint32_t i = 0; i < query_set.length; i++) {
-        FindForQuery(solution, database, C_map, query_set.queries[i]);
-        if (i % 1000 == 0)
-            std::cout << "progress = " << i << " of " << query_set.length << std::endl;
+        FindForQuery(solution.results[i], database, C_map, query_set.queries[i]);
     }
+    return solution;
 }
 
 int main(int argc, char** args) {
@@ -120,8 +114,11 @@ int main(int argc, char** args) {
 
     std::map<float32_t, std::pair<uint32_t, uint32_t>> C_map;
     IndexDatabase(database, C_map);
-    SolveForQueries(output_path, database, C_map, query_set);
 
+    Solution solution = SolveForQueries(database, C_map, query_set);
+    WriteSolution(solution, output_path);
+
+    FreeSolution(solution);
     FreeDatabase(database);
     FreeQuerySet(query_set);
 }
