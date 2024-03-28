@@ -73,18 +73,20 @@ void IndexDatabase(Database& database) {
 }
 
 void StatsDatabase(Database& database) {
-    ScalarEntry entry = ScalarEntry::forArrayCellField(
-        [&database](uint32_t i) { return database.records[i].T; },
-        database.length, "T"
-    );
-    std::cout << entry << std::endl;
+    std::cout << CategoricalEntry::forArrayCellField(
+        [&database](uint32_t i) { return database.records[i].C; },
+        database.length, "record.C"
+    ) << std::endl;
 
+    std::cout << ScalarEntry::forArrayCellField(
+        [&database](uint32_t i) { return database.records[i].T; },
+        database.length, "record.T"
+    ) << std::endl;
 
     for (uint32_t j = 0; j < vector_num_dimension; j++) {
-        ScalarEntry entry = ScalarEntry::forArrayCellField(
+        std::cout << ScalarEntry::forArrayCellField(
             [&database, &j](uint32_t i) { return database.records[i].fields[j]; },
-            database.length, "field#" + std::to_string(j)
-        );
-        std::cout << entry << std::endl;
+            database.length, "record.field#" + std::to_string(j)
+        ) << std::endl;
     }
 }

@@ -2,6 +2,7 @@
 #define STATS_HH
 
 #include <string>
+#include <map>
 #include <ostream>
 #include <sigmod/config.hh>
 
@@ -44,7 +45,26 @@ struct ScalarEntry {
     }
 };
 
+struct CategoricalEntry {
+    std::string what;
+    std::map<uint32_t, uint32_t> counts;
 
-std::ostream& operator<<(std::ostream& out, ScalarEntry& entry);
+    template <typename Accessor>
+    static CategoricalEntry forArrayCellField(Accessor accessor, uint32_t length, std::string what) {
+        CategoricalEntry res = {
+            .what = what,
+            .counts = {}
+        };
+
+        for (uint32_t i = 0; i < length; i++) {
+            res.counts[accessor(i)] += 1;
+        }
+
+        return res;
+    }
+};
+
+std::ostream& operator<<(std::ostream& out, ScalarEntry entry);
+std::ostream& operator<<(std::ostream& out, CategoricalEntry entry);
 
 #endif
