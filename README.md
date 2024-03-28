@@ -59,3 +59,7 @@ Current solution takes approximately:
 ## Ideas
 
 Maybe it could be useful to implement a sort of index or to sort elements in order to have a sort of binary search across the fields.
+
+I was thinking about something like this:
+
+- divide in sections the values of a column, and 
