@@ -2,6 +2,7 @@
 #include <sigmod/solution.hh>
 #include <sigmod/query_set.hh>
 #include <sigmod/database.hh>
+#include <sigmod/seek.hh>
 #include <cstdio>
 #include <iostream>
 #include <cstdint>
@@ -53,6 +54,20 @@ void FindForQuery(Result& result, Database& database, std::map<float32_t, std::p
     if (query_type == BY_C || query_type == BY_C_AND_T) {
         start_index = C_map[query.v].first;
         end_index = C_map[query.v].second + 1;
+    }
+
+    if (query_type == BY_C_AND_T) {
+        // it's guaranteed that the database is ordered by C, T, fields
+        // in such "order"
+        start_index = SeekHigh(
+            [&database](uint32_t i) { return database.records[i].T; },
+            start_index, end_index, query.l
+        );
+
+        end_index = SeekLow(
+            [&database](uint32_t i) { return database.records[i].T; },
+            start_index, end_index, query.r
+        );
     }
 
     // maximum distance in the front

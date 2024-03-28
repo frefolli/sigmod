@@ -2,3 +2,5 @@
 *.exe
 *.stackdump
 *.csv
+*.ipynb
+.ipynb_checkpoints
