@@ -8,5 +8,6 @@
 #include <sigmod/record.hh>
 #include <sigmod/stats.hh>
 #include <sigmod/solution.hh>
+#include <sigmod/workflow.hh>
 
 #endif
