@@ -53,11 +53,18 @@ Please format "output.bin" accordingly. You can check out our provided baseline 
 
 Current solution takes approximately:
 
-- ~0.80 sec for dummy-*.bin
-- ~10 min for contest-*-release-1m.bin
+- ~0.080 sec for dummy-*.bin
+- ~41 sec for 1000 items of contest-*-release-1m.bin
+- ~7 min for contest-*-release-1m.bin
 
 ## Approach & Ideas
 
 For now i sort the database by C and then index it's values in a $C \rightarrow [start, end]$ mapping. Then if such criterion is used, i restrict the search on those intervals.
 
 I would like to do something similar also for T, but i don't know how to join them.
+
+For now also T is "indexed" by using the same sorting used for C and seeking for high/low range. This saves up to 65% of search time for the case of having both C(v) and T(l, r) in query. For reference, *contest* datasets now spends 2s vs old 28s on such type of queries with this shortcut.
+
+I've optimized checks against *query_type* and now it takes slightly less than before. It's also more readable i guess.
+
+I was thinking to indexing the vector space by dividing it in logical sections, peeking the most accurate for the query and then expanding the search to nearest sections.

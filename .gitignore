@@ -3,3 +3,5 @@
 *.stackdump
 *.csv
 test
+*.ipynb
+.ipynb_checkpoints
