@@ -10,6 +10,7 @@
 #include <queue>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 inline bool elegible_by_T(const Query& query, const Record& record) {
     return (query.l >= record.T && record.T <= query.r);
@@ -145,6 +146,86 @@ Solution SolveForQueries(Database& database,
     return solution;
 }
 
+enum kdnode_t {
+    MIDDLE = 0,
+    LEAF = 1
+};
+
+struct KDNode {
+    kdnode_t type;
+    union {
+        float32_t median;
+        uint32_t index;
+    };
+    KDNode* left;
+    KDNode* right;
+};
+
+struct KDTree {
+    KDNode* root;
+    uint32_t* indexes;
+};
+
+void FreeKDNode(KDNode* node) {
+    if (node->left != nullptr) {
+        FreeKDNode(node->left);
+        node->left = nullptr;
+    }
+    if (node->right != nullptr) {
+        FreeKDNode(node->right);
+        node->right = nullptr;
+    }
+    free(node);
+}
+
+void FreeKDTree(KDTree& tree) {
+    if (tree.root != nullptr) {
+        FreeKDNode(tree.root);
+        tree.root = nullptr;
+    }
+    if (tree.indexes != nullptr) {
+        free(tree.indexes);
+        tree.indexes = nullptr;
+    }
+}
+
+// for interval [start, end]
+// note that end is included
+KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t dim) {
+    KDNode* node = (KDNode*) malloc(sizeof(KDNode));
+    if (start < end) {
+        std::sort(indexes + start, indexes + end + 1, [&database, &dim](uint32_t a, uint32_t b) {
+            return database.records[a].fields[dim] < database.records[b].fields[dim];
+        });
+
+        const uint32_t median = (start+end)/2;
+        node->type = MIDDLE;
+        node->median = database.records[median].fields[dim];
+        node->left = BuildKDNode(database, indexes, start, median, (dim + 1) % vector_num_dimension);
+        node->right = BuildKDNode(database, indexes, median + 1, end, (dim + 1) % vector_num_dimension);
+    } else if (start == end) {
+        node->type = LEAF;
+        node->index = start;
+        node->left = nullptr;
+        node->right = nullptr;
+    } else {
+        throw std::runtime_error("BuildKDNode! start > end");
+    }
+    return node;
+}
+
+KDTree BuildKDTree(Database& database) {
+    #define EXPERIMENT_KDTREE
+    uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
+    for (uint32_t i = 0; i < database.length; i++) {
+        indexes[i] = i;
+    }
+    return {
+        .root = BuildKDNode(database, indexes, 0, database.length - 1, 0),
+        .indexes = indexes
+    };
+}
+
 void Workflow(std::string database_path,
               std::string query_set_path,
               std::string output_path) {
@@ -155,11 +236,16 @@ void Workflow(std::string database_path,
 
     std::map<float32_t, std::pair<uint32_t, uint32_t>> C_map;
     IndexDatabase(database, C_map);
-
+    
+    #ifdef EXPERIMENT_KDTREE
+    KDTree tree = BuildKDTree(database);
+    FreeKDTree(tree);
+    #else
     Solution solution = SolveForQueries(database, C_map, query_set);
     WriteSolution(solution, output_path);
-
     FreeSolution(solution);
+    #endif
+
     FreeDatabase(database);
     FreeQuerySet(query_set);
 }
