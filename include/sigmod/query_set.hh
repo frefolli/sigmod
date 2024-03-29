@@ -10,6 +10,7 @@ struct QuerySet {
 };
 
 QuerySet ReadQuerySet(std::string input_path);
+void WriteQuerySet(QuerySet& query_set, std::string output_path);
 void FreeQuerySet(QuerySet& query_set);
 void StatsQuerySet(QuerySet& query_set);
 

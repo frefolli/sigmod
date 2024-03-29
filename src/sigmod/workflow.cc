@@ -199,8 +199,9 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
         });
 
         const uint32_t median = (start+end)/2;
+
         node->type = MIDDLE;
-        node->median = database.records[median].fields[dim];
+        node->median = database.records[indexes[median]].fields[dim];
         node->left = BuildKDNode(database, indexes, start, median, (dim + 1) % vector_num_dimension);
         node->right = BuildKDNode(database, indexes, median + 1, end, (dim + 1) % vector_num_dimension);
     } else if (start == end) {
@@ -226,6 +227,46 @@ KDTree BuildKDTree(Database& database) {
     };
 }
 
+void KDTreeSearch(KDTree& tree, Database& database, Query& query) {
+    KDNode* current_node = tree.root;
+
+    if (current_node == nullptr) {
+        throw std::runtime_error("KDTreeSearch! tree.node == nullptr");
+    }
+
+    uint32_t dim = 0;
+    while(current_node->type != LEAF) {
+        if (query.fields[dim] > current_node->median) {
+            current_node = current_node->right;
+        } else {
+            current_node = current_node->left;
+        }
+        dim = (dim + 1) % vector_num_dimension;
+        if (current_node == nullptr) {
+            throw std::runtime_error("KDTreeSearch! current_node == nullptr");
+        }
+    }
+
+    uint32_t kdtree = tree.indexes[current_node->index];
+
+    /*
+    Scoreboard scoreboard(compare_function);
+    ExaustiveSearch(database, query, scoreboard, 0, database.length);
+
+    uint32_t exaustive = 0;
+    while(!scoreboard.empty()) {
+        exaustive = scoreboard.top().index;
+        scoreboard.pop();
+    }
+
+    std::cout << query << std::endl;
+    std::cout << kdtree << " := " << database.records[kdtree] << std::endl;
+    std::cout << exaustive << " := " << database.records[exaustive] << std::endl;
+    std::cout << "d(q, s) := " << distance(query, database.records[kdtree]) << std::endl;
+    std::cout << "d(q, t) := " << distance(query, database.records[exaustive]) << std::endl;
+    */
+}
+
 void Workflow(std::string database_path,
               std::string query_set_path,
               std::string output_path) {
@@ -239,6 +280,9 @@ void Workflow(std::string database_path,
     
     #ifdef EXPERIMENT_KDTREE
     KDTree tree = BuildKDTree(database);
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        KDTreeSearch(tree, database, query_set.queries[i]);
+    }
     FreeKDTree(tree);
     #else
     Solution solution = SolveForQueries(database, C_map, query_set);
