@@ -9,7 +9,6 @@
 #include <cmath>
 #include <queue>
 #include <vector>
-#include <map>
 #include <algorithm>
 
 inline bool elegible_by_T(const Query& query, const Record& record) {
@@ -60,7 +59,7 @@ inline void FilterIndexesByT(Database& database, uint32_t& start_index, uint32_t
     );
 }
 
-inline void FilterIndexesByC(std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map, uint32_t& start_index, uint32_t& end_index, float32_t v) {
+inline void FilterIndexesByC(c_map_t& C_map, uint32_t& start_index, uint32_t& end_index, float32_t v) {
     start_index = C_map[v].first;
     end_index = C_map[v].second + 1;
 }
@@ -85,7 +84,7 @@ inline void ExaustiveSearch(Database& database, Query& query, Scoreboard& scoreb
     }
 }
 
-void FindForQuery(Result& result, Database& database, std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map, Query& query) {
+void FindForQuery(Result& result, Database& database, c_map_t& C_map, Query& query) {
     // maximum distance in the front
     Scoreboard scoreboard(compare_function);
 
@@ -130,7 +129,7 @@ void FindForQuery(Result& result, Database& database, std::map<float32_t, std::p
 }
 
 Solution SolveForQueries(Database& database,
-                         std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map,
+                         c_map_t& C_map,
                          QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
@@ -227,7 +226,7 @@ KDTree BuildKDTree(Database& database) {
     };
 }
 
-void KDTreeSearch(KDTree& tree, Database& database, Query& query) {
+void KDTreeSearch(KDTree& tree, Database& database, Query& query, uint32_t query_index) {
     KDNode* current_node = tree.root;
 
     if (current_node == nullptr) {
@@ -259,11 +258,9 @@ void KDTreeSearch(KDTree& tree, Database& database, Query& query) {
         scoreboard.pop();
     }
 
-    std::cout << query << std::endl;
-    std::cout << kdtree << " := " << database.records[kdtree] << std::endl;
-    std::cout << exaustive << " := " << database.records[exaustive] << std::endl;
-    std::cout << "d(q, s) := " << distance(query, database.records[kdtree]) << std::endl;
-    std::cout << "d(q, t) := " << distance(query, database.records[exaustive]) << std::endl;
+    if (exaustive != kdtree) {
+        std::cout << query_index << " := " << exaustive << " vs " << kdtree << std::endl;
+    }
     */
 }
 
@@ -275,13 +272,13 @@ void Workflow(std::string database_path,
     QuerySet query_set = ReadQuerySet(query_set_path);
     std::cout << "Read query_set, length = " << query_set.length << std::endl;
 
-    std::map<float32_t, std::pair<uint32_t, uint32_t>> C_map;
+    c_map_t C_map;
     IndexDatabase(database, C_map);
     
     #ifdef EXPERIMENT_KDTREE
     KDTree tree = BuildKDTree(database);
     for (uint32_t i = 0; i < query_set.length; i++) {
-        KDTreeSearch(tree, database, query_set.queries[i]);
+        KDTreeSearch(tree, database, query_set.queries[i], i);
     }
     FreeKDTree(tree);
     #else
