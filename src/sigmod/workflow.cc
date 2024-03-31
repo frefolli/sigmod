@@ -3,47 +3,20 @@
 #include <sigmod/query_set.hh>
 #include <sigmod/database.hh>
 #include <sigmod/seek.hh>
+#include <sigmod/kd_tree.hh>
+#include <sigmod/scoreboard.hh>
+#include <sigmod/debug.hh>
 #include <cstdio>
 #include <iostream>
 #include <cstdint>
 #include <cmath>
-#include <queue>
+#include <cstring>
 #include <vector>
 #include <algorithm>
 
 inline bool elegible_by_T(const Query& query, const Record& record) {
     return (query.l >= record.T && record.T <= query.r);
 }
-
-inline score_t distance(const Query& query, const Record& record) {
-    score_t sum = 0;
-    for (uint32_t i = 0; i < vector_num_dimension; i++) {
-        sum += pow(query.fields[i] - record.fields[i], 2);
-    }
-    return sum;
-}
-
-typedef struct {
-    uint32_t index;
-    score_t score;
-} Candidate;
-
-const auto compare_function = [](Candidate a, Candidate b) { return a.score < b.score; };
-typedef std::priority_queue<Candidate, std::vector<Candidate>, decltype(compare_function)> Scoreboard;
-
-inline void PushCandidate(Scoreboard& scoreboard, Record& record, Query& query, uint32_t record_index) {
-    scoreboard.emplace(Candidate({
-        .index = record_index,
-        .score = distance(query, record)
-    }));
-}
-
-enum query_t {
-    NORMAL = 0,
-    BY_C = 1,
-    BY_T = 2,
-    BY_C_AND_T = 3
-};
 
 inline void FilterIndexesByT(Database& database, uint32_t& start_index, uint32_t& end_index, float32_t l, float32_t r) {
     // it's guaranteed that the database is ordered by C, T, fields
@@ -86,9 +59,13 @@ inline void ExaustiveSearch(Database& database, Query& query, Scoreboard& scoreb
 
 void FindForQuery(Result& result, Database& database, c_map_t& C_map, Query& query) {
     // maximum distance in the front
-    Scoreboard scoreboard(compare_function);
+    Scoreboard scoreboard;
 
+    #ifdef DISATTEND_CHECKS
+    const uint32_t query_type = NORMAL;
+    #else
     const uint32_t query_type = (uint32_t) (query.query_type);
+    #endif
 
     uint32_t start_index = 0;
     uint32_t end_index = database.length;
@@ -136,156 +113,129 @@ Solution SolveForQueries(Database& database,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
     };
     for (uint32_t i = 0; i < query_set.length; i++) {
-        FindForQuery(solution.results[i], database, C_map, query_set.queries[i]);
-        #ifdef STOP_AFTER_1000
-        if (i > 1000)
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
             break;
         #endif
+        FindForQuery(solution.results[i], database, C_map, query_set.queries[i]);
     }
     return solution;
 }
 
-enum kdnode_t {
-    MIDDLE = 0,
-    LEAF = 1
-};
-
-struct KDNode {
-    kdnode_t type;
-    union {
-        float32_t median;
-        uint32_t index;
+Solution SolveForQueriesWithKDTree(Database& database,
+                                   KDTree& tree,
+                                   QuerySet& query_set) {
+    Solution solution = {
+        .length = query_set.length,
+        .results = (Result*) malloc(sizeof(Result) * query_set.length)
     };
-    KDNode* left;
-    KDNode* right;
-};
-
-struct KDTree {
-    KDNode* root;
-    uint32_t* indexes;
-};
-
-void FreeKDNode(KDNode* node) {
-    if (node->left != nullptr) {
-        FreeKDNode(node->left);
-        node->left = nullptr;
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        KDTreeSearch2(solution.results[i], tree, database, query_set.queries[i]);
     }
-    if (node->right != nullptr) {
-        FreeKDNode(node->right);
-        node->right = nullptr;
-    }
-    free(node);
+    return solution;
 }
 
-void FreeKDTree(KDTree& tree) {
-    if (tree.root != nullptr) {
-        FreeKDNode(tree.root);
-        tree.root = nullptr;
-    }
-    if (tree.indexes != nullptr) {
-        free(tree.indexes);
-        tree.indexes = nullptr;
-    }
-}
+void Statistics(Database& database) {
+    const uint32_t N = vector_num_dimension;
 
-// for interval [start, end]
-// note that end is included
-KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t dim) {
-    KDNode* node = (KDNode*) malloc(sizeof(KDNode));
-    if (start < end) {
-        std::sort(indexes + start, indexes + end + 1, [&database, &dim](uint32_t a, uint32_t b) {
-            return database.records[a].fields[dim] < database.records[b].fields[dim];
-        });
-
-        const uint32_t median = (start+end)/2;
-
-        node->type = MIDDLE;
-        node->median = database.records[indexes[median]].fields[dim];
-        node->left = BuildKDNode(database, indexes, start, median, (dim + 1) % vector_num_dimension);
-        node->right = BuildKDNode(database, indexes, median + 1, end, (dim + 1) % vector_num_dimension);
-    } else if (start == end) {
-        node->type = LEAF;
-        node->index = start;
-        node->left = nullptr;
-        node->right = nullptr;
-    } else {
-        throw std::runtime_error("BuildKDNode! start > end");
-    }
-    return node;
-}
-
-KDTree BuildKDTree(Database& database) {
-    #define EXPERIMENT_KDTREE
-    uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
-    for (uint32_t i = 0; i < database.length; i++) {
-        indexes[i] = i;
-    }
-    return {
-        .root = BuildKDNode(database, indexes, 0, database.length - 1, 0),
-        .indexes = indexes
-    };
-}
-
-void KDTreeSearch(KDTree& tree, Database& database, Query& query, uint32_t query_index) {
-    KDNode* current_node = tree.root;
-
-    if (current_node == nullptr) {
-        throw std::runtime_error("KDTreeSearch! tree.node == nullptr");
-    }
-
-    uint32_t dim = 0;
-    while(current_node->type != LEAF) {
-        if (query.fields[dim] > current_node->median) {
-            current_node = current_node->right;
-        } else {
-            current_node = current_node->left;
-        }
-        dim = (dim + 1) % vector_num_dimension;
-        if (current_node == nullptr) {
-            throw std::runtime_error("KDTreeSearch! current_node == nullptr");
+    float32_t* xys = (float32_t*) malloc (N * N * sizeof(float32_t));
+    float32_t* xs = (float32_t*) malloc (N * sizeof(float32_t));
+    memset(xys, 0, N * N * sizeof(float32_t));
+    memset(xs, 0, N * sizeof(float32_t));
+    for (uint32_t k = 0; k < database.length; k++) {
+        for (uint32_t i = 0; i < N; i++) {
+            xs[i] += database.records[k].fields[i] / database.length;
+            for (uint32_t j = i; j < N; j++) {
+                const float32_t xy = (database.records[k].fields[i] * database.records[k].fields[j]) / database.length;
+                xys[i * N + j] += xy;
+                xys[j * N + i] += xy;
+            }
         }
     }
 
-    uint32_t kdtree = tree.indexes[current_node->index];
-
-    /*
-    Scoreboard scoreboard(compare_function);
-    ExaustiveSearch(database, query, scoreboard, 0, database.length);
-
-    uint32_t exaustive = 0;
-    while(!scoreboard.empty()) {
-        exaustive = scoreboard.top().index;
-        scoreboard.pop();
+    float32_t* means = (float32_t*) malloc (N * sizeof(float32_t));
+    memset(means, 0, N * sizeof(float32_t));
+    for (uint32_t i = 0; i < N; i++) {
+        means[i] = xs[i];
     }
 
-    if (exaustive != kdtree) {
-        std::cout << query_index << " := " << exaustive << " vs " << kdtree << std::endl;
+    float32_t* covariances = (float32_t*) malloc (N * N * sizeof(float32_t));
+    memset(covariances, 0, N * N * sizeof(float32_t));
+    for (uint32_t i = 0; i < N; i++) {
+        for (uint32_t j = i; j < N; j++) {
+            const float32_t cov = xys[i * N + j] - (means[i] * means[j]);
+            covariances[i * N + j] = cov;
+            covariances[j * N + i] = cov;
+        }
     }
-    */
+
+    float32_t* correlations = (float32_t*) malloc (N * N * sizeof(float32_t));
+    memset(correlations, 0, N * N * sizeof(float32_t));
+    for (uint32_t i = 0; i < N; i++) {
+        for (uint32_t j = i; j < N; j++) {
+            const float32_t corr = covariances[i * N + j] / sqrt(covariances[i * N + i] * covariances[j * N + j]);
+            correlations[i * N + j] = corr;
+            correlations[j * N + i] = corr;
+        }
+    }
+
+    std::cout << "import numpy as np" << std::endl;
+    std::cout << "def data():" << std::endl;
+    std::cout << "\treturn np.array([" << std::endl;
+    for (uint32_t i = 0; i < N; i++) {
+        if (i != 0)
+            std::cout << ",\n";
+        std::cout << "\t[";
+        for (uint32_t j = 0; j < N; j++) {
+            if (j != 0)
+                std::cout << ", ";
+            std::cout << covariances[i * N + j];
+        }
+        std::cout << "]";
+    }
+    std::cout << "])" << std::endl;
+
+    free(xys);
+    free(xs);
+    free(correlations);
+    free(covariances);
+    free(means);
 }
 
 void Workflow(std::string database_path,
               std::string query_set_path,
               std::string output_path) {
     Database database = ReadDatabase(database_path);
-    std::cout << "Read database, length = " << database.length << std::endl;
+    std::cout << "# Read database, length = " << database.length << std::endl;
     QuerySet query_set = ReadQuerySet(query_set_path);
-    std::cout << "Read query_set, length = " << query_set.length << std::endl;
+    std::cout << "# Read query_set, length = " << query_set.length << std::endl;
 
     c_map_t C_map;
     IndexDatabase(database, C_map);
+
+    /*
+    Statistics(database);
     
-    #ifdef EXPERIMENT_KDTREE
     KDTree tree = BuildKDTree(database);
-    for (uint32_t i = 0; i < query_set.length; i++) {
-        KDTreeSearch(tree, database, query_set.queries[i], i);
-    }
+    Debug("Built KDTree");
+    */
+    
+    Solution exaustive = SolveForQueries(database, C_map, query_set);
+    /*
+    Solution kdtree = SolveForQueriesWithKDTree(database, tree, query_set);
+    CompareSolutions(database, query_set, exaustive, kdtree);
+
+    FreeSolution(kdtree);
+    */
+    FreeSolution(exaustive);
+    WriteSolution(exaustive, output_path);
+    /*
     FreeKDTree(tree);
-    #else
-    Solution solution = SolveForQueries(database, C_map, query_set);
-    WriteSolution(solution, output_path);
-    FreeSolution(solution);
-    #endif
+    */
 
     FreeDatabase(database);
     FreeQuerySet(query_set);

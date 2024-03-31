@@ -1,9 +1,11 @@
 #include <sigmod/solution.hh>
 #include <sigmod/stats.hh>
+#include <sigmod/scoreboard.hh>
 #include <cstdio>
 #include <iostream>
 #include <map>
 #include <algorithm>
+#include <cmath>
 
 void WriteSolution(Solution& solution, std::string output_path) {
     FILE* output = fopen(output_path.c_str(), "wb");
@@ -29,4 +31,30 @@ void FreeSolution(Solution& solution) {
     free(solution.results);
     solution.results = nullptr;
     solution.length = 0;
+}
+
+void CompareSolutions(const Database& database, const QuerySet& query_set, const Solution& expected, const Solution& got) {
+    std::cout << "expected has " << expected.length << " solutions" << std::endl;
+    std::cout << "got has " << got.length << " solutions" << std::endl;
+    uint32_t length = expected.length;
+    for (uint32_t i = 0; i < length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        for (uint32_t j = 0; j < k_nearest_neighbors; j++) {
+            if (expected.results[i].data[j] != got.results[i].data[j]) {
+                std::cout << "Solution conflit! with i = " << i << ", j = " << j << ";" << std::endl;
+                std::cout << "expected " << expected.results[i].data[j] << ", got " << got.results[i].data[j] << std::endl;
+                std::cout << "comparing "
+                    << distance(query_set.queries[i], database.records[expected.results[i].data[j]])
+                    << " vs "
+                    << distance(query_set.queries[i], database.records[got.results[i].data[j]])
+                    << std::endl;
+                return;
+            } else {
+            }
+        }
+    }
+    std::cout << "Overall Correct!" << std::endl;
 }
