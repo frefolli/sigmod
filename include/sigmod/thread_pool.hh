@@ -2,16 +2,21 @@
 #define  THREAD_POOL_HH
 
 #include<thread>
-#include <functional>
+#include<functional>
+#include<vector>
 
-struct ThreadPool {
-    int64_t n_workers;
-    std::vector<std::thread> pool;
+class ThreadPool{
+    private:
+        int64_t n_workers;
+        std::vector<std::thread*> pool;
+    public:
+        //ThreadPool();
+        ThreadPool(uint64_t n_workers);
+        ~ThreadPool();
+        void Start(std::function<void()> func);
 };
 
-ThreadPool MallocThreadPool(uint64_t n_workers, std::function<void ()> func);
-void StartThreadPool(ThreadPool& threadPool);
-void FreeThreadPool(ThreadPool& tp);
+
 
 #endif
 
