@@ -38,20 +38,30 @@ void FreeDatabase(Database& database) {
     database.length = 0;
 }
 
-bool operator<(Record& a, Record& b) {
-    if (a.C != b.C)
-        return (a.C < b.C);
-    if (a.T != b.T)
-        return (a.T < b.T);
+float32_t Norm(Record& record) {
+    float32_t sum = 0;
     for (uint32_t i = 0; i < vector_num_dimension; i++) {
-        if (a.fields[i] != b.fields[i])
-            return (a.fields[i] < b.fields[i]);
+        sum += record.fields[i] * record.fields[i];
     }
-    return true;
+    return sum;
 }
 
 void IndexDatabase(Database& database, c_map_t& C_map) {
-    std::sort(database.records, database.records + database.length);
+    const auto compare_records_by_ctfields = [](Record& a, Record& b) {
+        if (a.C != b.C)
+            return (a.C < b.C);
+        if (a.T != b.T)
+            return (a.T < b.T);
+        for (uint32_t i = 0; i < vector_num_dimension; i++) {
+            if (a.fields[i] != b.fields[i])
+                return (a.fields[i] < b.fields[i]);
+        }
+        return true;
+    };
+
+    std::sort(database.records,
+              database.records + database.length,
+              compare_records_by_ctfields);
 
     float32_t cur_C = database.records[0].C;
     uint32_t cur_start = 0;

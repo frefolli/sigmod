@@ -5,6 +5,7 @@
 
 typedef float float32_t;
 typedef double score_t;
+typedef long double ipernorm_t;
 
 const uint32_t k_nearest_neighbors = 100;
 const uint32_t vector_num_dimension = 100;

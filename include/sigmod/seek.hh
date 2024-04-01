@@ -66,4 +66,29 @@ uint32_t SeekHigh(Accessor accessor,
     return l;
 }
 
+template <typename Accessor>
+std::pair<uint32_t, uint32_t> SeekBoth(Accessor accessor,
+                                       uint32_t start,
+                                       uint32_t end,
+                                       float32_t value) {
+    uint32_t l = start;
+    uint32_t r = end - 1;
+    uint32_t m = (l + r) / 2;
+
+    while(l <= r) {
+        const float32_t center = accessor(m);
+        if (center > value) {
+            r = m - 1;
+            m = (l + r) / 2;
+        } else if (center < value) {
+            l = m + 1;
+            m = (l + r) / 2;
+        } else {
+            return {m, m};
+        }
+    }
+
+    return {r, l};
+}
+
 #endif

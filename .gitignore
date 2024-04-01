@@ -5,3 +5,6 @@
 test
 *.ipynb
 .ipynb_checkpoints
+__pycache__
+*.png
+*.py

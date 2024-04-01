@@ -6,6 +6,7 @@
 #include <sigmod/kd_tree.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
+#include <sigmod/stats.hh>
 #include <cstdio>
 #include <iostream>
 #include <cstdint>
@@ -13,6 +14,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 
 inline bool elegible_by_T(const Query& query, const Record& record) {
     return (query.l >= record.T && record.T <= query.r);
@@ -139,71 +141,103 @@ Solution SolveForQueriesWithKDTree(Database& database,
     return solution;
 }
 
-void Statistics(Database& database) {
-    const uint32_t N = vector_num_dimension;
+/*
+ * x' = (x - mu) / sigma
+ * */
+struct Normative {
+    float32_t* mus;
+    float32_t* sigmas;
+};
 
-    float32_t* xys = (float32_t*) malloc (N * N * sizeof(float32_t));
-    float32_t* xs = (float32_t*) malloc (N * sizeof(float32_t));
-    memset(xys, 0, N * N * sizeof(float32_t));
-    memset(xs, 0, N * sizeof(float32_t));
-    for (uint32_t k = 0; k < database.length; k++) {
-        for (uint32_t i = 0; i < N; i++) {
-            xs[i] += database.records[k].fields[i] / database.length;
-            for (uint32_t j = i; j < N; j++) {
-                const float32_t xy = (database.records[k].fields[i] * database.records[k].fields[j]) / database.length;
-                xys[i * N + j] += xy;
-                xys[j * N + i] += xy;
-            }
+Normative NewNormative() {
+    return {
+        .mus = (float32_t*) malloc (sizeof(float32_t) * vector_num_dimension),
+        .sigmas = (float32_t*) malloc (sizeof(float32_t) * vector_num_dimension)
+    };
+}
+
+void FreeNormative(Normative& normative) {
+    free(normative.mus);
+    free(normative.sigmas);
+}
+
+template <typename WithFields>
+ipernorm_t NormatedNorm(Normative& normative, WithFields& obj_with_fields) {
+    ipernorm_t sum = 0;
+    ipernorm_t pivot = 1;
+    for (uint32_t i = vector_num_dimension - 1; i < vector_num_dimension; i--) {
+        sum += pivot * (obj_with_fields.fields[i] - normative.mus[i]) / normative.sigmas[i];
+        pivot *= 2;
+    }
+    return sum;
+}
+
+void Statistics(Database& database, QuerySet& query_set) {
+    Normative normative = NewNormative();
+
+    float32_t* maxs = (float32_t*) malloc (sizeof(float32_t) * vector_num_dimension);
+    float32_t* mins = (float32_t*) malloc (sizeof(float32_t) * vector_num_dimension);
+    for (uint32_t i = 0; i < vector_num_dimension; i++) {
+        maxs[i] = database.records[0].fields[i];
+        mins[i] = database.records[0].fields[i];
+    }
+
+    for (uint32_t i = 1; i < database.length; i++) {
+        for (uint32_t j = 0; j < vector_num_dimension; j++) {
+            const float32_t val = database.records[i].fields[j];
+            if (maxs[j] < val)
+                maxs[j] = val;
+            if (mins[j] > val)
+                mins[j] = val;
         }
     }
-
-    float32_t* means = (float32_t*) malloc (N * sizeof(float32_t));
-    memset(means, 0, N * sizeof(float32_t));
-    for (uint32_t i = 0; i < N; i++) {
-        means[i] = xs[i];
+    
+    for (uint32_t i = 0; i < vector_num_dimension; i++) {
+        normative.mus[i] = mins[i];
+        normative.sigmas[i] = (maxs[i] - mins[i]);
     }
 
-    float32_t* covariances = (float32_t*) malloc (N * N * sizeof(float32_t));
-    memset(covariances, 0, N * N * sizeof(float32_t));
-    for (uint32_t i = 0; i < N; i++) {
-        for (uint32_t j = i; j < N; j++) {
-            const float32_t cov = xys[i * N + j] - (means[i] * means[j]);
-            covariances[i * N + j] = cov;
-            covariances[j * N + i] = cov;
-        }
-    }
+    free(maxs);
+    free(mins);
 
-    float32_t* correlations = (float32_t*) malloc (N * N * sizeof(float32_t));
-    memset(correlations, 0, N * N * sizeof(float32_t));
-    for (uint32_t i = 0; i < N; i++) {
-        for (uint32_t j = i; j < N; j++) {
-            const float32_t corr = covariances[i * N + j] / sqrt(covariances[i * N + i] * covariances[j * N + j]);
-            correlations[i * N + j] = corr;
-            correlations[j * N + i] = corr;
-        }
+    ipernorm_t* db_norms = (ipernorm_t*) malloc (sizeof(ipernorm_t) * database.length);
+    for (uint32_t i = 0; i < database.length; i++) {
+        db_norms[i] = NormatedNorm(normative, database.records[i]);
     }
+    Debug("Computed DB Norms");
 
-    std::cout << "import numpy as np" << std::endl;
-    std::cout << "def data():" << std::endl;
-    std::cout << "\treturn np.array([" << std::endl;
-    for (uint32_t i = 0; i < N; i++) {
-        if (i != 0)
-            std::cout << ",\n";
-        std::cout << "\t[";
-        for (uint32_t j = 0; j < N; j++) {
-            if (j != 0)
-                std::cout << ", ";
-            std::cout << covariances[i * N + j];
-        }
-        std::cout << "]";
+    uint32_t* db_indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
+    for (uint32_t i = 0; i < database.length; i++) {
+        db_indexes[i] = i;
     }
-    std::cout << "])" << std::endl;
+    Debug("Build DB Norm Index");
+ 
+    const auto compare_indexes_by_norm = [&db_norms](uint32_t a, uint32_t b) {
+        return db_norms[a] < db_norms[b];
+    };
 
-    free(xys);
-    free(xs);
-    free(correlations);
-    free(covariances);
-    free(means);
+    std::sort(db_indexes,
+              db_indexes + database.length,
+              compare_indexes_by_norm);
+    Debug("Sorted DB Norm Index");
+
+    ipernorm_t* qs_norms = (ipernorm_t*) malloc (sizeof(ipernorm_t) * query_set.length);
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        qs_norms[i] = NormatedNorm(normative, query_set.queries[i]);
+    }
+    Debug("Computed QS Norms");
+
+    auto p = SeekBoth(
+        [&db_norms](uint32_t i) { return db_norms[i]; },
+        0, database.length, qs_norms[0]
+    );
+    std::cout << "SB[QS[0]].f = " << p.first << std::endl;
+    std::cout << "SB[QS[0]].s = " << p.second << std::endl;
+
+    free(db_indexes);
+    free(db_norms);
+    free(qs_norms);
+    FreeNormative(normative);
 }
 
 void Workflow(std::string database_path,
@@ -216,24 +250,23 @@ void Workflow(std::string database_path,
 
     c_map_t C_map;
     IndexDatabase(database, C_map);
+    Debug("Built C_Map");
+
+    Statistics(database, query_set);
+    Debug("Built Stats");
 
     /*
-    Statistics(database);
-    
     KDTree tree = BuildKDTree(database);
-    Debug("Built KDTree");
     */
     
-    Solution exaustive = SolveForQueries(database, C_map, query_set);
     /*
+    Solution exaustive = SolveForQueries(database, C_map, query_set);
     Solution kdtree = SolveForQueriesWithKDTree(database, tree, query_set);
     CompareSolutions(database, query_set, exaustive, kdtree);
-    */
 
     WriteSolution(exaustive, output_path);
     FreeSolution(exaustive);
 
-    /*
     FreeSolution(kdtree);
     FreeKDTree(tree);
     */
