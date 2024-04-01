@@ -26,7 +26,7 @@ int main(int argc, char** args) {
     auto end = std::chrono::high_resolution_clock::now();
 
     std::cout 
-        << "ETA (ms): " 
+        << "# ETA (ms): " 
         << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()  
         << std::endl;
 }
