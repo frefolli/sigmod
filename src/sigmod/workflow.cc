@@ -228,12 +228,13 @@ void Workflow(std::string database_path,
     /*
     Solution kdtree = SolveForQueriesWithKDTree(database, tree, query_set);
     CompareSolutions(database, query_set, exaustive, kdtree);
-
-    FreeSolution(kdtree);
     */
-    FreeSolution(exaustive);
+
     WriteSolution(exaustive, output_path);
+    FreeSolution(exaustive);
+
     /*
+    FreeSolution(kdtree);
     FreeKDTree(tree);
     */
 
