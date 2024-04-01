@@ -20,15 +20,36 @@ struct Candidate {
     score_t score;
 
     bool operator<(const Candidate& other) const;
+
+    Candidate(uint32_t index, score_t score);
 };
 
-typedef std::priority_queue<Candidate, std::vector<Candidate>> Scoreboard;
+// typedef std::priority_queue<Candidate, std::vector<Candidate>> Scoreboard;
+
+class Scoreboard {
+    private:
+        std::vector<Candidate> board = {};
+    public:
+        uint32_t size();
+        Candidate& top();
+        void pop();
+        void add(uint32_t index, score_t score);
+        bool has(uint32_t index);
+        bool empty();
+};
 
 inline void PushCandidate(Scoreboard& scoreboard, const Record& record, const Query& query, const uint32_t record_index) {
-    scoreboard.emplace(Candidate({
-        .index = record_index,
-        .score = distance(query, record)
-    }));
+    const score_t score = distance(query, record);
+    if (scoreboard.size() == k_nearest_neighbors) {
+        if (score < scoreboard.top().score) {
+            scoreboard.add(record_index, score);
+            if (scoreboard.size() != k_nearest_neighbors) {
+                scoreboard.pop();
+            }
+        }
+    } else {
+        scoreboard.add(record_index, score);
+    }
 }
 
 #endif

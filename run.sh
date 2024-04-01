@@ -1,3 +1,4 @@
 make clean
-make
-./test
+make -j32
+# ./test
+./builddir/main.exe

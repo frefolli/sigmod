@@ -1,19 +1,50 @@
-CXX=g++
-CXXFLAGS=-Iinclude -std=c++11 -O3
-TARGET=test
-SRC=src/*.cc src/**/*.cc
-INCLUDE=include/*.hh include/**/*.hh
+@all: builddir\main.exe
 
-all: $(TARGET)
+builddir\src\main.o: src\main.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\main.o -c src\main.cc
 
-$(TARGET): $(SRC) $(INCLUDE)
-	$(CXX) $(CXXFLAGS) $(SRC) -o $@
+builddir\src\sigmod\c_map.o: src\sigmod\c_map.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\c_map.o -c src\sigmod\c_map.cc
 
-dummy: $(TARGET)
-	./$(TARGET) dummy-data.bin  dummy-queries.bin
+builddir\src\sigmod\database.o: src\sigmod\database.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\database.o -c src\sigmod\database.cc
 
-contest: $(TARGET)
-	./$(TARGET) contest-data-release-1m.bin contest-queries-release-1m.bin
+builddir\src\sigmod\kd_tree.o: src\sigmod\kd_tree.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\kd_tree.o -c src\sigmod\kd_tree.cc
+
+builddir\src\sigmod\query.o: src\sigmod\query.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\query.o -c src\sigmod\query.cc
+
+builddir\src\sigmod\query_set.o: src\sigmod\query_set.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\query_set.o -c src\sigmod\query_set.cc
+
+builddir\src\sigmod\random.o: src\sigmod\random.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\random.o -c src\sigmod\random.cc
+
+builddir\src\sigmod\record.o: src\sigmod\record.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\record.o -c src\sigmod\record.cc
+
+builddir\src\sigmod\scoreboard.o: src\sigmod\scoreboard.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\scoreboard.o -c src\sigmod\scoreboard.cc
+
+builddir\src\sigmod\solution.o: src\sigmod\solution.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\solution.o -c src\sigmod\solution.cc
+
+builddir\src\sigmod\stats.o: src\sigmod\stats.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\stats.o -c src\sigmod\stats.cc
+
+builddir\src\sigmod\workflow.o: src\sigmod\workflow.cc
+	g++ -Iinclude --std=c++11 -O3 -o builddir\src\sigmod\workflow.o -c src\sigmod\workflow.cc
+
+builddir\main.exe: builddir\src\main.o builddir\src\sigmod\c_map.o builddir\src\sigmod\database.o builddir\src\sigmod\kd_tree.o builddir\src\sigmod\query.o builddir\src\sigmod\query_set.o builddir\src\sigmod\random.o builddir\src\sigmod\record.o builddir\src\sigmod\scoreboard.o builddir\src\sigmod\solution.o builddir\src\sigmod\stats.o builddir\src\sigmod\workflow.o
+	g++ -Iinclude --std=c++11 -O3 -o builddir\main.exe builddir\src\main.o builddir\src\sigmod\c_map.o builddir\src\sigmod\database.o builddir\src\sigmod\kd_tree.o builddir\src\sigmod\query.o builddir\src\sigmod\query_set.o builddir\src\sigmod\random.o builddir\src\sigmod\record.o builddir\src\sigmod\scoreboard.o builddir\src\sigmod\solution.o builddir\src\sigmod\stats.o builddir\src\sigmod\workflow.o
 
 clean:
-	rm -f $(TARGET)
+	rm -rf builddir
+	mkdir builddir
+	mkdir builddir\src
+	mkdir builddir\src\sigmod
+
+run: builddir\main.exe
+	./builddir\main.exe
+

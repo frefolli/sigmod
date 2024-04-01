@@ -3,6 +3,7 @@
 #include <iostream>
 
 int main(int argc, char** args) {
+    std::srand(std::time(0));
     std::string database_path = "dummy-data.bin";
     std::string query_set_path = "dummy-queries.bin";
     std::string output_path = "output.bin";

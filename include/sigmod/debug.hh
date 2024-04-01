@@ -4,7 +4,7 @@
 #include <iostream>
 
 inline void Debug(std::string s) {
-    std::cout << "DEBUG | " << s << std::endl;
+    std::cout << "# DEBUG | " << s << std::endl;
 }
 
 #endif

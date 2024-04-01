@@ -34,8 +34,6 @@ void FreeSolution(Solution& solution) {
 }
 
 void CompareSolutions(const Database& database, const QuerySet& query_set, const Solution& expected, const Solution& got) {
-    std::cout << "expected has " << expected.length << " solutions" << std::endl;
-    std::cout << "got has " << got.length << " solutions" << std::endl;
     uint32_t length = expected.length;
     for (uint32_t i = 0; i < length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
