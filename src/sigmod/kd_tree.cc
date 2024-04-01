@@ -162,7 +162,8 @@ void RecursiveKDTreeSearch(Scoreboard& scoreboard,
                            const KDTree& tree,
                            const KDNode* node,
                            const Database& database,
-                           const Query& query) {
+                           const Query& query,
+                           int jumps) {
     if (node != nullptr) {
         uint32_t index = tree.indexes[node->index];
         score_t score = distance(query, database.records[index]);
@@ -171,15 +172,15 @@ void RecursiveKDTreeSearch(Scoreboard& scoreboard,
         PushCandidate(scoreboard, database.records[index], query, index);
         if (!IsLeaf(node)) {
             if (delta > 0) {
-                RecursiveKDTreeSearch(scoreboard, tree, node->right, database, query);
-                if (delta * delta < scoreboard.top().score
-                    && scoreboard.size() < k_nearest_neighbors)
-                    RecursiveKDTreeSearch(scoreboard, tree, node->left, database, query);
+                RecursiveKDTreeSearch(scoreboard, tree, node->right, database, query, jumps);
+                bool search_other_branch = (delta * delta < scoreboard.top().score && jumps > 0);
+                if (search_other_branch)
+                    RecursiveKDTreeSearch(scoreboard, tree, node->left, database, query, jumps - 1);
             } else {
-                RecursiveKDTreeSearch(scoreboard, tree, node->left, database, query);
-                if (delta * delta < scoreboard.top().score
-                    && scoreboard.size() < k_nearest_neighbors)
-                    RecursiveKDTreeSearch(scoreboard, tree, node->right, database, query);
+                RecursiveKDTreeSearch(scoreboard, tree, node->left, database, query, jumps);
+                bool search_other_branch = (delta * delta < scoreboard.top().score && jumps > 0);
+                if (search_other_branch)
+                    RecursiveKDTreeSearch(scoreboard, tree, node->right, database, query, jumps - 1);
             }
         }
     }
@@ -190,7 +191,7 @@ void KDTreeSearch2(Result& result,
                    const Database& database,
                    const Query& query) {
     Scoreboard scoreboard;
-    RecursiveKDTreeSearch(scoreboard, tree, tree.root, database, query);
+    RecursiveKDTreeSearch(scoreboard, tree, tree.root, database, query, vector_num_dimension + 1);
 
     uint32_t i = k_nearest_neighbors - 1;
     while(!scoreboard.empty()) {

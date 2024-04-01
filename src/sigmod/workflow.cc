@@ -235,35 +235,34 @@ void Workflow(std::string database_path,
     IndexDatabase(database, C_map);
     Debug("Indexes Database");
 
-    // Statistics(database);
+    /*
+    KDTree tree = BuildKDTree(database);
+    Debug("Built KDTree");
+    */
     
-    const uint32_t forest_length = 4;
-    KDForest forest = BuildKDForest(database, forest_length);
-    Debug("Built KDForest");
-    
-    // /*
     Solution exaustive = SolveForQueries(database, C_map, query_set);
     Debug("Used Exaustive");
-    // */
 
-    Solution kdforest = SolveForQueriesWithKDForest(database, forest, query_set);
-    Debug("Used KDForest");
+    /*
+    Solution kdtree = SolveForQueriesWithKDTree(database, tree, query_set);
+    Debug("Used KDTree");
     
-    // /*
-    CompareSolutions(database, query_set, exaustive, kdforest);
+    CompareSolutions(database, query_set, exaustive, kdtree);
     Debug("Compared Solutions");
+    */
 
     WriteSolution(exaustive, output_path);
     Debug("Wrote Solution");
 
-    FreeSolution(exaustive);
-    // */
-
-    FreeSolution(kdforest);
+    /*
+    FreeSolution(kdtree);
     Debug("Freed solutions");
 
-    FreeKDForest(forest);
-    Debug("Freed KDForest");
+    FreeKDTree(tree);
+    Debug("Freed KDTree");
+    */
+
+    FreeSolution(exaustive);
 
     FreeDatabase(database);
     FreeQuerySet(query_set);
