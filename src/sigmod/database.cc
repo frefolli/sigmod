@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <algorithm>
 #include <iostream>
-#include <map>
 
 Database ReadDatabase(std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -51,7 +50,7 @@ bool operator<(Record& a, Record& b) {
     return true;
 }
 
-void IndexDatabase(Database& database, std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map) {
+void IndexDatabase(Database& database, c_map_t& C_map) {
     std::sort(database.records, database.records + database.length);
 
     float32_t cur_C = database.records[0].C;

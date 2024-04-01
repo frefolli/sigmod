@@ -3,47 +3,20 @@
 #include <sigmod/query_set.hh>
 #include <sigmod/database.hh>
 #include <sigmod/seek.hh>
+#include <sigmod/kd_tree.hh>
+#include <sigmod/scoreboard.hh>
+#include <sigmod/debug.hh>
 #include <cstdio>
 #include <iostream>
 #include <cstdint>
 #include <cmath>
-#include <queue>
+#include <cstring>
 #include <vector>
-#include <map>
+#include <algorithm>
 
 inline bool elegible_by_T(const Query& query, const Record& record) {
     return (query.l >= record.T && record.T <= query.r);
 }
-
-inline score_t distance(const Query& query, const Record& record) {
-    score_t sum = 0;
-    for (uint32_t i = 0; i < vector_num_dimension; i++) {
-        sum += pow(query.fields[i] - record.fields[i], 2);
-    }
-    return sum;
-}
-
-typedef struct {
-    uint32_t index;
-    score_t score;
-} Candidate;
-
-const auto compare_function = [](Candidate a, Candidate b) { return a.score < b.score; };
-typedef std::priority_queue<Candidate, std::vector<Candidate>, decltype(compare_function)> Scoreboard;
-
-inline void PushCandidate(Scoreboard& scoreboard, Record& record, Query& query, uint32_t record_index) {
-    scoreboard.emplace(Candidate({
-        .index = record_index,
-        .score = distance(query, record)
-    }));
-}
-
-enum query_t {
-    NORMAL = 0,
-    BY_C = 1,
-    BY_T = 2,
-    BY_C_AND_T = 3
-};
 
 inline void FilterIndexesByT(Database& database, uint32_t& start_index, uint32_t& end_index, float32_t l, float32_t r) {
     // it's guaranteed that the database is ordered by C, T, fields
@@ -59,7 +32,7 @@ inline void FilterIndexesByT(Database& database, uint32_t& start_index, uint32_t
     );
 }
 
-inline void FilterIndexesByC(std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map, uint32_t& start_index, uint32_t& end_index, float32_t v) {
+inline void FilterIndexesByC(c_map_t& C_map, uint32_t& start_index, uint32_t& end_index, float32_t v) {
     start_index = C_map[v].first;
     end_index = C_map[v].second + 1;
 }
@@ -84,11 +57,15 @@ inline void ExaustiveSearch(Database& database, Query& query, Scoreboard& scoreb
     }
 }
 
-void FindForQuery(Result& result, Database& database, std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map, Query& query) {
+void FindForQuery(Result& result, Database& database, c_map_t& C_map, Query& query) {
     // maximum distance in the front
-    Scoreboard scoreboard(compare_function);
+    Scoreboard scoreboard;
 
+    #ifdef DISATTEND_CHECKS
+    const uint32_t query_type = NORMAL;
+    #else
     const uint32_t query_type = (uint32_t) (query.query_type);
+    #endif
 
     uint32_t start_index = 0;
     uint32_t end_index = database.length;
@@ -129,37 +106,137 @@ void FindForQuery(Result& result, Database& database, std::map<float32_t, std::p
 }
 
 Solution SolveForQueries(Database& database,
-                         std::map<float32_t, std::pair<uint32_t, uint32_t>>& C_map,
+                         c_map_t& C_map,
                          QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
     };
     for (uint32_t i = 0; i < query_set.length; i++) {
-        FindForQuery(solution.results[i], database, C_map, query_set.queries[i]);
-        #ifdef STOP_AFTER_1000
-        if (i > 1000)
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
             break;
         #endif
+        FindForQuery(solution.results[i], database, C_map, query_set.queries[i]);
     }
     return solution;
+}
+
+Solution SolveForQueriesWithKDTree(Database& database,
+                                   KDTree& tree,
+                                   QuerySet& query_set) {
+    Solution solution = {
+        .length = query_set.length,
+        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+    };
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        KDTreeSearch2(solution.results[i], tree, database, query_set.queries[i]);
+    }
+    return solution;
+}
+
+void Statistics(Database& database) {
+    const uint32_t N = vector_num_dimension;
+
+    float32_t* xys = (float32_t*) malloc (N * N * sizeof(float32_t));
+    float32_t* xs = (float32_t*) malloc (N * sizeof(float32_t));
+    memset(xys, 0, N * N * sizeof(float32_t));
+    memset(xs, 0, N * sizeof(float32_t));
+    for (uint32_t k = 0; k < database.length; k++) {
+        for (uint32_t i = 0; i < N; i++) {
+            xs[i] += database.records[k].fields[i] / database.length;
+            for (uint32_t j = i; j < N; j++) {
+                const float32_t xy = (database.records[k].fields[i] * database.records[k].fields[j]) / database.length;
+                xys[i * N + j] += xy;
+                xys[j * N + i] += xy;
+            }
+        }
+    }
+
+    float32_t* means = (float32_t*) malloc (N * sizeof(float32_t));
+    memset(means, 0, N * sizeof(float32_t));
+    for (uint32_t i = 0; i < N; i++) {
+        means[i] = xs[i];
+    }
+
+    float32_t* covariances = (float32_t*) malloc (N * N * sizeof(float32_t));
+    memset(covariances, 0, N * N * sizeof(float32_t));
+    for (uint32_t i = 0; i < N; i++) {
+        for (uint32_t j = i; j < N; j++) {
+            const float32_t cov = xys[i * N + j] - (means[i] * means[j]);
+            covariances[i * N + j] = cov;
+            covariances[j * N + i] = cov;
+        }
+    }
+
+    float32_t* correlations = (float32_t*) malloc (N * N * sizeof(float32_t));
+    memset(correlations, 0, N * N * sizeof(float32_t));
+    for (uint32_t i = 0; i < N; i++) {
+        for (uint32_t j = i; j < N; j++) {
+            const float32_t corr = covariances[i * N + j] / sqrt(covariances[i * N + i] * covariances[j * N + j]);
+            correlations[i * N + j] = corr;
+            correlations[j * N + i] = corr;
+        }
+    }
+
+    std::cout << "import numpy as np" << std::endl;
+    std::cout << "def data():" << std::endl;
+    std::cout << "\treturn np.array([" << std::endl;
+    for (uint32_t i = 0; i < N; i++) {
+        if (i != 0)
+            std::cout << ",\n";
+        std::cout << "\t[";
+        for (uint32_t j = 0; j < N; j++) {
+            if (j != 0)
+                std::cout << ", ";
+            std::cout << covariances[i * N + j];
+        }
+        std::cout << "]";
+    }
+    std::cout << "])" << std::endl;
+
+    free(xys);
+    free(xs);
+    free(correlations);
+    free(covariances);
+    free(means);
 }
 
 void Workflow(std::string database_path,
               std::string query_set_path,
               std::string output_path) {
     Database database = ReadDatabase(database_path);
-    std::cout << "Read database, length = " << database.length << std::endl;
+    std::cout << "# Read database, length = " << database.length << std::endl;
     QuerySet query_set = ReadQuerySet(query_set_path);
-    std::cout << "Read query_set, length = " << query_set.length << std::endl;
+    std::cout << "# Read query_set, length = " << query_set.length << std::endl;
 
-    std::map<float32_t, std::pair<uint32_t, uint32_t>> C_map;
+    c_map_t C_map;
     IndexDatabase(database, C_map);
 
-    Solution solution = SolveForQueries(database, C_map, query_set);
-    WriteSolution(solution, output_path);
+    /*
+    Statistics(database);
+    
+    KDTree tree = BuildKDTree(database);
+    Debug("Built KDTree");
+    */
+    
+    Solution exaustive = SolveForQueries(database, C_map, query_set);
+    /*
+    Solution kdtree = SolveForQueriesWithKDTree(database, tree, query_set);
+    CompareSolutions(database, query_set, exaustive, kdtree);
 
-    FreeSolution(solution);
+    FreeSolution(kdtree);
+    */
+    FreeSolution(exaustive);
+    WriteSolution(exaustive, output_path);
+    /*
+    FreeKDTree(tree);
+    */
+
     FreeDatabase(database);
     FreeQuerySet(query_set);
 }
