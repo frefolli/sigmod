@@ -1,11 +1,21 @@
 from typing import Generator, Iterable
-import re, os, sys, argparse
+import re, os, sys
+import yaml
 
 class SourceGraph:
-  def __init__(self, include_dirs: list[str], source_dirs: list[str], builddir: str):
+  def __init__(self, include_dirs: list[str], source_dirs: list[str], links: list[str], options: list[str], builddir: str):
     self.load_files(include_dirs, source_dirs)
+    self.setup_compiler(links, options)
     self.compute_dependencies()
     self.assemble(builddir)
+
+  def setup_compiler(self, links, options):
+    self.links = links
+    self.options = options
+    self.cc = ("g++ %s" %
+                   " ".join(["-I%s" % _ for _ in self.include_dirs]
+                            + ["-l%s" % _ for _ in self.links]
+                            + ["%s" % _ for _ in self.options]))
 
   def get_all_files(self, dir: str) -> Generator[str, None, None]:
     for entry in os.listdir(dir):
@@ -65,16 +75,16 @@ class SourceGraph:
         self.dependencies[path].update(self.dependencies[dep])
   
   def add_object_rule(self, source, object, dependencies):
-    print("%s: %s\n\tg++ %s --std=c++11 -O3 -o %s -c %s\n" % (
+    print("%s: %s\n\t%s -o %s -c %s\n" % (
       object, " ".join([source]+dependencies),
-      " ".join(["-I%s" % _ for _ in self.include_dirs]),
+      self.cc,
       object, source
     ))
   
   def add_executable_rule(self, executable, objects):
-    print("%s: %s\n\tg++ %s --std=c++11 -O3 -o %s %s\n" % (
+    print("%s: %s\n\t%s -o %s %s\n" % (
       executable, " ".join(objects),
-      " ".join(["-I%s" % _ for _ in self.include_dirs]),
+      self.cc,
       executable, " ".join(objects)
     ))
 
@@ -105,6 +115,17 @@ class SourceGraph:
     self.clean_rule(set([os.path.dirname(_) for _ in objects+[executable]]))
     self.run_rule(executable)
 
+  @staticmethod
+  def from_config(config_path: str):
+      with open(config_path, mode="r", encoding="utf-8") as file:
+          doc = yaml.safe_load(file)
+          return SourceGraph(
+            include_dirs=(doc.get('include_dirs') or []),
+            source_dirs=(doc.get('source_dirs') or []),
+            links=(doc.get('links') or []),
+            options=(doc.get('options') or []),
+            builddir=(doc.get('builddir') or 'builddir')
+          )
+
 if __name__ == "__main__":
-  SourceGraph(["include"], ["src"], "builddir")
-  
+  SourceGraph.from_config('build.yml')
