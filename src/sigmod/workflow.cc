@@ -172,11 +172,6 @@ void Workflow(std::string database_path,
     BallForest forest = BuildBallForest(database, C_map);
     Debug("Built Ball Forest");
 
-    // PrintBallForest(forest);
-
-    SearchBallForest(forest, database, C_map, query_set.queries[0]);
-    Debug("Used Ball Forest");
-
     FreeBallForest(forest);
     Debug("Freed Ball Forest");
     
