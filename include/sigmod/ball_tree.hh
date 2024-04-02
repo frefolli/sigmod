@@ -8,7 +8,7 @@ struct BallNode {
     uint32_t start;
     uint32_t end;
     float32_t radius;
-
+    Record center;
     BallNode* left;
     BallNode* right;
 };
