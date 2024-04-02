@@ -14,10 +14,6 @@ Database ReadDatabase(std::string input_path);
 void FreeDatabase(Database& database);
 void StatsDatabase(Database& database);
 
-/* C_map is a mapping of C -> [start, end] positions
- * **note the inclusion of the end**
- * */
-
 void IndexDatabase(Database& database,
                    c_map_t& C_map);
 

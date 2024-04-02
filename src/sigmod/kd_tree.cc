@@ -6,6 +6,8 @@
 #include <sigmod/random.hh>
 
 void FreeKDNode(KDNode* node) {
+    if (node == nullptr)
+        return;
     if (node->left != nullptr) {
         FreeKDNode(node->left);
         node->left = nullptr;

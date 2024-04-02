@@ -4,6 +4,7 @@
 #include <sigmod/database.hh>
 #include <sigmod/seek.hh>
 #include <sigmod/kd_tree.hh>
+#include <sigmod/ball_tree.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
 #include <cstdio>
@@ -156,73 +157,6 @@ Solution SolveForQueriesWithKDForest(Database& database,
     return solution;
 }
 
-void Statistics(Database& database) {
-    const uint32_t N = vector_num_dimension;
-
-    float32_t* xys = (float32_t*) malloc (N * N * sizeof(float32_t));
-    float32_t* xs = (float32_t*) malloc (N * sizeof(float32_t));
-    memset(xys, 0, N * N * sizeof(float32_t));
-    memset(xs, 0, N * sizeof(float32_t));
-    for (uint32_t k = 0; k < database.length; k++) {
-        for (uint32_t i = 0; i < N; i++) {
-            xs[i] += database.records[k].fields[i] / database.length;
-            for (uint32_t j = i; j < N; j++) {
-                const float32_t xy = (database.records[k].fields[i] * database.records[k].fields[j]) / database.length;
-                xys[i * N + j] += xy;
-                xys[j * N + i] += xy;
-            }
-        }
-    }
-
-    float32_t* means = (float32_t*) malloc (N * sizeof(float32_t));
-    memset(means, 0, N * sizeof(float32_t));
-    for (uint32_t i = 0; i < N; i++) {
-        means[i] = xs[i];
-    }
-
-    float32_t* covariances = (float32_t*) malloc (N * N * sizeof(float32_t));
-    memset(covariances, 0, N * N * sizeof(float32_t));
-    for (uint32_t i = 0; i < N; i++) {
-        for (uint32_t j = i; j < N; j++) {
-            const float32_t cov = xys[i * N + j] - (means[i] * means[j]);
-            covariances[i * N + j] = cov;
-            covariances[j * N + i] = cov;
-        }
-    }
-
-    float32_t* correlations = (float32_t*) malloc (N * N * sizeof(float32_t));
-    memset(correlations, 0, N * N * sizeof(float32_t));
-    for (uint32_t i = 0; i < N; i++) {
-        for (uint32_t j = i; j < N; j++) {
-            const float32_t corr = covariances[i * N + j] / sqrt(covariances[i * N + i] * covariances[j * N + j]);
-            correlations[i * N + j] = corr;
-            correlations[j * N + i] = corr;
-        }
-    }
-
-    std::cout << "import numpy as np" << std::endl;
-    std::cout << "def data():" << std::endl;
-    std::cout << "\treturn np.array([" << std::endl;
-    for (uint32_t i = 0; i < N; i++) {
-        if (i != 0)
-            std::cout << ",\n";
-        std::cout << "\t[";
-        for (uint32_t j = 0; j < N; j++) {
-            if (j != 0)
-                std::cout << ", ";
-            std::cout << covariances[i * N + j];
-        }
-        std::cout << "]";
-    }
-    std::cout << "])" << std::endl;
-
-    free(xys);
-    free(xs);
-    free(correlations);
-    free(covariances);
-    free(means);
-}
-
 void Workflow(std::string database_path,
               std::string query_set_path,
               std::string output_path) {
@@ -235,34 +169,26 @@ void Workflow(std::string database_path,
     IndexDatabase(database, C_map);
     Debug("Indexes Database");
 
-    /*
-    KDTree tree = BuildKDTree(database);
-    Debug("Built KDTree");
-    */
+    BallForest forest = BuildBallForest(database, C_map);
+    Debug("Built Ball Forest");
+
+    // PrintBallForest(forest);
+
+    SearchBallForest(forest, database, C_map, query_set.queries[0]);
+    Debug("Used Ball Forest");
+
+    FreeBallForest(forest);
+    Debug("Freed Ball Forest");
     
+    #ifdef COMPARE_SOLUTIONS
     Solution exaustive = SolveForQueries(database, C_map, query_set);
     Debug("Used Exaustive");
-
-    /*
-    Solution kdtree = SolveForQueriesWithKDTree(database, tree, query_set);
-    Debug("Used KDTree");
-    
-    CompareSolutions(database, query_set, exaustive, kdtree);
-    Debug("Compared Solutions");
-    */
 
     WriteSolution(exaustive, output_path);
     Debug("Wrote Solution");
 
-    /*
-    FreeSolution(kdtree);
-    Debug("Freed solutions");
-
-    FreeKDTree(tree);
-    Debug("Freed KDTree");
-    */
-
     FreeSolution(exaustive);
+    #endif
 
     FreeDatabase(database);
     FreeQuerySet(query_set);

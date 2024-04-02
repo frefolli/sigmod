@@ -1,0 +1,36 @@
+#ifndef BALL_TREE_HH
+#define BALL_TREE_HH
+
+#include <sigmod/database.hh>
+#include <sigmod/query.hh>
+
+struct BallNode {
+    uint32_t dim;
+    uint32_t index;
+    uint32_t record;
+    float32_t value;
+    float32_t radius;
+
+    BallNode* left;
+    BallNode* right;
+};
+
+struct BallTree {
+    BallNode* root;
+    uint32_t* indexes;
+    uint32_t start;
+    uint32_t end;
+};
+
+struct BallForest {
+    uint32_t length; // number of trees
+    uint32_t* indexes;
+    BallTree* trees;
+};
+
+BallForest BuildBallForest(const Database& database, const c_map_t& C_map);
+void FreeBallForest(BallForest& forest);
+void PrintBallForest(const BallForest& forest);
+void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, const Query& query);
+
+#endif
