@@ -5,3 +5,5 @@
 test
 *.ipynb
 .ipynb_checkpoints
+__pycache__
+builddir

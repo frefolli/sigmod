@@ -139,6 +139,23 @@ Solution SolveForQueriesWithKDTree(Database& database,
     return solution;
 }
 
+Solution SolveForQueriesWithKDForest(Database& database,
+                                   KDForest& forest,
+                                   QuerySet& query_set) {
+    Solution solution = {
+        .length = query_set.length,
+        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+    };
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        KDTreeSearch3(solution.results[i], forest, database, query_set.queries[i]);
+    }
+    return solution;
+}
+
 void Statistics(Database& database) {
     const uint32_t N = vector_num_dimension;
 
@@ -216,28 +233,38 @@ void Workflow(std::string database_path,
 
     c_map_t C_map;
     IndexDatabase(database, C_map);
+    Debug("Indexes Database");
 
     /*
-    Statistics(database);
-    
     KDTree tree = BuildKDTree(database);
     Debug("Built KDTree");
     */
     
     Solution exaustive = SolveForQueries(database, C_map, query_set);
+    Debug("Used Exaustive");
+
     /*
     Solution kdtree = SolveForQueriesWithKDTree(database, tree, query_set);
+    Debug("Used KDTree");
+    
     CompareSolutions(database, query_set, exaustive, kdtree);
+    Debug("Compared Solutions");
     */
 
     WriteSolution(exaustive, output_path);
-    FreeSolution(exaustive);
+    Debug("Wrote Solution");
 
     /*
     FreeSolution(kdtree);
+    Debug("Freed solutions");
+
     FreeKDTree(tree);
+    Debug("Freed KDTree");
     */
+
+    FreeSolution(exaustive);
 
     FreeDatabase(database);
     FreeQuerySet(query_set);
+    Debug("Freed DB&QS");
 }

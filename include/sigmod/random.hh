@@ -1,0 +1,8 @@
+#ifndef RANDOM_HH
+#define RANDOM_HH
+
+#include <sigmod/config.hh>
+
+uint32_t RandomUINT32T(uint32_t min, uint32_t max);
+
+#endif
