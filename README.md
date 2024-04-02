@@ -3,6 +3,20 @@
 - [Link to Description](http://sigmodcontest2024.eastus.cloudapp.azure.com/task.shtml?content=description)
 - [Link to Datasets](http://sigmodcontest2024.eastus.cloudapp.azure.com/task.shtml?content=datasets)
 
+## Development Notes
+
+### Maintenance of Build System
+
+Tweak `build.yml` to insert links to dependencies (`links` section) or different options for *g++* (`options` section), as well as ad-hoc run commands (`runs` section).
+
+```
+python -m builder > Makefile
+```
+
+Reads from `build.yml` and assemble a Makefile. *pyyaml* it's required to run the build system generator.
+
+Then `make clean`, `make`, `make run` can be launched as usual.
+
 ## Task Description
 
 Given a set of vectors with additional attributes, the task is to answer hybrid vector search queries over the data accurately in limited time. A hybrid vector query is to find the approximate k nearest neighbors of a given query vector under one given similarity measure, such as Euclidean distance, with some constraints on non-vector attributes. For each query, your output should be the ids of the k nearest neighbors determined by your algorithm. For this year's task, k is set to be 100 and the vectors have a dimension of 100.
