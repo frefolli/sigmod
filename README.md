@@ -65,11 +65,7 @@ Please format "output.bin" accordingly. You can check out our provided baseline 
 
 ## Benchmarks
 
-Current solution takes approximately:
-
-- ~0.080 sec for dummy-*.bin
-- ~41 sec for 1000 items of contest-*-release-1m.bin
-- ~7 min for contest-*-release-1m.bin
+![Rilevamento di 1000 query con Ball Forest e C Map su Contest 1/10m](rilevamenti-1000-query-con-c-map-contest-1-10m.png)
 
 ## Approach & Ideas
 

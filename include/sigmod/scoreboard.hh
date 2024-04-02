@@ -35,8 +35,10 @@ class Scoreboard {
         void pop();
         void add(uint32_t index, score_t score);
         void consider(Candidate& candidate);
+        void update(const Scoreboard& input);
         bool has(uint32_t index);
         bool empty();
+        bool full();
 };
 
 inline void PushCandidate(Scoreboard& scoreboard, const Record& record, const Query& query, const uint32_t record_index) {

@@ -19,9 +19,8 @@ struct BallTree {
 };
 
 struct BallForest {
-    uint32_t length; // number of trees
     uint32_t* indexes;
-    BallTree* trees;
+    std::map<uint32_t, BallTree> trees;
 };
 
 BallForest BuildBallForest(const Database& database, const c_map_t& C_map);

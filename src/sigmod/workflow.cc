@@ -14,6 +14,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <chrono>
 
 inline bool elegible_by_T(const Query& query, const Record& record) {
     return (query.l >= record.T && record.T <= query.r);
@@ -157,6 +158,19 @@ Solution SolveForQueriesWithKDForest(Database& database,
     return solution;
 }
 
+void SolveForQueriesWithBallForest(Database& database,
+                                     BallForest& forest,
+                                     c_map_t& C_map,
+                                     QuerySet& query_set) {
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        SearchBallForest(forest, database, C_map, query_set.queries[i]);
+    }
+}
+
 void Workflow(std::string database_path,
               std::string query_set_path,
               std::string output_path) {
@@ -171,6 +185,16 @@ void Workflow(std::string database_path,
 
     BallForest forest = BuildBallForest(database, C_map);
     Debug("Built Ball Forest");
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    SolveForQueriesWithBallForest(database, forest, C_map, query_set);
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    
+    Debug("Used Ball Forest");
+
+    std::cout << "# ETA (ms): " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
 
     FreeBallForest(forest);
     Debug("Freed Ball Forest");

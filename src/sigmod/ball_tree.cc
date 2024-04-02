@@ -5,6 +5,8 @@
 #include <sigmod/scoreboard.hh>
 #include <cassert>
 
+#define EPSILON 0.25
+
 void FreeBallNode(BallNode* node) {
     if (node == nullptr)
         return;
@@ -28,14 +30,8 @@ void FreeBallTree(BallTree& tree) {
 }
 
 void FreeBallForest(BallForest& forest) {
-    if (forest.trees != nullptr) {
-        for (uint32_t i = 0; i < forest.length; i++) {
-            FreeBallTree(forest.trees[i]);
-        }
-        free(forest.trees);
-        forest.trees = nullptr;
-        forest.length = 0;
-    }
+    for (auto tree : forest.trees)
+        FreeBallTree(tree.second);
     if (forest.indexes != nullptr) {
         free(forest.indexes);
         forest.indexes = nullptr;
@@ -175,18 +171,78 @@ BallForest BuildBallForest(const Database& database, const c_map_t& C_map) {
         indexes[i] = i;
     }
 
-    const uint32_t length = C_map.size();
-    BallTree* trees = (BallTree*) malloc (sizeof(BallTree) * length);
-
-    uint32_t i = 0;
+    std::map<uint32_t, BallTree> trees;
     for (auto cat : C_map) {
-        trees[i] = BuildBallTree(database, indexes, cat.second.first, cat.second.second + 1);
-        i++;
+        trees[cat.first] = BuildBallTree(database, indexes, cat.second.first, cat.second.second + 1);
     }
 
     return {
-        .length = length,
         .indexes = indexes,
         .trees = trees
     };
+}
+
+void SearchBallNode(const Database& database, const Query& query,
+                    Scoreboard& scoreboard, const BallTree& tree,
+                    const BallNode* node, const score_t distance_query_center) {
+    if (IsLeaf(node)) {
+        for (uint32_t i = node->start; i < node->end; i++) {
+            const uint32_t p = tree.indexes[i];
+            const score_t distance_query_p = distance(query, database.records[p]);
+            if (scoreboard.full()) {
+                if (distance_query_p < scoreboard.top().score) {
+                    scoreboard.pop();
+                    scoreboard.add(p, distance_query_p);
+                }
+            } else {
+                scoreboard.add(p, distance_query_p);
+            }
+        }
+    } else {
+        const score_t distance_query_left = distance(query, node->left->center);
+        const score_t distance_query_right = distance(query, node->right->center);
+
+        if (distance_query_left < distance_query_right) {
+            if (scoreboard.empty() || distance_query_left - (node->left->radius * EPSILON) < scoreboard.top().score)
+                SearchBallNode(database, query, scoreboard, tree, node->left, distance_query_left);
+            if (scoreboard.empty() || distance_query_right - (node->right->radius * EPSILON) < scoreboard.top().score)
+                SearchBallNode(database, query, scoreboard, tree, node->right, distance_query_right);
+        } else {
+            if (scoreboard.empty() || distance_query_right - (node->right->radius * EPSILON) < scoreboard.top().score)
+                SearchBallNode(database, query, scoreboard, tree, node->right, distance_query_right);
+            if (scoreboard.empty() || distance_query_left - (node->left->radius * EPSILON) < scoreboard.top().score)
+                SearchBallNode(database, query, scoreboard, tree, node->left, distance_query_left);
+        }
+    }
+}
+
+void SearchBallTree(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree) {
+    score_t distance_query_root = distance(query, tree.root->center);
+    if (scoreboard.empty() || distance_query_root - (tree.root->radius * EPSILON) < scoreboard.top().score)
+        SearchBallNode(database, query, scoreboard, tree, tree.root, distance_query_root);
+}
+
+void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, const Query& query) {
+    Scoreboard gboard;
+
+    #ifdef DISATTEND_CHECKS
+    const uint32_t query_type = NORMAL;
+    #else
+    const uint32_t query_type = (uint32_t) (query.query_type);
+    #endif
+
+    if (query_type == BY_C || query_type == BY_C_AND_T) {
+        SearchBallTree(database, query, gboard, forest.trees.at(query.v));
+    } else {
+        for (auto tree : forest.trees) {
+            SearchBallTree(database, query, gboard, tree.second);
+        }
+    }
+
+    uint32_t rank = gboard.size() - 1;
+    while(!gboard.empty()) {
+        // std::cout << rank << " | " << gboard.top().index << " | " << gboard.top().score << std::endl;
+        gboard.pop();
+        rank--;
+    }
 }
