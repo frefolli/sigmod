@@ -5,10 +5,8 @@
 #include <sigmod/query.hh>
 
 struct BallNode {
-    uint32_t dim;
-    uint32_t index;
-    uint32_t record;
-    float32_t value;
+    uint32_t start;
+    uint32_t end;
     float32_t radius;
 
     BallNode* left;
@@ -18,8 +16,6 @@ struct BallNode {
 struct BallTree {
     BallNode* root;
     uint32_t* indexes;
-    uint32_t start;
-    uint32_t end;
 };
 
 struct BallForest {

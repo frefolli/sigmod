@@ -23,8 +23,6 @@ void FreeBallTree(BallTree& tree) {
         FreeBallNode(tree.root);
         tree.root = nullptr;
         tree.indexes = nullptr;
-        tree.start = 0;
-        tree.end = 0;
     }
 }
 
@@ -51,59 +49,81 @@ bool IsMiddle(const BallNode* node) {
     return (node->left != nullptr && node->right != nullptr);
 }
 
-struct Mixin {
-    float32_t mins[vector_num_dimension];
-    float32_t maxs[vector_num_dimension];
-};
-
-// end is not included
-uint32_t DetermineMaxSpread(const Database& database, const uint32_t* indexes, Mixin& mixin, const uint32_t start, const uint32_t end) {
+score_t distance(const Record& a, const Record& b) {
+    score_t sum = 0;
     for (uint32_t i = 0; i < vector_num_dimension; i++) {
-        mixin.mins[i] = database.records[indexes[start]].fields[i];
-        mixin.maxs[i] = database.records[indexes[start]].fields[i];
+        score_t d = a.fields[i] - b.fields[i];
+        sum += d*d;
     }
-
-    for (uint32_t j = start + 1; j < end; j++) {
-        for (uint32_t i = 0; i < vector_num_dimension; i++) {
-            const float32_t val = database.records[indexes[j]].fields[i];
-            if (val < mixin.mins[i])
-                mixin.mins[i] = val;
-            if (val > mixin.maxs[i])
-                mixin.maxs[i] = val;
-        }
-    }
-
-    uint32_t max_spread_index = 0;
-    float32_t max_spread = mixin.maxs[0] - mixin.mins[0];
-    for (uint32_t i = 1; i < vector_num_dimension; i++) {
-        float32_t spread = mixin.maxs[i] - mixin.mins[i];
-        if (spread > max_spread) {
-            max_spread = spread;
-            max_spread_index = i;
-        }
-    }
-
-    return max_spread_index;
+    return sum;
 }
 
-BallNode* BuildBallNode(const Database& database, uint32_t* indexes, Mixin& mixin, const uint32_t start, const uint32_t end) {
+uint32_t FindFurthestPoint(const Database& database, uint32_t* indexes,
+                           const uint32_t start, const uint32_t end,
+                           const uint32_t target) {
+    uint32_t furthest = start;
+    score_t furthest_score = distance(database.records[indexes[target]], database.records[indexes[furthest]]);
+    for (uint32_t i = start + 1; i < end; i++) {
+        score_t score = distance(database.records[indexes[target]], database.records[indexes[i]]);
+        if (score > furthest_score) {
+            furthest_score = score;
+            furthest = i;
+        }
+    }
+    return furthest;
+}
+
+inline bool is_leftist(const Database& database, const uint32_t* indexes, const uint32_t a, const uint32_t b, const uint32_t x) {
+    score_t da = distance(database.records[indexes[a]], database.records[indexes[x]]);
+    score_t db = distance(database.records[indexes[b]], database.records[indexes[x]]);
+    return (da - db) < 0;
+}
+
+BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
+    if (end - start <= k_nearest_neighbors)
+        return nullptr;
+
+    uint32_t a = FindFurthestPoint(database, indexes, start, end, start);
+    uint32_t b = FindFurthestPoint(database, indexes, start, end, a);
+    
+    if (a != start)
+        std::swap(indexes[a], indexes[start]);
+    if (b != end - 1)
+        std::swap(indexes[b], indexes[end - 1]);
+
+    uint32_t i = start + 1;
+    uint32_t j = end - 2;
+    while (i < j) {
+        while(i <= j && is_leftist(database, indexes, a, b, i)) {
+            i++;
+        }
+        while(i <= j && !is_leftist(database, indexes, a, b, j)) {
+            j--;
+        }
+        if (i < j) {
+            std::swap(indexes[i], indexes[j]);
+            i++; j--;
+        }
+    }
+
+    uint32_t next_start = j+1;
+    uint32_t next_end = i;
+
+    BuildBallNode(database, indexes, start, next_end);
+    BuildBallNode(database, indexes, next_start, end);
     return nullptr;
 }
 
-BallTree BuildBallTree(const Database& database, uint32_t* indexes, Mixin& mixin, const uint32_t start, const uint32_t end) {
+BallTree BuildBallTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
     if (start >= end || end > database.length)
         return {
             .root = nullptr,
-            .indexes = nullptr,
-            .start = 0,
-            .end = 0
+            .indexes = nullptr
         };
 
     return {
-        .root = BuildBallNode(database, indexes, mixin, start, end),
-        .indexes = indexes,
-        .start = start,
-        .end = end
+        .root = BuildBallNode(database, indexes, start, end),
+        .indexes = indexes
     };
 }
 
@@ -112,7 +132,6 @@ BallTree BuildBallTree(const Database& database, uint32_t* indexes, Mixin& mixin
  * */
 BallForest BuildBallForest(const Database& database, const c_map_t& C_map) {
     // i try a one-dimensional axis for each division
-    Mixin mixin;
 
     uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
     for (uint32_t i = 0; i < database.length; i++) {
@@ -124,7 +143,7 @@ BallForest BuildBallForest(const Database& database, const c_map_t& C_map) {
 
     uint32_t i = 0;
     for (auto cat : C_map) {
-        trees[i] = BuildBallTree(database, indexes, mixin, cat.second.first, cat.second.second + 1);
+        trees[i] = BuildBallTree(database, indexes, cat.second.first, cat.second.second + 1);
         i++;
     }
 
