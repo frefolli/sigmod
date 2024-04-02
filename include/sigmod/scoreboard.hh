@@ -34,6 +34,7 @@ class Scoreboard {
         Candidate& top();
         void pop();
         void add(uint32_t index, score_t score);
+        void consider(Candidate& candidate);
         bool has(uint32_t index);
         bool empty();
 };

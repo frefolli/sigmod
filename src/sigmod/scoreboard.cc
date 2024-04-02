@@ -41,3 +41,14 @@ bool Scoreboard::empty() {
 
 Candidate::Candidate(uint32_t index, score_t score) :
     index(index), score(score) {}
+
+void Scoreboard::consider(Candidate& candidate) {
+    if (board.size() == k_nearest_neighbors) {
+        if (candidate.score < board.back().score) {
+            pop();
+            add(candidate.index, candidate.score);
+        }
+    } else {
+        add(candidate.index, candidate.score);
+    }
+}
