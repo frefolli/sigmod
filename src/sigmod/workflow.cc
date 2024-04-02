@@ -141,8 +141,8 @@ Solution SolveForQueriesWithKDTree(Database& database,
 }
 
 Solution SolveForQueriesWithKDForest(Database& database,
-                                   KDForest& forest,
-                                   QuerySet& query_set) {
+                                     KDForest& forest,
+                                     QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)

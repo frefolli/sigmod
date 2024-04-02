@@ -46,7 +46,7 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, Mixin& mixi
         return database.records[a].fields[dim] < database.records[b].fields[dim];
     });
 
-    uint32_t median_index = (start + end - 1) / 2;
+    uint32_t median_index = (start + end) / 2;
     uint32_t median_record = indexes[median_index];
     float32_t median_value = database.records[median_record].fields[dim];
     float32_t min_value = database.records[indexes[start]].fields[dim];
@@ -61,10 +61,10 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, Mixin& mixi
     node->value = median_value;
     node->radius = radius;
 
-    if (start >= median_index - 1 || median_index - 1 > database.length) {
+    if (start >= median_index || median_index > database.length) {
         node->left = nullptr;
     } else {
-        node->left = BuildBallNode(database, indexes, mixin, start, median_index - 1);
+        node->left = BuildBallNode(database, indexes, mixin, start, median_index);
     }
 
     if (median_index + 1 >= end || end > database.length) {
@@ -228,6 +228,15 @@ void SearchBallNode(const Database& database, const Query& query, Scoreboard& sc
     }
 }
 
+inline void ExaustiveSearch(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
+    for (uint32_t i = start_index; i < end_index; i++) {
+        PushCandidate(scoreboard, database.records[i], query, i);
+        if (scoreboard.size() > k_nearest_neighbors) {
+            scoreboard.pop();
+        }
+    }
+}
+
 void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, const Query& query) {
     // for now i assume to use the first tree of the forest, which usually is thick.
 
@@ -242,6 +251,15 @@ void SearchBallForest(const BallForest& forest, const Database& database, const 
     }
 
     uint32_t i = global_scoreboard.size() - 1;
+    while(!global_scoreboard.empty()) {
+        std::cout << i << " | " << global_scoreboard.top().index << " | " << global_scoreboard.top().score << std::endl;
+        global_scoreboard.pop();
+        i -= 1;
+    }
+
+    ExaustiveSearch(database, query, global_scoreboard, 0, database.length);
+
+    i = global_scoreboard.size() - 1;
     while(!global_scoreboard.empty()) {
         std::cout << i << " | " << global_scoreboard.top().index << " | " << global_scoreboard.top().score << std::endl;
         global_scoreboard.pop();
