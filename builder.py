@@ -94,10 +94,10 @@ class SourceGraph:
   def assemble(self, builddir: str):
     self.builddir = builddir
     objects = []
-    executable = os.path.join(self.builddir, "main.exe")
+    executable = os.path.normcase(os.path.join(self.builddir, "main.exe"))
     self.default_hook(executable)
     for source in self.sources:
-      object = os.path.join(builddir, source.replace("/", "_").replace(".cc", ".o").replace(".cpp", ".o"))
+      object = os.path.normcase(os.path.join(builddir, source.replace(".cc", ".o").replace(".cpp", ".o")))
       objects.append(object)
       dependencies = list(self.dependencies[source])
       self.add_object_rule(source, object, dependencies)
