@@ -4,7 +4,7 @@ source_dirs:
     - src
 links: []
 options:
-    - --std=c++11
+    - --std=c++17
     - -O3
 builddir: builddir
 runs:

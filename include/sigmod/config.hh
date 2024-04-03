@@ -13,8 +13,8 @@ const uint32_t batch_size = 10000;
 #define TOT_ELEMENTS 1000
 #define STOP_AFTER_TOT_ELEMENTS
 // #define DISATTEND_CHECKS
-// #define ENABLE_KD_TREE
-// #define ENABLE_BALL_TREE
-// #define ENABLE_EXAUSTIVE
+// #define ENABLE_KD_FOREST
+// #define ENABLE_BALL_FOREST
+#define ENABLE_EXAUSTIVE
 
 #endif

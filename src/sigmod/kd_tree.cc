@@ -34,18 +34,18 @@ bool IsLeaf(const KDNode* node) {
     return (node->left == nullptr && node->right == nullptr);
 }
 
-// for interval [start, end)
-// note that end is excluded
+// for interval [start, end]
+// note that end is included
 KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t dim) {
     KDNode* node = (KDNode*) malloc(sizeof(KDNode));
     if (node == nullptr)
         throw std::runtime_error("insufficient memory");
 
-    std::sort(indexes + start, indexes + end, [&database, &dim](uint32_t a, uint32_t b) {
+    std::sort(indexes + start, indexes + end + 1, [&database, &dim](uint32_t a, uint32_t b) {
         return database.records[a].fields[dim] < database.records[b].fields[dim];
     });
 
-    const uint32_t median = (end + start)/2;
+    const uint32_t median = (start + end)/2;
     node->value = database.records[indexes[median]].fields[dim];
     node->index = median;
     node->dim = dim;
@@ -53,8 +53,8 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
     // const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
     const uint32_t next_dim = (dim + 1) % vector_num_dimension;
     
-    if (median != end && start <= median && median <= database.length) {
-        node->left = BuildKDNode(database, indexes, start, median, next_dim);
+    if (median-1 != end && start <= median-1 && median-1 <= database.length) {
+        node->left = BuildKDNode(database, indexes, start, median-1, next_dim);
     } else {
         node->left = nullptr;
     }
@@ -75,7 +75,7 @@ KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t s
     };
 }
 
-KDForest BuildKDForest(const Database& database, uint32_t length, const c_map_t& C_map) {
+KDForest BuildKDForest(const Database& database, const c_map_t& C_map) {
     uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
     for (uint32_t i = 0; i < database.length; i++) {
         indexes[i] = i;
@@ -83,7 +83,7 @@ KDForest BuildKDForest(const Database& database, uint32_t length, const c_map_t&
 
     std::map<uint32_t, KDTree> trees;
     for (auto cat : C_map) {
-        trees[cat.first] = BuildKDTree(database, indexes, cat.second.first, cat.second.second + 1);
+        trees[cat.first] = BuildKDTree(database, indexes, cat.second.first, cat.second.second);
     }
 
     return {
@@ -95,32 +95,30 @@ KDForest BuildKDForest(const Database& database, uint32_t length, const c_map_t&
 void SearchKDNode(const Database& database, const Query& query,
                   Scoreboard& scoreboard, const KDTree& tree,
                   const KDNode* node) {
-    if (node != nullptr) {
-        uint32_t index = tree.indexes[node->index];
-        score_t score = distance(query, database.records[index]);
-        float32_t delta = query.fields[node->dim] - node->value;
+    uint32_t index = tree.indexes[node->index];
+    score_t score = distance(query, database.records[index]);
+    float32_t delta = query.fields[node->dim] - node->value;
 
-        if (scoreboard.full()) {
-            if (score < scoreboard.top().score) {
-                scoreboard.pop();
-                scoreboard.add(index, score);
-            }
-        } else {
+    if (scoreboard.full()) {
+        if (score < scoreboard.top().score) {
+            scoreboard.pop();
             scoreboard.add(index, score);
         }
-        
-        if (!IsLeaf(node)) {
-            if (delta > 0) {
-                if (node->right != nullptr)
-                    SearchKDNode(database, query, scoreboard, tree, node->right);
-                if (node->left != nullptr && delta * delta < scoreboard.top().score)
-                    SearchKDNode(database, query, scoreboard, tree, node->left);
-            } else {
-                if (node->left != nullptr)
-                    SearchKDNode(database, query, scoreboard, tree, node->left);
-                if (node->right != nullptr && delta * delta < scoreboard.top().score)
-                    SearchKDNode(database, query, scoreboard, tree, node->right);
-            }
+    } else {
+        scoreboard.add(index, score);
+    }
+    
+    if (!IsLeaf(node)) {
+        if (delta > 0) {
+            if (node->right != nullptr)
+                SearchKDNode(database, query, scoreboard, tree, node->right);
+            if (node->left != nullptr && delta * delta < scoreboard.top().score)
+                SearchKDNode(database, query, scoreboard, tree, node->left);
+        } else {
+            if (node->left != nullptr)
+                SearchKDNode(database, query, scoreboard, tree, node->left);
+            if (node->right != nullptr && delta * delta < scoreboard.top().score)
+                SearchKDNode(database, query, scoreboard, tree, node->right);
         }
     }
 }
