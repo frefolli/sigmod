@@ -132,7 +132,7 @@ class SourceGraph:
             links=(doc.get('links') or []),
             options=(doc.get('options') or []),
             builddir=(doc.get('builddir') or 'builddir'),
-            runs=(doc.get('runs') or [])
+            runs=(doc.get('runs') or {})
           )
 
 if __name__ == "__main__":
