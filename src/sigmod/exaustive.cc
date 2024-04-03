@@ -1,5 +1,6 @@
 #include <sigmod/exaustive.hh>
 #include <sigmod/seek.hh>
+#include <cassert>
 
 bool elegible_by_T(const Query& query, const Record& record) {
     return (query.l >= record.T && record.T <= query.r);
@@ -27,9 +28,14 @@ void FilterIndexesByC(const c_map_t& C_map, uint32_t& start_index, uint32_t& end
 void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
     for (uint32_t i = start_index; i < end_index; i++) {
         if (elegible_by_T(query, database.records[i])) {
-            PushCandidate(scoreboard, database.records[i], query, i);
-            if (scoreboard.size() > k_nearest_neighbors) {
-                scoreboard.pop();
+            score_t score = distance(query, database.records[i]);
+            if (scoreboard.full()) {
+                if (score < scoreboard.top().score) {
+                    scoreboard.pop();
+                    scoreboard.add(i, score);
+                }
+            } else {
+                scoreboard.add(i, score);
             }
         }
     }
@@ -37,9 +43,14 @@ void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard
 
 void ExaustiveSearch(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
     for (uint32_t i = start_index; i < end_index; i++) {
-        PushCandidate(scoreboard, database.records[i], query, i);
-        if (scoreboard.size() > k_nearest_neighbors) {
-            scoreboard.pop();
+        score_t score = distance(query, database.records[i]);
+        if (scoreboard.full()) {
+            if (score < scoreboard.top().score) {
+                scoreboard.pop();
+                scoreboard.add(i, score);
+            }
+        } else {
+            scoreboard.add(i, score);
         }
     }
 }
@@ -84,6 +95,7 @@ void SearchExaustive(const Database& database, const c_map_t& C_map, Result& res
         }; 
     }
 
+    assert (scoreboard.full());
     uint32_t rank = scoreboard.size() - 1;
     while(!scoreboard.empty()) {
         result.data[rank] = scoreboard.top().index;

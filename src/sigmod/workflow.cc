@@ -98,8 +98,22 @@ void Workflow(const std::string database_path,
     #endif
 
     #ifdef ENABLE_EXAUSTIVE
-    Solution exaustive = SolveForQueriesWithExaustive(database, C_map, query_set);
+    Solution exaustive_solution = SolveForQueriesWithExaustive(database, C_map, query_set);
     LogTime("Used Exaustive");
+    #endif
+
+    /* Comparison */
+    #ifdef ENABLE_EXAUSTIVE
+        #ifdef ENABLE_BALL_FOREST
+            score_t ball_forest_score = CompareSolutions(database, query_set, exaustive_solution, ball_forest_solution);
+            Debug("Recall(Ball Forest) := " + std::to_string(ball_forest_score));
+            LogTime("Compared Ball Forest to Exaustive");
+        #endif
+        #ifdef ENABLE_KD_FOREST
+            score_t kd_forest_score = CompareSolutions(database, query_set, exaustive_solution, kd_forest_solution);
+            Debug("Recall(KD Forest) := " + std::to_string(kd_forest_score));
+            LogTime("Compared KD Forest to Exaustive");
+        #endif
     #endif
 
     /* Free Solution */
@@ -114,7 +128,7 @@ void Workflow(const std::string database_path,
     #endif
 
     #ifdef ENABLE_EXAUSTIVE
-    FreeSolution(exaustive);
+    FreeSolution(exaustive_solution);
     LogTime("Freed Exaustive Solution");
     #endif
 

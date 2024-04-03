@@ -78,3 +78,9 @@ For now also T is "indexed" by using the same sorting used for C and seeking for
 I've optimized checks against *query_type* and now it takes slightly less than before. It's also more readable i guess.
 
 I was thinking to indexing the vector space by dividing it in logical sections, peeking the most accurate for the query and then expanding the search to nearest sections.
+
+## Schedule
+
+Ball Trees and KD Trees have 1.0 recall (established by Exaustive) if ignoring checks. They both have implemented two filters on *C_MAP*: *BY_C* and *BY_C_AND_T* (this limited to *C*).
+
+They should have the support for discarding wront T values.

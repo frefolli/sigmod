@@ -33,23 +33,31 @@ void FreeSolution(Solution& solution) {
     solution.length = 0;
 }
 
-void CompareSolutions(const Database& database, const QuerySet& query_set, const Solution& expected, const Solution& got) {
-    uint32_t length = expected.length;
+score_t CompareSolutions(const Database& database, const QuerySet& query_set, const Solution& expected, const Solution& got) {
+    uint32_t length = std::min(expected.length, got.length);
+    score_t recall = 0;
     for (uint32_t i = 0; i < length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
         if (i >= TOT_ELEMENTS)
             break;
         #endif
         for (uint32_t j = 0; j < k_nearest_neighbors; j++) {
-            if (expected.results[i].data[j] != got.results[i].data[j]) {
-                std::cout << "Solution conflit! with i = " << i << ", j = " << j << "; "
-                          << got.results[i].data[j] << " io " << expected.results[i].data[j] << "; "
-                          << distance(query_set.queries[i], database.records[got.results[i].data[j]])
-                          << " vs "
-                          << distance(query_set.queries[i], database.records[expected.results[i].data[j]])
-                          << std::endl;
-                break;
+            if (expected.results[i].data[j] == got.results[i].data[j]) {
+                recall++;
+            } else {
+                const uint32_t a = expected.results[i].data[j];
+                const uint32_t b = got.results[i].data[j];
+                const Query& query = query_set.queries[i];
+                std::cout << "Solution conflit! with i = " << i << ", j = " << j << "; " << distance(query, database.records[a]) << " vs " << distance(query, database.records[b]) << std::endl;
             }
         }
     }
+
+    #ifdef STOP_AFTER_TOT_ELEMENTS
+        recall /= (std::min((uint32_t) TOT_ELEMENTS, length) * k_nearest_neighbors);
+    #else
+        recall /= (length * k_nearest_neighbors);
+    #endif
+
+    return recall;
 }

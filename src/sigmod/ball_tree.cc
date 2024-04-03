@@ -5,7 +5,7 @@
 #include <sigmod/scoreboard.hh>
 #include <cassert>
 
-#define EPSILON 0.05
+#define EPSILON 1
 
 void FreeBallNode(BallNode* node) {
     if (node == nullptr)
@@ -114,7 +114,7 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
         }
     }
 
-    const uint32_t next_start = j+1;
+    const uint32_t next_start = i;
     const uint32_t next_end = i;
 
     BallNode* node = (BallNode*) malloc (sizeof(BallNode));
@@ -223,6 +223,7 @@ void SearchBallForest(const BallForest& forest, const Database& database, const 
         }
     }
 
+    assert (gboard.full());
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
         result.data[rank] = gboard.top().index;
