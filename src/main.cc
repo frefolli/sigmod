@@ -19,6 +19,16 @@ int main(int argc, char** args) {
         output_path = std::string(args[3]);
     }
 
+    std::cout << "n thread: " << std::thread::hardware_concurrency();
+    
+    ThreadPool tp(2);
+    tp.Start([](){std::cout<<"ok"<<std::endl;});
+
+
+    return 0;
+
+    std::cout << "Starting processing db" << std::endl;
+
     auto start = std::chrono::high_resolution_clock::now();
 
     Workflow(database_path, query_set_path, output_path);

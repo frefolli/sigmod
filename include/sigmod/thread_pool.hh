@@ -10,7 +10,6 @@ class ThreadPool{
         int64_t n_workers;
         std::vector<std::thread*> pool;
     public:
-        //ThreadPool();
         ThreadPool(uint64_t n_workers);
         ~ThreadPool();
         void Start(std::function<void()> func);

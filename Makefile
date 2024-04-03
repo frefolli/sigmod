@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-Iinclude -std=c++11 -O3
+CXXFLAGS=-Iinclude -std=c++11 -O3 -lpthread
 TARGET=test
 SRC=src/*.cc src/**/*.cc
 INCLUDE=include/*.hh include/**/*.hh
