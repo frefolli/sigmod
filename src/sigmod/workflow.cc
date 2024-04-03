@@ -175,41 +175,34 @@ void Workflow(std::string database_path,
               std::string query_set_path,
               std::string output_path) {
     Database database = ReadDatabase(database_path);
-    std::cout << "# Read database, length = " << database.length << std::endl;
+    LogTime("Read database, length = " + std::to_string(database.length));
     QuerySet query_set = ReadQuerySet(query_set_path);
-    std::cout << "# Read query_set, length = " << query_set.length << std::endl;
+    LogTime("Read query_set, length = " + std::to_string(query_set.length));
 
     c_map_t C_map;
     IndexDatabase(database, C_map);
-    Debug("Indexes Database");
+    LogTime("Indexes Database");
 
     BallForest forest = BuildBallForest(database, C_map);
-    Debug("Built Ball Forest");
-
-    auto start = std::chrono::high_resolution_clock::now();
+    LogTime("Built Ball Forest");
 
     SolveForQueriesWithBallForest(database, forest, C_map, query_set);
-    
-    auto end = std::chrono::high_resolution_clock::now();
-    
-    Debug("Used Ball Forest");
-
-    std::cout << "# ETA (ms): " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
+    LogTime("Used Ball Forest");
 
     FreeBallForest(forest);
-    Debug("Freed Ball Forest");
+    LogTime("Freed Ball Forest");
     
     #ifdef COMPARE_SOLUTIONS
     Solution exaustive = SolveForQueries(database, C_map, query_set);
-    Debug("Used Exaustive");
+    LogTime("Used Exaustive");
 
     WriteSolution(exaustive, output_path);
-    Debug("Wrote Solution");
+    LogTime("Wrote Solution");
 
     FreeSolution(exaustive);
     #endif
 
     FreeDatabase(database);
     FreeQuerySet(query_set);
-    Debug("Freed DB&QS");
+    LogTime("Freed DB&QS");
 }

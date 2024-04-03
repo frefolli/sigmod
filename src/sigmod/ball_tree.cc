@@ -5,7 +5,7 @@
 #include <sigmod/scoreboard.hh>
 #include <cassert>
 
-#define EPSILON 0.25
+#define EPSILON 0.05
 
 void FreeBallNode(BallNode* node) {
     if (node == nullptr)
@@ -142,7 +142,9 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
     for (uint32_t i = 0; i < vector_num_dimension; i++) {
         node->center.fields[i] = (node->left->center.fields[i] + node->right->center.fields[i]) / 2;
     }
-    node->radius = (node->left->radius + node->right->radius) - (distance(node->left->center, node->right->center) / 2);
+
+    node->radius = (node->left->radius + node->right->radius + distance(node->left->center, node->right->center)) / 2;
+    // node->radius = node->left->radius + node->right->radius - (distance(node->left->center, node->right->center)) / 2;
 
     return node;
 }
@@ -224,6 +226,8 @@ void SearchBallTree(const Database& database, const Query& query, Scoreboard& sc
 
 void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, const Query& query) {
     Scoreboard gboard;
+
+    // std::cout << query << std::endl;
 
     #ifdef DISATTEND_CHECKS
     const uint32_t query_type = NORMAL;

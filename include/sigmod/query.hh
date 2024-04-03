@@ -19,6 +19,6 @@ enum query_t {
     BY_C_AND_T = 3
 };
 
-std::ostream& operator<<(std::ostream& out, Query& query);
+std::ostream& operator<<(std::ostream& out, const Query& query);
 
 #endif
