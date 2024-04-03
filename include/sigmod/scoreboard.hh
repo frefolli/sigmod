@@ -6,7 +6,8 @@
 #include <sigmod/query.hh>
 #include <queue>
 
-inline score_t distance(const Query& query, const Record& record) {
+template <typename WFA, typename WFB>
+inline score_t distance(const WFA& query, const WFB& record) {
     score_t sum = 0;
     for (uint32_t i = 0; i < vector_num_dimension; i++) {
         score_t m = query.fields[i] - record.fields[i];

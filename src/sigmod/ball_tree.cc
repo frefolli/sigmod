@@ -42,19 +42,6 @@ bool IsLeaf(const BallNode* node) {
     return (node->left == nullptr && node->right == nullptr);
 }
 
-bool IsMiddle(const BallNode* node) {
-    return (node->left != nullptr && node->right != nullptr);
-}
-
-score_t distance(const Record& a, const Record& b) {
-    score_t sum = 0;
-    for (uint32_t i = 0; i < vector_num_dimension; i++) {
-        score_t d = a.fields[i] - b.fields[i];
-        sum += d*d;
-    }
-    return sum;
-}
-
 uint32_t FindFurthestPoint(const Database& database, uint32_t* indexes,
                            const uint32_t start, const uint32_t end,
                            const uint32_t target) {
@@ -162,12 +149,7 @@ BallTree BuildBallTree(const Database& database, uint32_t* indexes, const uint32
     };
 }
 
-/* It is highly probable that such category pairing (trees[i] -> C_map[i]) isn't right,
- * so in the future, in order to use it proficiently, we'll use a map {Cat -> Tree} or {Cat -> Index of Tree}.
- * */
 BallForest BuildBallForest(const Database& database, const c_map_t& C_map) {
-    // i try a one-dimensional axis for each division
-
     uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
     for (uint32_t i = 0; i < database.length; i++) {
         indexes[i] = i;
