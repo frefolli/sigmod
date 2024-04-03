@@ -126,8 +126,11 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
 
     assert(node->left != nullptr && node->right != nullptr);
     
+    // const float32_t alpha = (node->left->end - node->left->start) / (node->end - node->start);
+    // const float32_t beta = (node->right->end - node->right->start) / (node->end - node->start);
     for (uint32_t i = 0; i < vector_num_dimension; i++) {
         node->center.fields[i] = (node->left->center.fields[i] + node->right->center.fields[i]) / 2;
+        // node->center.fields[i] = alpha * node->left->center.fields[i] + beta * node->right->center.fields[i];
     }
 
     node->radius = (node->left->radius + node->right->radius + distance(node->left->center, node->right->center)) / 2;
