@@ -5,7 +5,7 @@ bool elegible_by_T(const Query& query, const Record& record) {
     return (query.l >= record.T && record.T <= query.r);
 }
 
-void FilterIndexesByT(Database& database, uint32_t& start_index, uint32_t& end_index, float32_t l, float32_t r) {
+void FilterIndexesByT(const Database& database, uint32_t& start_index, uint32_t& end_index, const float32_t l, const float32_t r) {
     // it's guaranteed that the database is ordered by C, T, fields
     // in such "order"
     start_index = SeekHigh(
@@ -19,12 +19,12 @@ void FilterIndexesByT(Database& database, uint32_t& start_index, uint32_t& end_i
     );
 }
 
-void FilterIndexesByC(c_map_t& C_map, uint32_t& start_index, uint32_t& end_index, float32_t v) {
-    start_index = C_map[v].first;
-    end_index = C_map[v].second + 1;
+void FilterIndexesByC(const c_map_t& C_map, uint32_t& start_index, uint32_t& end_index, const float32_t v) {
+    start_index = C_map.at(v).first;
+    end_index = C_map.at(v).second + 1;
 }
 
-void ExaustiveSearchByT(Database& database, Query& query, Scoreboard& scoreboard, uint32_t start_index, uint32_t end_index) {
+void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
     for (uint32_t i = start_index; i < end_index; i++) {
         if (elegible_by_T(query, database.records[i])) {
             PushCandidate(scoreboard, database.records[i], query, i);
@@ -35,7 +35,7 @@ void ExaustiveSearchByT(Database& database, Query& query, Scoreboard& scoreboard
     }
 }
 
-void ExaustiveSearch(Database& database, Query& query, Scoreboard& scoreboard, uint32_t start_index, uint32_t end_index) {
+void ExaustiveSearch(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
     for (uint32_t i = start_index; i < end_index; i++) {
         PushCandidate(scoreboard, database.records[i], query, i);
         if (scoreboard.size() > k_nearest_neighbors) {
@@ -44,7 +44,7 @@ void ExaustiveSearch(Database& database, Query& query, Scoreboard& scoreboard, u
     }
 }
 
-void SearchExaustive(Result& result, Database& database, c_map_t& C_map, Query& query) {
+void SearchExaustive(const Database& database, const c_map_t& C_map, Result& result, const Query& query) {
     // maximum distance in the front
     Scoreboard scoreboard;
 
@@ -84,10 +84,10 @@ void SearchExaustive(Result& result, Database& database, c_map_t& C_map, Query& 
         }; 
     }
 
-    uint32_t i = k_nearest_neighbors - 1;
+    uint32_t rank = scoreboard.size() - 1;
     while(!scoreboard.empty()) {
-        result.data[i] = scoreboard.top().index;
+        result.data[rank] = scoreboard.top().index;
         scoreboard.pop();
-        i -= 1;
+        rank -= 1;
     }
 }

@@ -4,6 +4,7 @@
 #include <sigmod/database.hh>
 #include <sigmod/query.hh>
 #include <sigmod/scoreboard.hh>
+#include <sigmod/solution.hh>
 
 struct BallNode {
     uint32_t start;
@@ -36,6 +37,6 @@ void SearchBallNode(const Database& database, const Query& query,
                     Scoreboard& scoreboard, const BallTree& tree,
                     const BallNode* node, const score_t distance_query_center);
 void SearchBallTree(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree);
-void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, const Query& query);
+void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, Result& result, const Query& query);
 
 #endif

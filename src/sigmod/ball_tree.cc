@@ -206,10 +206,8 @@ void SearchBallTree(const Database& database, const Query& query, Scoreboard& sc
         SearchBallNode(database, query, scoreboard, tree, tree.root, distance_query_root);
 }
 
-void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, const Query& query) {
+void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, Result& result, const Query& query) {
     Scoreboard gboard;
-
-    // std::cout << query << std::endl;
 
     #ifdef DISATTEND_CHECKS
     const uint32_t query_type = NORMAL;
@@ -227,7 +225,7 @@ void SearchBallForest(const BallForest& forest, const Database& database, const 
 
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
-        // std::cout << rank << " | " << gboard.top().index << " | " << gboard.top().score << std::endl;
+        result.data[rank] = gboard.top().index;
         gboard.pop();
         rank--;
     }

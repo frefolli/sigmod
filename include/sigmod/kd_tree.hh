@@ -39,6 +39,6 @@ void SearchKDNode(const Database& database, const Query& query,
                   Scoreboard& scoreboard, const KDTree& tree,
                   const KDNode* node);
 void SearchKDTree(const Database& database, const Query& query, Scoreboard& scoreboard, const KDTree& tree);
-void SearchKDForest(const KDForest& forest, const Database& database, const c_map_t& C_map, const Query& query);
+void SearchKDForest(const KDForest& forest, const Database& database, const c_map_t& C_map, Result& result, const Query& query);
 
 #endif
