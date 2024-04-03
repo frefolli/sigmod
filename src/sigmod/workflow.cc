@@ -10,9 +10,9 @@
 #include <sigmod/debug.hh>
 #include <cstdint>
 
-Solution SolveForQueriesWithExaustive(Database& database,
-                         c_map_t& C_map,
-                         QuerySet& query_set) {
+Solution SolveForQueriesWithExaustive(const Database& database,
+                                      const c_map_t& C_map,
+                                      const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
@@ -27,10 +27,10 @@ Solution SolveForQueriesWithExaustive(Database& database,
     return solution;
 }
 
-Solution SolveForQueriesWithKDForest(Database& database,
-                                     KDForest& forest,
-                                     c_map_t& C_map,
-                                     QuerySet& query_set) {
+Solution SolveForQueriesWithKDForest(const Database& database,
+                                     const KDForest& forest,
+                                     const c_map_t& C_map,
+                                     const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
@@ -45,10 +45,10 @@ Solution SolveForQueriesWithKDForest(Database& database,
     return solution;
 }
 
-Solution SolveForQueriesWithBallForest(Database& database,
-                                   BallForest& forest,
-                                   c_map_t& C_map,
-                                   QuerySet& query_set) {
+Solution SolveForQueriesWithBallForest(const Database& database,
+                                       const BallForest& forest,
+                                       const c_map_t& C_map,
+                                       const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
@@ -63,9 +63,9 @@ Solution SolveForQueriesWithBallForest(Database& database,
     return solution;
 }
 
-void Workflow(std::string database_path,
-              std::string query_set_path,
-              std::string output_path) {
+void Workflow(const std::string database_path,
+              const std::string query_set_path,
+              const std::string output_path) {
     Database database = ReadDatabase(database_path);
     LogTime("Read database, length = " + std::to_string(database.length));
     QuerySet query_set = ReadQuerySet(query_set_path);

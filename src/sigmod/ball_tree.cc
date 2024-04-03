@@ -58,8 +58,8 @@ uint32_t FindFurthestPoint(const Database& database, uint32_t* indexes,
 }
 
 inline bool is_leftist(const Database& database, const uint32_t* indexes, const uint32_t a, const uint32_t b, const uint32_t x) {
-    score_t da = distance(database.records[indexes[a]], database.records[indexes[x]]);
-    score_t db = distance(database.records[indexes[b]], database.records[indexes[x]]);
+    const score_t da = distance(database.records[indexes[a]], database.records[indexes[x]]);
+    const score_t db = distance(database.records[indexes[b]], database.records[indexes[x]]);
     return (da - db) < 0;
 }
 
@@ -70,7 +70,7 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
         BallNode* node = (BallNode*) malloc (sizeof(BallNode));
         node->start = start;
         node->end = end;
-        uint32_t length = end - start;
+        const uint32_t length = end - start;
         for (uint32_t i = 0; i < vector_num_dimension; i++) {
             node->center.fields[i] = database.records[indexes[start]].fields[i] / length;
         }
@@ -90,8 +90,8 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
         return node;
     }
 
-    uint32_t a = FindFurthestPoint(database, indexes, start, end, start);
-    uint32_t b = FindFurthestPoint(database, indexes, start, end, a);
+    const uint32_t a = FindFurthestPoint(database, indexes, start, end, start);
+    const uint32_t b = FindFurthestPoint(database, indexes, start, end, a);
     
     if (a != start)
         std::swap(indexes[a], indexes[start]);
@@ -114,8 +114,8 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
         }
     }
 
-    uint32_t next_start = j+1;
-    uint32_t next_end = i;
+    const uint32_t next_start = j+1;
+    const uint32_t next_end = i;
 
     BallNode* node = (BallNode*) malloc (sizeof(BallNode));
     node->start = start;
@@ -201,7 +201,7 @@ void SearchBallNode(const Database& database, const Query& query,
 }
 
 void SearchBallTree(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree) {
-    score_t distance_query_root = distance(query, tree.root->center);
+    const score_t distance_query_root = distance(query, tree.root->center);
     if (scoreboard.empty() || distance_query_root - (tree.root->radius * EPSILON) < scoreboard.top().score)
         SearchBallNode(database, query, scoreboard, tree, tree.root, distance_query_root);
 }

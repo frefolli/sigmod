@@ -95,9 +95,9 @@ KDForest BuildKDForest(const Database& database, const c_map_t& C_map) {
 void SearchKDNode(const Database& database, const Query& query,
                   Scoreboard& scoreboard, const KDTree& tree,
                   const KDNode* node) {
-    uint32_t index = tree.indexes[node->index];
-    score_t score = distance(query, database.records[index]);
-    float32_t delta = query.fields[node->dim] - node->value;
+    const uint32_t index = tree.indexes[node->index];
+    const score_t score = distance(query, database.records[index]);
+    const float32_t delta = query.fields[node->dim] - node->value;
 
     if (scoreboard.full()) {
         if (score < scoreboard.top().score) {
