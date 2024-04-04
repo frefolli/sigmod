@@ -1,11 +1,10 @@
 #include <sigmod/ball_tree.hh>
 #include <sigmod/flags.hh>
+#include <sigmod/tweaks.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/scoreboard.hh>
 #include <algorithm>
 #include <cassert>
-
-#define EPSILON 1
 
 void FreeBallNode(BallNode* node) {
     if (node == nullptr)
@@ -66,7 +65,7 @@ inline bool is_leftist(const Database& database, const uint32_t* indexes, const 
 BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
     assert(start < end && end <= database.length);
 
-    if (end - start <= k_nearest_neighbors) {
+    if (end - start <= GAMMA) {
         BallNode* node = (BallNode*) malloc (sizeof(BallNode));
         node->start = start;
         node->end = end;
