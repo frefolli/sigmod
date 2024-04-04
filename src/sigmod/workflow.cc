@@ -230,7 +230,7 @@ void Workflow(std::string database_path,
     std::cout << "# Read database, length = " << database.length << std::endl;
     QuerySet query_set = ReadQuerySet(query_set_path);
     std::cout << "# Read query_set, length = " << query_set.length << std::endl;
-
+    Statistics(database);
     c_map_t C_map;
     IndexDatabase(database, C_map);
     Debug("Indexes Database");
