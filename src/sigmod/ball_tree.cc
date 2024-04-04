@@ -1,8 +1,8 @@
 #include <sigmod/ball_tree.hh>
-#include <iostream>
-#include <algorithm>
+#include <sigmod/flags.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/scoreboard.hh>
+#include <algorithm>
 #include <cassert>
 
 #define EPSILON 1

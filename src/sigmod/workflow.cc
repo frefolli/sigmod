@@ -1,4 +1,5 @@
 #include <sigmod/workflow.hh>
+#include <sigmod/flags.hh>
 #include <sigmod/solution.hh>
 #include <sigmod/query_set.hh>
 #include <sigmod/database.hh>
@@ -8,7 +9,6 @@
 #include <sigmod/exaustive.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
-#include <cstdint>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
                                       const c_map_t& C_map,

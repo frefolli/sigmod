@@ -1,11 +1,10 @@
 #include <sigmod/solution.hh>
+#include <sigmod/flags.hh>
 #include <sigmod/stats.hh>
 #include <sigmod/scoreboard.hh>
 #include <cstdio>
 #include <iostream>
-#include <map>
 #include <algorithm>
-#include <cmath>
 
 void WriteSolution(Solution& solution, std::string output_path) {
     FILE* output = fopen(output_path.c_str(), "wb");

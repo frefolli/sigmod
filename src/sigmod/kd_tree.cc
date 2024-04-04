@@ -1,9 +1,9 @@
 #include <sigmod/kd_tree.hh>
+#include <sigmod/flags.hh>
 #include <sigmod/scoreboard.hh>
-#include <algorithm>
-#include <iostream>
 #include <sigmod/debug.hh>
 #include <sigmod/random.hh>
+#include <algorithm>
 
 void FreeKDNode(KDNode* node) {
     if (node == nullptr)

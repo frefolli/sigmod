@@ -4,7 +4,8 @@
 #include <sigmod/config.hh>
 #include <sigmod/record.hh>
 #include <sigmod/query.hh>
-#include <queue>
+#include <vector>
+#include <iostream>
 
 template <typename WFA, typename WFB>
 inline score_t distance(const WFA& query, const WFB& record) {
@@ -20,40 +21,37 @@ struct Candidate {
     uint32_t index;
     score_t score;
 
-    bool operator<(const Candidate& other) const;
-
     Candidate(uint32_t index, score_t score);
 };
 
-// typedef std::priority_queue<Candidate, std::vector<Candidate>> Scoreboard;
-
+/*
+* I think we can convert this vector to a Candidate& carray because
+* all insertions follow insertion sort and we don't have ever more than k_nearest_neighbors
+* across the sigmod program
+*/
 class Scoreboard {
     private:
         std::vector<Candidate> board = {};
     public:
-        uint32_t size();
-        Candidate& top();
+        uint32_t size() const;
+        const Candidate& top() const;
         void pop();
         void add(uint32_t index, score_t score);
         void consider(Candidate& candidate);
         void update(const Scoreboard& input);
-        bool has(uint32_t index);
-        bool empty();
-        bool full();
-};
-
-inline void PushCandidate(Scoreboard& scoreboard, const Record& record, const Query& query, const uint32_t record_index) {
-    const score_t score = distance(query, record);
-    if (scoreboard.size() == k_nearest_neighbors) {
-        if (score < scoreboard.top().score) {
-            scoreboard.add(record_index, score);
-            if (scoreboard.size() != k_nearest_neighbors) {
-                scoreboard.pop();
-            }
+        bool has(uint32_t index) const;
+        bool empty() const;
+        bool full() const;
+        inline void push(const uint32_t index, const score_t score) {
+          if (full()) {
+              if (score < top().score) {
+                  pop();
+                  add(index, score);
+              }
+          } else {
+              add(index, score);
+          }
         }
-    } else {
-        scoreboard.add(record_index, score);
-    }
-}
+};
 
 #endif

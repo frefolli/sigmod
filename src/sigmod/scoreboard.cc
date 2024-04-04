@@ -1,14 +1,11 @@
 #include <sigmod/scoreboard.hh>
+#include <sigmod/flags.hh>
 
-bool Candidate::operator<(const Candidate& other) const {
-    return score < other.score;
-}
-
-uint32_t Scoreboard::size() {
+uint32_t Scoreboard::size() const {
     return board.size();
 }
 
-Candidate& Scoreboard::top() {
+const Candidate& Scoreboard::top() const {
     return board.back();
 }
 
@@ -17,8 +14,10 @@ void Scoreboard::pop() {
 }
 
 void Scoreboard::add(uint32_t index, score_t score) {
-    // if (has(index))
-    //    return;
+    #ifdef SCOREBOARD_ALWAYS_CHECK_DUPLICATES
+    if (has(index))
+      return;
+    #endif
 
     auto it = board.begin();
     while(it != board.end() && it->score < score)
@@ -27,7 +26,7 @@ void Scoreboard::add(uint32_t index, score_t score) {
     board.emplace(it, index, score);
 }
 
-bool Scoreboard::has(uint32_t index) {
+bool Scoreboard::has(uint32_t index) const {
     for (auto it = board.begin(); it != board.end(); it++) {
         if (it->index == index)
             return true;
@@ -35,7 +34,7 @@ bool Scoreboard::has(uint32_t index) {
     return false;
 }
 
-bool Scoreboard::empty() {
+bool Scoreboard::empty() const {
     return board.size() == 0;
 }
 
@@ -59,6 +58,6 @@ void Scoreboard::update(const Scoreboard& input) {
     }
 }
 
-bool Scoreboard::full() {
+bool Scoreboard::full() const {
     return board.size() == k_nearest_neighbors;
 }

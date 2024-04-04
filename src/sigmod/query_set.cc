@@ -2,8 +2,6 @@
 #include <sigmod/stats.hh>
 #include <cstdio>
 #include <iostream>
-#include <map>
-#include <algorithm>
 
 QuerySet ReadQuerySet(std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");

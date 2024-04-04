@@ -1,9 +1,11 @@
 #include <sigmod/exaustive.hh>
+#include <sigmod/flags.hh>
 #include <sigmod/seek.hh>
+#include <sigmod/debug.hh>
 #include <cassert>
 
 bool elegible_by_T(const Query& query, const Record& record) {
-    return (query.l >= record.T && record.T <= query.r);
+    return (query.l <= record.T && query.r >= record.T );
 }
 
 void FilterIndexesByT(const Database& database, uint32_t& start_index, uint32_t& end_index, const float32_t l, const float32_t r) {
@@ -29,14 +31,7 @@ void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard
     for (uint32_t i = start_index; i < end_index; i++) {
         if (elegible_by_T(query, database.records[i])) {
             score_t score = distance(query, database.records[i]);
-            if (scoreboard.full()) {
-                if (score < scoreboard.top().score) {
-                    scoreboard.pop();
-                    scoreboard.add(i, score);
-                }
-            } else {
-                scoreboard.add(i, score);
-            }
+            scoreboard.push(i, score);
         }
     }
 }
@@ -44,14 +39,7 @@ void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard
 void ExaustiveSearch(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
     for (uint32_t i = start_index; i < end_index; i++) {
         score_t score = distance(query, database.records[i]);
-        if (scoreboard.full()) {
-            if (score < scoreboard.top().score) {
-                scoreboard.pop();
-                scoreboard.add(i, score);
-            }
-        } else {
-            scoreboard.add(i, score);
-        }
+        scoreboard.push(i, score);
     }
 }
 
@@ -72,7 +60,7 @@ void SearchExaustive(const Database& database, const c_map_t& C_map, Result& res
         case BY_T: {
             for (auto C_it : C_map) {
                 start_index = C_it.second.first;
-                end_index = C_it.second.second;
+                end_index = C_it.second.second + 1;
                 FilterIndexesByT(database, start_index, end_index, query.l, query.r);
                 ExaustiveSearchByT(database, query, scoreboard, start_index, end_index);
             }
