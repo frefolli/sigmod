@@ -65,8 +65,6 @@ VPNode* BuildVPNode(const Database& database, uint32_t* indexes, const uint32_t 
     const uint32_t next_start = middle;
     const uint32_t next_end = middle;
 
-    std::cout << start << "|" << middle << "|" << end << std::endl;
-
     VPNode* node = (VPNode*) malloc (sizeof(VPNode));
     node->start = start;
     node->end = end;
