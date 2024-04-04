@@ -14,7 +14,7 @@ struct ScalarEntry {
     float32_t max;
 
     template <typename Accessor>
-    static ScalarEntry forArrayCellField(Accessor accessor, uint32_t length, std::string what) {
+    static ScalarEntry forArrayCellField(const Accessor accessor, const uint32_t length, const std::string what) {
         float32_t acc = 0;
         float32_t acc2 = 0;
         float32_t min = accessor(0);
@@ -50,7 +50,7 @@ struct CategoricalEntry {
     std::map<uint32_t, uint32_t> counts;
 
     template <typename Accessor>
-    static CategoricalEntry forArrayCellField(Accessor accessor, uint32_t length, std::string what) {
+    static CategoricalEntry forArrayCellField(const Accessor accessor, const uint32_t length, const std::string what) {
         CategoricalEntry res = {
             .what = what,
             .counts = {}
@@ -64,7 +64,7 @@ struct CategoricalEntry {
     }
 };
 
-std::ostream& operator<<(std::ostream& out, ScalarEntry entry);
-std::ostream& operator<<(std::ostream& out, CategoricalEntry entry);
+std::ostream& operator<<(std::ostream& out, const ScalarEntry entry);
+std::ostream& operator<<(std::ostream& out, const CategoricalEntry entry);
 
 #endif

@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <iostream>
 
-QuerySet ReadQuerySet(std::string input_path) {
+QuerySet ReadQuerySet(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
     
     uint32_t db_length;
@@ -29,7 +29,7 @@ QuerySet ReadQuerySet(std::string input_path) {
     };
 }
 
-void WriteQuerySet(QuerySet& query_set, std::string output_path) {
+void WriteQuerySet(const QuerySet& query_set, const std::string output_path) {
     FILE* output = fopen(output_path.c_str(), "wb");
 
     fwrite(&query_set.length, sizeof(uint32_t), 1, output);
@@ -56,7 +56,7 @@ void FreeQuerySet(QuerySet& queryset) {
     queryset.length = 0;
 }
 
-void StatsQuerySet(QuerySet& query_set) {
+void StatsQuerySet(const QuerySet& query_set) {
     std::cout << CategoricalEntry::forArrayCellField(
         [&query_set](uint32_t i) { return query_set.queries[i].query_type; },
         query_set.length, "query.query_type"

@@ -34,6 +34,41 @@ bool IsLeaf(const KDNode* node) {
     return (node->left == nullptr && node->right == nullptr);
 }
 
+uint32_t MaximizeSpread(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
+  uint32_t best_dim = 0;
+  float32_t cur_min = database.at(start).fields[best_dim];
+  float32_t cur_max = database.at(start).fields[best_dim];
+  for (uint32_t i = start + 1; i <= end; i++) {
+    const float32_t val = database.at(indexes[i]).fields[best_dim];
+    if (val < cur_min)
+        cur_min = val;
+    if (val > cur_max)
+        cur_max = val;
+  }
+
+  float32_t best_min = cur_min;
+  float32_t best_max = cur_max;
+
+  for (uint32_t dim = 1; dim < vector_num_dimension; dim++) {
+    cur_min = database.at(start).fields[dim];
+    cur_max = database.at(start).fields[dim];
+    for (uint32_t i = start + 1; i <= end; i++) {
+      const float32_t val = database.at(indexes[i]).fields[best_dim];
+      if (val < cur_min)
+          cur_min = val;
+      if (val > cur_max)
+          cur_max = val;
+    }
+    if (cur_max - cur_min > best_max - best_min) {
+      best_min = cur_min;
+      best_max = cur_max;
+      best_dim = dim;
+    }
+  }
+
+  return best_dim;
+}
+
 // for interval [start, end]
 // note that end is included
 KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t dim) {
@@ -49,16 +84,31 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
     node->value = database.at(indexes[median]).fields[dim];
     node->index = median;
     node->dim = dim;
-
-    // const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
-    const uint32_t next_dim = (dim + 1) % vector_num_dimension;
     
     if (median-1 != end && start <= median-1 && median-1 <= database.length) {
+        #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+        const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+        #else
+          #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+          const uint32_t next_dim = MaximizeSpread(database, indexes, start, median - 1);
+          #else
+          const uint32_t next_dim = (dim + 1) % vector_num_dimension;
+          #endif
+        #endif
         node->left = BuildKDNode(database, indexes, start, median-1, next_dim);
     } else {
         node->left = nullptr;
     }
     if (median + 1 != start && median + 1 <= end && end <= database.length) {
+        #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+        const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+        #else
+          #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+          const uint32_t next_dim = MaximizeSpread(database, indexes, median + 1, end);
+          #else
+          const uint32_t next_dim = (dim + 1) % vector_num_dimension;
+          #endif
+        #endif
         node->right = BuildKDNode(database, indexes, median + 1, end, next_dim);
     } else {
         node->right = nullptr;
@@ -66,9 +116,17 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
     return node;
 }
 
-KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, uint32_t first_dim) {
-    // const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
-    const uint32_t next_dim = first_dim;
+KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t first_dim) {
+    #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+    const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+    #else
+      #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+      const uint32_t next_dim = MaximizeSpread(database, indexes, start, end);
+      #else
+      const uint32_t next_dim = first_dim;
+      #endif
+    #endif
+
     return {
         .root = BuildKDNode(database, indexes, start, end, next_dim),
         .indexes = indexes

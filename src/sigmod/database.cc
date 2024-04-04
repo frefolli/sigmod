@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <iostream>
 
-Database ReadDatabase(std::string input_path) {
+Database ReadDatabase(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
     
     uint32_t db_length;
@@ -40,7 +40,7 @@ void FreeDatabase(Database& database) {
     database.length = 0;
 }
 
-bool operator<(Record& a, Record& b) {
+bool operator<(const Record& a, const Record& b) {
     if (a.C != b.C)
         return (a.C < b.C);
     if (a.T != b.T)
@@ -79,7 +79,7 @@ void IndexDatabase(Database& database) {
     database.C_map[cur_C] = {cur_start, cur_end};
 }
 
-void StatsDatabase(Database& database) {
+void StatsDatabase(const Database& database) {
     std::cout << CategoricalEntry::forArrayCellField(
         [&database](uint32_t i) { return database.at(i).C; },
         database.length, "record.C"

@@ -12,14 +12,14 @@ struct Database {
     uint32_t* indexes;
 
     // indirection of indexes[index]
-    inline const Record& at(uint32_t index) const {
+    inline const Record& at(const uint32_t index) const {
       return records[indexes[index]];
     };
 };
 
-Database ReadDatabase(std::string input_path);
+Database ReadDatabase(const std::string input_path);
 void FreeDatabase(Database& database);
-void StatsDatabase(Database& database);
+void StatsDatabase(const Database& database);
 
 void IndexDatabase(Database& database);
 

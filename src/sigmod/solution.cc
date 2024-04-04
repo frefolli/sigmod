@@ -6,7 +6,7 @@
 #include <iostream>
 #include <algorithm>
 
-void WriteSolution(Solution& solution, std::string output_path) {
+void WriteSolution(const Solution& solution, const std::string output_path) {
     FILE* output = fopen(output_path.c_str(), "wb");
 
     Result* results_entry_point = solution.results;
