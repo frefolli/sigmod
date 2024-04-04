@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <iostream>
+#include <sigmod/debug.hh>
 
 Database ReadDatabase(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -54,14 +55,13 @@ bool operator<(const Record& a, const Record& b) {
 
 void IndexDatabase(Database& database) {
     database.indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
-    for (uint32_t i = 1; i < database.length; i++) {
+    for (uint32_t i = 0; i < database.length; i++) {
       database.indexes[i] = i;
     }
     std::sort(database.indexes, database.indexes + database.length,
               [&database](uint32_t a, uint32_t b) {
         return database.records[a] < database.records[b];
     });
-
     float32_t cur_C = database.at(0).C;
     uint32_t cur_start = 0;
     uint32_t cur_end = 0;
