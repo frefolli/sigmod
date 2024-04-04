@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <iostream>
 
-Database ReadDatabase(std::string input_path) {
+Database ReadDatabase(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
     
     uint32_t db_length;
@@ -26,7 +26,9 @@ Database ReadDatabase(std::string input_path) {
 
     return {
         .length = db_length,
-        .records = records
+        .records = records,
+        .C_map = {},
+        .indexes = nullptr
     };
 }
 
@@ -38,7 +40,7 @@ void FreeDatabase(Database& database) {
     database.length = 0;
 }
 
-bool operator<(Record& a, Record& b) {
+bool operator<(const Record& a, const Record& b) {
     if (a.C != b.C)
         return (a.C < b.C);
     if (a.T != b.T)
@@ -50,39 +52,47 @@ bool operator<(Record& a, Record& b) {
     return true;
 }
 
-void IndexDatabase(Database& database, c_map_t& C_map) {
-    std::sort(database.records, database.records + database.length);
+void IndexDatabase(Database& database) {
+    database.indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
+    for (uint32_t i = 1; i < database.length; i++) {
+      database.indexes[i] = i;
+    }
+    std::sort(database.indexes, database.indexes + database.length,
+              [&database](uint32_t a, uint32_t b) {
+        return database.records[a] < database.records[b];
+    });
 
-    float32_t cur_C = database.records[0].C;
+    float32_t cur_C = database.at(0).C;
     uint32_t cur_start = 0;
     uint32_t cur_end = 0;
     for (uint32_t i = 1; i < database.length; i++) {
-        if (database.records[i].C == cur_C) {
+        float32_t Ci = database.at(i).C;
+        if (Ci == cur_C) {
             cur_end += 1;
         } else {
-            C_map[cur_C] = {cur_start, cur_end};
-            cur_C = database.records[i].C;
+            database.C_map[cur_C] = {cur_start, cur_end};
+            cur_C = Ci;
             cur_start = i;
             cur_end = cur_start;
         }
     }
-    C_map[cur_C] = {cur_start, cur_end};
+    database.C_map[cur_C] = {cur_start, cur_end};
 }
 
-void StatsDatabase(Database& database) {
+void StatsDatabase(const Database& database) {
     std::cout << CategoricalEntry::forArrayCellField(
-        [&database](uint32_t i) { return database.records[i].C; },
+        [&database](uint32_t i) { return database.at(i).C; },
         database.length, "record.C"
     ) << std::endl;
 
     std::cout << ScalarEntry::forArrayCellField(
-        [&database](uint32_t i) { return database.records[i].T; },
+        [&database](uint32_t i) { return database.at(i).T; },
         database.length, "record.T"
     ) << std::endl;
 
     for (uint32_t j = 0; j < vector_num_dimension; j++) {
         std::cout << ScalarEntry::forArrayCellField(
-            [&database, &j](uint32_t i) { return database.records[i].fields[j]; },
+            [&database, &j](uint32_t i) { return database.at(i).fields[j]; },
             database.length, "record.field#" + std::to_string(j)
         ) << std::endl;
     }

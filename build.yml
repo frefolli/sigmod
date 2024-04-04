@@ -1,0 +1,13 @@
+include_dirs:
+    - include
+source_dirs:
+    - src
+links: []
+options:
+    - --std=c++17
+    - -O3
+builddir: builddir
+runs:
+  dummy: dummy-data.bin dummy-queries.bin
+  contest-1m: contest-1m-data.bin contest-1m-queries.bin
+  contest-10m: contest-10m-data.bin contest-10m-queries.bin

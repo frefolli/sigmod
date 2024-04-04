@@ -3,6 +3,20 @@
 - [Link to Description](http://sigmodcontest2024.eastus.cloudapp.azure.com/task.shtml?content=description)
 - [Link to Datasets](http://sigmodcontest2024.eastus.cloudapp.azure.com/task.shtml?content=datasets)
 
+## Development Notes
+
+### Maintenance of Build System
+
+Tweak `build.yml` to insert links to dependencies (`links` section) or different options for *g++* (`options` section), as well as ad-hoc run commands (`runs` section).
+
+```
+python -m builder > Makefile
+```
+
+Reads from `build.yml` and assemble a Makefile. *pyyaml* it's required to run the build system generator.
+
+Then `make clean`, `make`, `make run` can be launched as usual.
+
 ## Task Description
 
 Given a set of vectors with additional attributes, the task is to answer hybrid vector search queries over the data accurately in limited time. A hybrid vector query is to find the approximate k nearest neighbors of a given query vector under one given similarity measure, such as Euclidean distance, with some constraints on non-vector attributes. For each query, your output should be the ids of the k nearest neighbors determined by your algorithm. For this year's task, k is set to be 100 and the vectors have a dimension of 100.
@@ -51,11 +65,7 @@ Please format "output.bin" accordingly. You can check out our provided baseline 
 
 ## Benchmarks
 
-Current solution takes approximately:
-
-- ~0.080 sec for dummy-*.bin
-- ~41 sec for 1000 items of contest-*-release-1m.bin
-- ~7 min for contest-*-release-1m.bin
+![Rilevamento di 1000 query con Ball Forest e C Map su Contest 1/10m](rilevamenti-1000-query-con-c-map-contest-1-10m.png)
 
 ## Approach & Ideas
 
@@ -68,3 +78,9 @@ For now also T is "indexed" by using the same sorting used for C and seeking for
 I've optimized checks against *query_type* and now it takes slightly less than before. It's also more readable i guess.
 
 I was thinking to indexing the vector space by dividing it in logical sections, peeking the most accurate for the query and then expanding the search to nearest sections.
+
+## Schedule
+
+Ball Trees and KD Trees have 1.0 recall (established by Exaustive) if ignoring checks. They both have implemented two filters on *C_MAP*: *BY_C* and *BY_C_AND_T* (this limited to *C*).
+
+They should have the support for discarding wront T values.

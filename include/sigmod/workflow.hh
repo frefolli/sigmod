@@ -3,8 +3,8 @@
 
 #include <string>
 
-void Workflow(std::string database_path,
-              std::string query_set_path,
-              std::string output_path);
+void Workflow(const std::string database_path,
+              const std::string query_set_path,
+              const std::string output_path);
 
 #endif

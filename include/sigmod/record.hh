@@ -10,6 +10,6 @@ struct Record {
     float32_t fields[vector_num_dimension];
 };
 
-std::ostream& operator<<(std::ostream& out, Record& record);
+std::ostream& operator<<(std::ostream& out, const Record& record);
 
 #endif

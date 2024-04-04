@@ -1,11 +1,13 @@
 #include <sigmod/kd_tree.hh>
+#include <sigmod/flags.hh>
 #include <sigmod/scoreboard.hh>
-#include <algorithm>
-#include <iostream>
 #include <sigmod/debug.hh>
 #include <sigmod/random.hh>
+#include <algorithm>
 
 void FreeKDNode(KDNode* node) {
+    if (node == nullptr)
+        return;
     if (node->left != nullptr) {
         FreeKDNode(node->left);
         node->left = nullptr;
@@ -21,223 +23,181 @@ void FreeKDTree(KDTree& tree) {
     if (tree.root != nullptr) {
         FreeKDNode(tree.root);
         tree.root = nullptr;
-    }
-    if (tree.indexes != nullptr) {
-        free(tree.indexes);
         tree.indexes = nullptr;
     }
 }
 
 void FreeKDForest(KDForest& forest) {
-    if (forest.trees != nullptr) {
-        for (uint32_t i = 0; i < forest.length; i++)
-            FreeKDTree(forest.trees[i]);
-        free(forest.trees);
-        forest.trees = nullptr;
-        forest.length = 0;
-    }
 }
 
 bool IsLeaf(const KDNode* node) {
     return (node->left == nullptr && node->right == nullptr);
 }
 
+uint32_t MaximizeSpread(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
+  uint32_t best_dim = 0;
+  float32_t cur_min = database.at(start).fields[best_dim];
+  float32_t cur_max = database.at(start).fields[best_dim];
+  for (uint32_t i = start + 1; i <= end; i++) {
+    const float32_t val = database.at(indexes[i]).fields[best_dim];
+    if (val < cur_min)
+        cur_min = val;
+    if (val > cur_max)
+        cur_max = val;
+  }
+
+  float32_t best_min = cur_min;
+  float32_t best_max = cur_max;
+
+  for (uint32_t dim = 1; dim < vector_num_dimension; dim++) {
+    cur_min = database.at(start).fields[dim];
+    cur_max = database.at(start).fields[dim];
+    for (uint32_t i = start + 1; i <= end; i++) {
+      const float32_t val = database.at(indexes[i]).fields[best_dim];
+      if (val < cur_min)
+          cur_min = val;
+      if (val > cur_max)
+          cur_max = val;
+    }
+    if (cur_max - cur_min > best_max - best_min) {
+      best_min = cur_min;
+      best_max = cur_max;
+      best_dim = dim;
+    }
+  }
+
+  return best_dim;
+}
+
 // for interval [start, end]
 // note that end is included
 KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t dim) {
-    // std::cout << "DEBUG | " << start << " ; " << end << " ; " << dim << std::endl;
-    if (start > end || end >= database.length)
-        return nullptr;
-
     KDNode* node = (KDNode*) malloc(sizeof(KDNode));
     if (node == nullptr)
         throw std::runtime_error("insufficient memory");
 
     std::sort(indexes + start, indexes + end + 1, [&database, &dim](uint32_t a, uint32_t b) {
-        return database.records[a].fields[dim] < database.records[b].fields[dim];
+        return database.at(a).fields[dim] < database.at(b).fields[dim];
     });
 
-    const uint32_t median = start + (end - start)/2;
-    // std::cout << start << "|" << median-1 << "|" << median+1 << "|" << end << std::endl;
-    node->value = database.records[indexes[median]].fields[dim];
+    const uint32_t median = (start + end)/2;
+    node->value = database.at(indexes[median]).fields[dim];
     node->index = median;
     node->dim = dim;
-    // const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
-    const uint32_t next_dim = (dim + 1) % vector_num_dimension;
-    if (median - 1 != end) {
-        node->left = BuildKDNode(database, indexes, start, median - 1, next_dim);
+    
+    if (median-1 != end && start <= median-1 && median-1 <= database.length) {
+        #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+        const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+        #else
+          #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+          const uint32_t next_dim = MaximizeSpread(database, indexes, start, median - 1);
+          #else
+          const uint32_t next_dim = (dim + 1) % vector_num_dimension;
+          #endif
+        #endif
+        node->left = BuildKDNode(database, indexes, start, median-1, next_dim);
     } else {
         node->left = nullptr;
     }
-    if (median + 1 != start) {
+    if (median + 1 != start && median + 1 <= end && end <= database.length) {
+        #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+        const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+        #else
+          #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+          const uint32_t next_dim = MaximizeSpread(database, indexes, median + 1, end);
+          #else
+          const uint32_t next_dim = (dim + 1) % vector_num_dimension;
+          #endif
+        #endif
         node->right = BuildKDNode(database, indexes, median + 1, end, next_dim);
     } else {
         node->right = nullptr;
     }
-
     return node;
 }
 
-KDTree BuildKDTree(const Database& database, uint32_t first_dim) {
-    uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
-    for (uint32_t i = 0; i < database.length; i++) {
-        indexes[i] = i;
-    }
-    // const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
-    const uint32_t next_dim = first_dim;
+KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t first_dim) {
+    #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+    const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+    #else
+      #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+      const uint32_t next_dim = MaximizeSpread(database, indexes, start, end);
+      #else
+      const uint32_t next_dim = first_dim;
+      #endif
+    #endif
+
     return {
-        .root = BuildKDNode(database, indexes, 0, database.length - 1, next_dim),
+        .root = BuildKDNode(database, indexes, start, end, next_dim),
         .indexes = indexes
     };
 }
 
-KDForest BuildKDForest(const Database& database, uint32_t length) {
-    KDTree* trees = (KDTree*) malloc (sizeof(KDTree) * length);
-    const uint32_t dim_shift = vector_num_dimension / length;
-    uint32_t first_dim = RandomUINT32T(0, vector_num_dimension);
-    // uint32_t first_dim = 0;
-    for (uint32_t i = 0; i < length; i++) {
-        trees[i] = BuildKDTree(database, first_dim);
-        first_dim = RandomUINT32T(0, vector_num_dimension);
-        // first_dim += dim_shift;
+KDForest BuildKDForest(const Database& database) {
+    uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
+    for (uint32_t i = 0; i < database.length; i++) {
+        indexes[i] = i;
     }
+
+    std::map<uint32_t, KDTree> trees;
+    for (auto cat : database.C_map) {
+        trees[cat.first] = BuildKDTree(database, indexes, cat.second.first, cat.second.second);
+    }
+
     return {
-        .length = length,
+        .indexes = indexes,
         .trees = trees
     };
 }
 
-void BottomUpKDTreeSearch(Scoreboard& scoreboard,
-                          const KDTree& tree,
-                          const Database& database,
-                          const Query& query) {
-    KDNode* current_node = tree.root;
+void SearchKDNode(const Database& database, const Query& query,
+                  Scoreboard& scoreboard, const KDTree& tree,
+                  const KDNode* node) {
+    const uint32_t index = tree.indexes[node->index];
+    const score_t score = distance(query, database.at(index));
+    const float32_t delta = query.fields[node->dim] - node->value;
 
-    if (current_node == nullptr) {
-        throw std::runtime_error("KDTreeSearch! tree.node == nullptr");
-    }
-
-    while(!IsLeaf(current_node)) {
-        PushCandidate(scoreboard, database.records[tree.indexes[current_node->index]], query, tree.indexes[current_node->index]);
-        if (query.fields[current_node->dim] > current_node->value) {
-            if (current_node->right != nullptr) {
-                current_node = current_node->right;
-            } else {
-                break;
-            }
+    scoreboard.push(index, score);
+    if (!IsLeaf(node)) {
+        if (delta > 0) {
+            if (node->right != nullptr)
+                SearchKDNode(database, query, scoreboard, tree, node->right);
+            if (node->left != nullptr && delta * delta < scoreboard.top().score)
+                SearchKDNode(database, query, scoreboard, tree, node->left);
         } else {
-            if (current_node->left != nullptr) {
-                current_node = current_node->left;
-            } else {
-                break;
-            }
-        }
-    }
-
-    // throw std::runtime_error("Interrupt");
-
-    const uint32_t center = current_node->index;
-    PushCandidate(scoreboard, database.records[tree.indexes[center]], query, tree.indexes[center]);
-
-    uint32_t ll = center;
-    uint32_t rr = center;
-
-    const uint32_t shifts = 2 * k_nearest_neighbors;
-    uint32_t i = 0;
-
-    while(i < shifts) {
-        if (ll > 0) {
-            ll--;
-            PushCandidate(scoreboard, database.records[tree.indexes[ll]], query, tree.indexes[ll]);
-        }
-        if (rr < database.length - 1) {
-            rr++;
-            PushCandidate(scoreboard, database.records[tree.indexes[rr]], query, tree.indexes[rr]);
-        }
-        i++;
-    }
-}
-
-void RecursiveKDTreeSearch(Scoreboard& scoreboard,
-                           const KDTree& tree,
-                           const KDNode* node,
-                           const Database& database,
-                           const Query& query,
-                           int jumps) {
-    if (node != nullptr) {
-        uint32_t index = tree.indexes[node->index];
-        score_t score = distance(query, database.records[index]);
-        float32_t delta = query.fields[node->dim] - node->value;
-
-        PushCandidate(scoreboard, database.records[index], query, index);
-        if (!IsLeaf(node)) {
-            if (delta > 0) {
-                RecursiveKDTreeSearch(scoreboard, tree, node->right, database, query, jumps);
-                bool search_other_branch = (delta * delta < scoreboard.top().score && jumps > 0);
-                if (search_other_branch)
-                    RecursiveKDTreeSearch(scoreboard, tree, node->left, database, query, jumps - 1);
-            } else {
-                RecursiveKDTreeSearch(scoreboard, tree, node->left, database, query, jumps);
-                bool search_other_branch = (delta * delta < scoreboard.top().score && jumps > 0);
-                if (search_other_branch)
-                    RecursiveKDTreeSearch(scoreboard, tree, node->right, database, query, jumps - 1);
-            }
+            if (node->left != nullptr)
+                SearchKDNode(database, query, scoreboard, tree, node->left);
+            if (node->right != nullptr && delta * delta < scoreboard.top().score)
+                SearchKDNode(database, query, scoreboard, tree, node->right);
         }
     }
 }
 
-void KDTreeSearch2(Result& result,
-                   const KDTree& tree,
-                   const Database& database,
-                   const Query& query) {
-    Scoreboard scoreboard;
-    RecursiveKDTreeSearch(scoreboard, tree, tree.root, database, query, vector_num_dimension + 1);
-
-    uint32_t i = k_nearest_neighbors - 1;
-    while(!scoreboard.empty()) {
-        result.data[i] = scoreboard.top().index;
-        scoreboard.pop();
-        i -= 1;
-    }
+void SearchKDTree(const Database& database, const Query& query, Scoreboard& scoreboard, const KDTree& tree) {
+    SearchKDNode(database, query, scoreboard, tree, tree.root);
 }
 
-void KDTreeSearch(Result& result,
-                  const KDTree& tree,
-                  const Database& database,
-                  const Query& query) {
-    Scoreboard scoreboard;
-    BottomUpKDTreeSearch(scoreboard, tree, database, query);
+void SearchKDForest(const KDForest& forest, const Database& database, Result& result, const Query& query) {
+    Scoreboard gboard;
 
-    if (scoreboard.size() != k_nearest_neighbors) {
-        throw std::runtime_error("Bruh wtf!");
+    #ifdef DISATTEND_CHECKS
+    const uint32_t query_type = NORMAL;
+    #else
+    const uint32_t query_type = (uint32_t) (query.query_type);
+    #endif
+
+    if (query_type == BY_C || query_type == BY_C_AND_T) {
+        SearchKDTree(database, query, gboard, forest.trees.at(query.v));
+    } else {
+        for (auto tree : forest.trees) {
+            SearchKDTree(database, query, gboard, tree.second);
+        }
     }
 
-    uint32_t i = k_nearest_neighbors - 1;
-    while(!scoreboard.empty()) {
-        result.data[i] = scoreboard.top().index;
-        scoreboard.pop();
-        i -= 1;
-    }
-}
-
-void KDTreeSearch3(Result& result,
-                   const KDForest& forest,
-                   const Database& database,
-                   const Query& query) {
-    Scoreboard scoreboard;
-    for (uint32_t i = 0; i < forest.length; i++) {
-        BottomUpKDTreeSearch(scoreboard, forest.trees[i], database, query);
-    }
-
-    if (scoreboard.size() != k_nearest_neighbors) {
-        std::cout << scoreboard.size() << std::endl;
-        throw std::runtime_error("Bruh wtf!");
-    }
-
-    uint32_t i = k_nearest_neighbors - 1;
-    while(!scoreboard.empty()) {
-        result.data[i] = scoreboard.top().index;
-        scoreboard.pop();
-        i -= 1;
+    uint32_t rank = gboard.size() - 1;
+    while(!gboard.empty()) {
+        result.data[rank] = database.indexes[gboard.top().index];
+        gboard.pop();
+        rank--;
     }
 }

@@ -16,7 +16,7 @@ struct Solution {
 };
 
 void FreeSolution(Solution& solution);
-void WriteSolution(Solution& solution, std::string output_path);
-void CompareSolutions(const Database& database, const QuerySet& query_set, const Solution& expected, const Solution& got);
+void WriteSolution(const Solution& solution, const std::string output_path);
+score_t CompareSolutions(const Database& database, const QuerySet& query_set, const Solution& expected, const Solution& got);
 
 #endif

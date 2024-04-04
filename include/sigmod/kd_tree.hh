@@ -5,6 +5,7 @@
 #include <sigmod/database.hh>
 #include <sigmod/query.hh>
 #include <sigmod/solution.hh>
+#include <sigmod/scoreboard.hh>
 
 struct KDNode {
     float32_t value;
@@ -20,19 +21,24 @@ struct KDTree {
 };
 
 struct KDForest {
-    uint32_t length;
-    KDTree* trees;
+    uint32_t* indexes;
+    std::map<uint32_t, KDTree> trees;
 };
+
+bool IsLeaf(const KDNode* node);
 
 void FreeKDForest(KDForest& forest);
 void FreeKDTree(KDTree& tree);
 void FreeKDNode(KDNode* node);
-bool IsLeaf(const KDNode* node);
+
 KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t dim);
-KDTree BuildKDTree(const Database& database, uint32_t first_dim = 0);
-KDForest BuildKDForest(const Database& database, uint32_t length);
-void KDTreeSearch(Result& result, const KDTree& tree, const Database& database, const Query& query);
-void KDTreeSearch2(Result& result, const KDTree& tree, const Database& database, const Query& query);
-void KDTreeSearch3(Result& result, const KDForest& forest, const Database& database, const Query& query);
+KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t first_dim = 0);
+KDForest BuildKDForest(const Database& database);
+
+void SearchKDNode(const Database& database, const Query& query,
+                  Scoreboard& scoreboard, const KDTree& tree,
+                  const KDNode* node);
+void SearchKDTree(const Database& database, const Query& query, Scoreboard& scoreboard, const KDTree& tree);
+void SearchKDForest(const KDForest& forest, const Database& database, Result& result, const Query& query);
 
 #endif

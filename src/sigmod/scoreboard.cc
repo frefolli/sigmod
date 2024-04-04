@@ -1,14 +1,11 @@
 #include <sigmod/scoreboard.hh>
+#include <sigmod/flags.hh>
 
-bool Candidate::operator<(const Candidate& other) const {
-    return score < other.score;
-}
-
-uint32_t Scoreboard::size() {
+uint32_t Scoreboard::size() const {
     return board.size();
 }
 
-Candidate& Scoreboard::top() {
+const Candidate& Scoreboard::top() const {
     return board.back();
 }
 
@@ -16,9 +13,11 @@ void Scoreboard::pop() {
     board.pop_back();
 }
 
-void Scoreboard::add(uint32_t index, score_t score) {
+void Scoreboard::add(const uint32_t index, const score_t score) {
+    #ifdef SCOREBOARD_ALWAYS_CHECK_DUPLICATES
     if (has(index))
-        return;
+      return;
+    #endif
 
     auto it = board.begin();
     while(it != board.end() && it->score < score)
@@ -27,7 +26,7 @@ void Scoreboard::add(uint32_t index, score_t score) {
     board.emplace(it, index, score);
 }
 
-bool Scoreboard::has(uint32_t index) {
+bool Scoreboard::has(const uint32_t index) const {
     for (auto it = board.begin(); it != board.end(); it++) {
         if (it->index == index)
             return true;
@@ -35,9 +34,30 @@ bool Scoreboard::has(uint32_t index) {
     return false;
 }
 
-bool Scoreboard::empty() {
+bool Scoreboard::empty() const {
     return board.size() == 0;
 }
 
-Candidate::Candidate(uint32_t index, score_t score) :
+Candidate::Candidate(const uint32_t index, const score_t score) :
     index(index), score(score) {}
+
+void Scoreboard::consider(const Candidate& candidate) {
+    if (full()) {
+        if (candidate.score < board.back().score) {
+            pop();
+            add(candidate.index, candidate.score);
+        }
+    } else {
+        add(candidate.index, candidate.score);
+    }
+}
+
+void Scoreboard::update(const Scoreboard& input) {
+    for (auto candidate : input.board) {
+        consider(candidate);
+    }
+}
+
+bool Scoreboard::full() const {
+    return board.size() == k_nearest_neighbors;
+}
