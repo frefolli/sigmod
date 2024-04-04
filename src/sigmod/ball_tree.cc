@@ -176,14 +176,7 @@ void SearchBallNode(const Database& database, const Query& query,
         for (uint32_t i = node->start; i < node->end; i++) {
             const uint32_t p = tree.indexes[i];
             const score_t distance_query_p = distance(query, database.records[p]);
-            if (scoreboard.full()) {
-                if (distance_query_p < scoreboard.top().score) {
-                    scoreboard.pop();
-                    scoreboard.add(p, distance_query_p);
-                }
-            } else {
-                scoreboard.add(p, distance_query_p);
-            }
+            scoreboard.push(p, distance_query_p);
         }
     } else {
         const score_t distance_query_left = distance(query, node->left->center);

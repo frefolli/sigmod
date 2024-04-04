@@ -99,15 +99,7 @@ void SearchKDNode(const Database& database, const Query& query,
     const score_t score = distance(query, database.records[index]);
     const float32_t delta = query.fields[node->dim] - node->value;
 
-    if (scoreboard.full()) {
-        if (score < scoreboard.top().score) {
-            scoreboard.pop();
-            scoreboard.add(index, score);
-        }
-    } else {
-        scoreboard.add(index, score);
-    }
-    
+    scoreboard.push(index, score);
     if (!IsLeaf(node)) {
         if (delta > 0) {
             if (node->right != nullptr)
