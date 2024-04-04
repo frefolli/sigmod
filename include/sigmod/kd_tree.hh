@@ -33,12 +33,12 @@ void FreeKDNode(KDNode* node);
 
 KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t dim);
 KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t first_dim = 0);
-KDForest BuildKDForest(const Database& database, const c_map_t& C_map);
+KDForest BuildKDForest(const Database& database);
 
 void SearchKDNode(const Database& database, const Query& query,
                   Scoreboard& scoreboard, const KDTree& tree,
                   const KDNode* node);
 void SearchKDTree(const Database& database, const Query& query, Scoreboard& scoreboard, const KDTree& tree);
-void SearchKDForest(const KDForest& forest, const Database& database, const c_map_t& C_map, Result& result, const Query& query);
+void SearchKDForest(const KDForest& forest, const Database& database, Result& result, const Query& query);
 
 #endif

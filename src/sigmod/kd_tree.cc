@@ -34,6 +34,41 @@ bool IsLeaf(const KDNode* node) {
     return (node->left == nullptr && node->right == nullptr);
 }
 
+uint32_t MaximizeSpread(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
+  uint32_t best_dim = 0;
+  float32_t cur_min = database.at(start).fields[best_dim];
+  float32_t cur_max = database.at(start).fields[best_dim];
+  for (uint32_t i = start + 1; i <= end; i++) {
+    const float32_t val = database.at(indexes[i]).fields[best_dim];
+    if (val < cur_min)
+        cur_min = val;
+    if (val > cur_max)
+        cur_max = val;
+  }
+
+  float32_t best_min = cur_min;
+  float32_t best_max = cur_max;
+
+  for (uint32_t dim = 1; dim < vector_num_dimension; dim++) {
+    cur_min = database.at(start).fields[dim];
+    cur_max = database.at(start).fields[dim];
+    for (uint32_t i = start + 1; i <= end; i++) {
+      const float32_t val = database.at(indexes[i]).fields[best_dim];
+      if (val < cur_min)
+          cur_min = val;
+      if (val > cur_max)
+          cur_max = val;
+    }
+    if (cur_max - cur_min > best_max - best_min) {
+      best_min = cur_min;
+      best_max = cur_max;
+      best_dim = dim;
+    }
+  }
+
+  return best_dim;
+}
+
 // for interval [start, end]
 // note that end is included
 KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t dim) {
@@ -42,23 +77,38 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
         throw std::runtime_error("insufficient memory");
 
     std::sort(indexes + start, indexes + end + 1, [&database, &dim](uint32_t a, uint32_t b) {
-        return database.records[a].fields[dim] < database.records[b].fields[dim];
+        return database.at(a).fields[dim] < database.at(b).fields[dim];
     });
 
     const uint32_t median = (start + end)/2;
-    node->value = database.records[indexes[median]].fields[dim];
+    node->value = database.at(indexes[median]).fields[dim];
     node->index = median;
     node->dim = dim;
-
-    // const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
-    const uint32_t next_dim = (dim + 1) % vector_num_dimension;
     
     if (median-1 != end && start <= median-1 && median-1 <= database.length) {
+        #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+        const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+        #else
+          #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+          const uint32_t next_dim = MaximizeSpread(database, indexes, start, median - 1);
+          #else
+          const uint32_t next_dim = (dim + 1) % vector_num_dimension;
+          #endif
+        #endif
         node->left = BuildKDNode(database, indexes, start, median-1, next_dim);
     } else {
         node->left = nullptr;
     }
     if (median + 1 != start && median + 1 <= end && end <= database.length) {
+        #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+        const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+        #else
+          #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+          const uint32_t next_dim = MaximizeSpread(database, indexes, median + 1, end);
+          #else
+          const uint32_t next_dim = (dim + 1) % vector_num_dimension;
+          #endif
+        #endif
         node->right = BuildKDNode(database, indexes, median + 1, end, next_dim);
     } else {
         node->right = nullptr;
@@ -66,23 +116,31 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
     return node;
 }
 
-KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, uint32_t first_dim) {
-    // const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
-    const uint32_t next_dim = first_dim;
+KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t first_dim) {
+    #ifdef KD_FOREST_DIMENSION_RANDOMIZE
+    const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+    #else
+      #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+      const uint32_t next_dim = MaximizeSpread(database, indexes, start, end);
+      #else
+      const uint32_t next_dim = first_dim;
+      #endif
+    #endif
+
     return {
         .root = BuildKDNode(database, indexes, start, end, next_dim),
         .indexes = indexes
     };
 }
 
-KDForest BuildKDForest(const Database& database, const c_map_t& C_map) {
+KDForest BuildKDForest(const Database& database) {
     uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
     for (uint32_t i = 0; i < database.length; i++) {
         indexes[i] = i;
     }
 
     std::map<uint32_t, KDTree> trees;
-    for (auto cat : C_map) {
+    for (auto cat : database.C_map) {
         trees[cat.first] = BuildKDTree(database, indexes, cat.second.first, cat.second.second);
     }
 
@@ -96,7 +154,7 @@ void SearchKDNode(const Database& database, const Query& query,
                   Scoreboard& scoreboard, const KDTree& tree,
                   const KDNode* node) {
     const uint32_t index = tree.indexes[node->index];
-    const score_t score = distance(query, database.records[index]);
+    const score_t score = distance(query, database.at(index));
     const float32_t delta = query.fields[node->dim] - node->value;
 
     scoreboard.push(index, score);
@@ -119,7 +177,7 @@ void SearchKDTree(const Database& database, const Query& query, Scoreboard& scor
     SearchKDNode(database, query, scoreboard, tree, tree.root);
 }
 
-void SearchKDForest(const KDForest& forest, const Database& database, const c_map_t& C_map, Result& result, const Query& query) {
+void SearchKDForest(const KDForest& forest, const Database& database, Result& result, const Query& query) {
     Scoreboard gboard;
 
     #ifdef DISATTEND_CHECKS
@@ -138,7 +196,7 @@ void SearchKDForest(const KDForest& forest, const Database& database, const c_ma
 
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
-        result.data[rank] = gboard.top().index;
+        result.data[rank] = database.indexes[gboard.top().index];
         gboard.pop();
         rank--;
     }

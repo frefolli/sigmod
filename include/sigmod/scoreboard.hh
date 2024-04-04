@@ -5,7 +5,6 @@
 #include <sigmod/record.hh>
 #include <sigmod/query.hh>
 #include <vector>
-#include <iostream>
 
 template <typename WFA, typename WFB>
 inline score_t distance(const WFA& query, const WFB& record) {
@@ -21,7 +20,7 @@ struct Candidate {
     uint32_t index;
     score_t score;
 
-    Candidate(uint32_t index, score_t score);
+    Candidate(const uint32_t index, const score_t score);
 };
 
 /*
@@ -29,17 +28,17 @@ struct Candidate {
 * all insertions follow insertion sort and we don't have ever more than k_nearest_neighbors
 * across the sigmod program
 */
-class Scoreboard {
+struct Scoreboard {
     private:
         std::vector<Candidate> board = {};
     public:
         uint32_t size() const;
         const Candidate& top() const;
         void pop();
-        void add(uint32_t index, score_t score);
-        void consider(Candidate& candidate);
+        void add(const uint32_t index, const score_t score);
+        void consider(const Candidate& candidate);
         void update(const Scoreboard& input);
-        bool has(uint32_t index) const;
+        bool has(const uint32_t index) const;
         bool empty() const;
         bool full() const;
         inline void push(const uint32_t index, const score_t score) {

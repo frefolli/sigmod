@@ -17,10 +17,10 @@
  * */
 
 template <typename Accessor>
-uint32_t SeekLow(Accessor accessor,
-                 uint32_t start,
-                 uint32_t end,
-                 float32_t value) {
+uint32_t SeekLow(const Accessor accessor,
+                 const uint32_t start,
+                 const uint32_t end,
+                 const float32_t value) {
     uint32_t l = start;
     uint32_t r = end - 1;
     uint32_t m = (l + r) / 2;
@@ -42,10 +42,10 @@ uint32_t SeekLow(Accessor accessor,
 }
 
 template <typename Accessor>
-uint32_t SeekHigh(Accessor accessor,
-                  uint32_t start,
-                  uint32_t end,
-                  float32_t value) {
+uint32_t SeekHigh(const Accessor accessor,
+                  const uint32_t start,
+                  const uint32_t end,
+                  const float32_t value) {
     uint32_t l = start;
     uint32_t r = end - 1;
     uint32_t m = (l + r) / 2;

@@ -2,7 +2,7 @@
 #define FLAGS_HH
 
 /* Scoreboard::add always checks if an input Candidate could be already in the collection */
-// define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
+// #define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
 
 /* Query.query_type is ignored as if it was NORMAL */
 // #define DISATTEND_CHECKS
@@ -13,6 +13,12 @@
 
 /* Build a KD Forest and uses it to craft a solution */
 // #define ENABLE_KD_FOREST
+
+/* Randomize KD Node dimensions */
+// #define KD_FOREST_DIMENSION_RANDOMIZE
+
+/* Assign KD Node dimensions in order to maximize spread */
+// #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
 
 /* Build a Ball Forest and uses it to craft a solution */
 // #define ENABLE_BALL_FOREST

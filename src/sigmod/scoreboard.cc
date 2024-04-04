@@ -13,7 +13,7 @@ void Scoreboard::pop() {
     board.pop_back();
 }
 
-void Scoreboard::add(uint32_t index, score_t score) {
+void Scoreboard::add(const uint32_t index, const score_t score) {
     #ifdef SCOREBOARD_ALWAYS_CHECK_DUPLICATES
     if (has(index))
       return;
@@ -26,7 +26,7 @@ void Scoreboard::add(uint32_t index, score_t score) {
     board.emplace(it, index, score);
 }
 
-bool Scoreboard::has(uint32_t index) const {
+bool Scoreboard::has(const uint32_t index) const {
     for (auto it = board.begin(); it != board.end(); it++) {
         if (it->index == index)
             return true;
@@ -38,10 +38,10 @@ bool Scoreboard::empty() const {
     return board.size() == 0;
 }
 
-Candidate::Candidate(uint32_t index, score_t score) :
+Candidate::Candidate(const uint32_t index, const score_t score) :
     index(index), score(score) {}
 
-void Scoreboard::consider(Candidate& candidate) {
+void Scoreboard::consider(const Candidate& candidate) {
     if (full()) {
         if (candidate.score < board.back().score) {
             pop();
