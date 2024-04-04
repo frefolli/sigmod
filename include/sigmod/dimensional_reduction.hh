@@ -1,21 +1,16 @@
 #ifndef DIMENSIONAL_REDUCTION_HH
 #define DIMENSIONAL_REDUCTION_HH
 
-#include<sigmod/database.hh>
+#include <sigmod/statistical_indeces.hh>
 
-struct StatisticalIndeces {
-    Database* db;
-    float32_t* mean;
-    float32_t* var;
-    float32_t* covarianceMatrix;
+struct ComponentResults{
+    float32_t* eigenvalue;
+    float32_t** r;
 };
 
-StatisticalIndeces* MallocStatisticalIndeces(Database& database);
-void Standardize(StatisticalIndeces& database);
-void InitializeStatisticalIndeces(StatisticalIndeces& si);
-void ComputeMeanVariance(StatisticalIndeces& si);
-void ComputeCovarianceMatrix(StatisticalIndeces& si);
-
-void FreeStatisticalIndeces(StatisticalIndeces& si);
-
+ComponentResults* MallocComponentResults(const uint32_t n_principal_components, 
+    const uint32_t dimension);
+ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations);
+ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations, float32_t tollerance);
+void FreeComponentResults(ComponentResults* cr);
 #endif

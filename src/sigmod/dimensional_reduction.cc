@@ -1,107 +1,92 @@
 #include<sigmod/dimensional_reduction.hh>
-#include<cmath>
-#include<sigmod/config.hh>
+#include<sigmod/lin_alg.hh>
 
-StatisticalIndeces* MallocStatisticalIndeces(Database& database, 
-    const float32_t mean, const float32_t var, const float32_t std) {
-    StatisticalIndeces* si = (StatisticalIndeces*) std::malloc(sizeof(StatisticalIndeces));
-    si->db = &database;
-    si->mean = (float32_t*) std::malloc(sizeof(float32_t) * vector_num_dimension);
-    si->var = (float32_t*) std::malloc(sizeof(float32_t) * vector_num_dimension);
-    si->covarianceMatrix = (float32_t*) std::malloc(sizeof(float32_t) * vector_num_dimension + 1);
+ComponentResults* MallocComponentResults(const uint32_t n_principal_components, const uint32_t dimension) {
+    ComponentResults* cr = (ComponentResults*) std::malloc(sizeof(ComponentResults));
+
+    cr->eigenvalue = (float32_t*) std::malloc(sizeof(float32_t) * n_principal_components);
+    cr->r = (float32_t**) std::malloc(sizeof(float32_t) * n_principal_components * dimension);
+
+    return cr;
 }
 
-void InitializeStatisticalIndeces(StatisticalIndeces& si) {
-    ComputeMean(si); 
-    ComputeVariance(si);
-}
+/**
+ * @brief 
+ * 
+ * PSEUDOCODE
+ *  r = a random vector of length p
+ *  r = r / norm(r)
+ *  do c times:
+ *      s = 0 (a vector of length p)
+ *      for each row x in X
+ *              s = s + (x ⋅ r) x
+ *      λ = rTs // λ is the eigenvalue
+ *      error = |λ ⋅ r − s|
+ *      r = s / norm(s)
+ *      exit if error < tolerance
+ *  return λ, r
+ * 
+ * https://en.wikipedia.org/wiki/Principal_component_analysis
+ * 
+ * @param si 
+ * @param iterations n iterations that algorithm compute
+ * @param tollerance threashold 
+ * @return a ComponentResults with the first most important eigenvalue and its 
+ *  associated unit vector r of covariance matrix
+ */
 
-void Standardize(StatisticalIndeces& si) {
-    InitializeStatisticalIndeces(si);
-    for (uint32_t i = 0; i < si.db->length; i++) {
-        for (uint32_t j = 0; j < vector_num_dimension; j++) {
-            si.db->records[i].fields[j]  = (si.db->records[i].fields[j] - si.mean[j]) / sqrt(si.var[j]);
-        }
-    }
-}
-
-void ComputeMean(StatisticalIndeces& si) {
-    uint64_t n_elements = si.db->length * vector_num_dimension;
-    float32_t partial_sum_per_attr = 0; 
-        
-    for (uint32_t j = 0; j < vector_num_dimension; j++) {
-        partial_sum_per_attr = 0; 
-        for (uint32_t i = 0; i < si.db->length; i++) {
-            partial_sum_per_attr += si.db->records[i].fields[j];
-        }
-        si.mean[j] = partial_sum_per_attr / si.db->length;
-    }
-}
-
-void ComputeVariance(StatisticalIndeces& si) {
-    uint64_t n_elements = si.db->length * vector_num_dimension;
-    float32_t partial_dev_per_attr = 0; 
-        
-    for (uint32_t j = 0; j < vector_num_dimension; j++) {
-        partial_dev_per_attr = 0; 
-        for (uint32_t i = 0; i < si.db->length; i++) {
-            partial_dev_per_attr += pow(si.db->records[i].fields[j] - si.mean[j], 2);
-        }
-        si.var[j] = partial_dev_per_attr / si.db->length;
-    }
-}
-
-const float32_t ComputeVectorNorm2(const float32_t vector[]){
-    float32_t sum = 0;
-    for (int32_t i = 0; i < vector_num_dimension; i++) {
-        sum = vector[i] * vector[i];
-    }
-    return sqrt(sum);
-}  
-
-void NormalizeVector(float32_t vector[]){
-    float32_t norm2 = ComputeVectorNorm2(vector);
-    for (int32_t i = 0; i < vector_num_dimension; i++) {
-        vector[i] /= norm2;
-    }
-}
-float32_t* GenerateVector(const uint32_t dimension, const float32_t initial_value){
-    float32_t* vector = (float32_t*) std::malloc(sizeof(float32_t) * dimension);
-    for (int32_t i = 0; i < dimension; i++) {
-        vector[i] = initial_value;
-    }
-    return vector;
-}    
-
-void pca(StatisticalIndeces& si, uint32_t iterations) {
-    Standardize(si);
-    float32_t r[vector_num_dimension];
-    NormalizeVector(r);
+ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations, float32_t tollerance) {
+    float32_t* r = MallocVector(vector_num_dimension);
+    NormalizeVector(r, r, vector_num_dimension);
     float32_t* s;
+    float32_t* temp_vector;
+    float32_t temp = 0;
+    float32_t eigenvalue = 0;
+
     for(uint32_t i = 0; i < iterations; i++){
-        s = GenerateVector(vector_num_dimension, 0);
+
+        s = MallocVector(vector_num_dimension, 0);
+        temp_vector = MallocVector(vector_num_dimension, 0);
         for (uint32_t i = 0; i < si.db->length; i++) {
-            s = s + (x * r) * x;
+            float32_t* x = si.db->records[i].fields;
+            temp = 0;
+            ScalarProduct(x, r, temp, vector_num_dimension);
+            ScalarDotVector(temp, x, temp_vector, vector_num_dimension);
+            SumVectors(s, temp_vector, s, vector_num_dimension);
+        }
+
+        // computing heigvalue of the first component
+        ScalarProduct(r, s, eigenvalue, vector_num_dimension);
+
+        // computing error vector
+        ScalarDotVector(eigenvalue, r, temp_vector, vector_num_dimension);
+        DiffVectors(temp_vector, s, temp_vector, vector_num_dimension);
+        
+        // updating r for the next iteration
+        NormalizeVector(s, r, vector_num_dimension);
+
+        FreeVector(temp_vector);
+        FreeVector(s);
+
+        if (abs(ComputeVectorNorm2(temp_vector)) < tollerance) {
+            break;
         }
     }
 
-    // ! ON WORKING
+    ComponentResults* cr = MallocComponentResults(1, vector_num_dimension);
+    cr->eigenvalue[0] = eigenvalue;
+    CopyVector(r, cr->r[0], vector_num_dimension);
+    FreeVector(r);
+
+    return cr;
 }
 
-void FreeStatisticalIndeces(StatisticalIndeces& si) {
-    if (si.db != nullptr) {
-        FreeDatabase(*(si.db));
-    }
 
-    if (si.mean != nullptr) {
-        std::free(si.mean);
+void FreeComponentResults(ComponentResults* cr) {
+    if(cr->eigenvalue != nullptr){
+        std::free(cr->eigenvalue);
     }
-    
-    if (si.var != nullptr) {
-        std::free(si.var);
-    }
-
-    if (si.covarianceMatrix != nullptr) {
-        std::free(si.covarianceMatrix);
+    if(cr->r != nullptr){   
+        std::free(cr->r);
     }
 }
