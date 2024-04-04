@@ -1,7 +1,7 @@
 #include <sigmod/thread_pool.hh>
 
 ThreadPool::ThreadPool(uint64_t n_workers) {
-    n_workers = n_workers;
+    this->n_workers = n_workers;
 }
 
 void ThreadPool::Start(std::function<void()> func) {
