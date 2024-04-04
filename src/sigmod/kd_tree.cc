@@ -42,11 +42,11 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
         throw std::runtime_error("insufficient memory");
 
     std::sort(indexes + start, indexes + end + 1, [&database, &dim](uint32_t a, uint32_t b) {
-        return database.records[a].fields[dim] < database.records[b].fields[dim];
+        return database.at(a).fields[dim] < database.at(b).fields[dim];
     });
 
     const uint32_t median = (start + end)/2;
-    node->value = database.records[indexes[median]].fields[dim];
+    node->value = database.at(indexes[median]).fields[dim];
     node->index = median;
     node->dim = dim;
 
@@ -75,14 +75,14 @@ KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t s
     };
 }
 
-KDForest BuildKDForest(const Database& database, const c_map_t& C_map) {
+KDForest BuildKDForest(const Database& database) {
     uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
     for (uint32_t i = 0; i < database.length; i++) {
         indexes[i] = i;
     }
 
     std::map<uint32_t, KDTree> trees;
-    for (auto cat : C_map) {
+    for (auto cat : database.C_map) {
         trees[cat.first] = BuildKDTree(database, indexes, cat.second.first, cat.second.second);
     }
 
@@ -96,7 +96,7 @@ void SearchKDNode(const Database& database, const Query& query,
                   Scoreboard& scoreboard, const KDTree& tree,
                   const KDNode* node) {
     const uint32_t index = tree.indexes[node->index];
-    const score_t score = distance(query, database.records[index]);
+    const score_t score = distance(query, database.at(index));
     const float32_t delta = query.fields[node->dim] - node->value;
 
     scoreboard.push(index, score);
@@ -119,7 +119,7 @@ void SearchKDTree(const Database& database, const Query& query, Scoreboard& scor
     SearchKDNode(database, query, scoreboard, tree, tree.root);
 }
 
-void SearchKDForest(const KDForest& forest, const Database& database, const c_map_t& C_map, Result& result, const Query& query) {
+void SearchKDForest(const KDForest& forest, const Database& database, Result& result, const Query& query) {
     Scoreboard gboard;
 
     #ifdef DISATTEND_CHECKS
@@ -138,7 +138,7 @@ void SearchKDForest(const KDForest& forest, const Database& database, const c_ma
 
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
-        result.data[rank] = gboard.top().index;
+        result.data[rank] = database.indexes[gboard.top().index];
         gboard.pop();
         rank--;
     }

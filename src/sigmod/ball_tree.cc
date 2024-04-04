@@ -45,9 +45,9 @@ uint32_t FindFurthestPoint(const Database& database, uint32_t* indexes,
                            const uint32_t start, const uint32_t end,
                            const uint32_t target) {
     uint32_t furthest = start;
-    score_t furthest_score = distance(database.records[indexes[target]], database.records[indexes[furthest]]);
+    score_t furthest_score = distance(database.at(indexes[target]), database.at(indexes[furthest]));
     for (uint32_t i = start + 1; i < end; i++) {
-        score_t score = distance(database.records[indexes[target]], database.records[indexes[i]]);
+        score_t score = distance(database.at(indexes[target]), database.at(indexes[i]));
         if (score > furthest_score) {
             furthest_score = score;
             furthest = i;
@@ -57,8 +57,8 @@ uint32_t FindFurthestPoint(const Database& database, uint32_t* indexes,
 }
 
 inline bool is_leftist(const Database& database, const uint32_t* indexes, const uint32_t a, const uint32_t b, const uint32_t x) {
-    const score_t da = distance(database.records[indexes[a]], database.records[indexes[x]]);
-    const score_t db = distance(database.records[indexes[b]], database.records[indexes[x]]);
+    const score_t da = distance(database.at(indexes[a]), database.at(indexes[x]));
+    const score_t db = distance(database.at(indexes[b]), database.at(indexes[x]));
     return (da - db) < 0;
 }
 
@@ -71,16 +71,16 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
         node->end = end;
         const uint32_t length = end - start;
         for (uint32_t i = 0; i < vector_num_dimension; i++) {
-            node->center.fields[i] = database.records[indexes[start]].fields[i] / length;
+            node->center.fields[i] = database.at(indexes[start]).fields[i] / length;
         }
         for (uint32_t j = start + 1; j < end; j++) {
             for (uint32_t i = 0; i < vector_num_dimension; i++) {
-                node->center.fields[i] += database.records[indexes[j]].fields[i] / length;
+                node->center.fields[i] += database.at(indexes[j]).fields[i] / length;
             }
         }
         node->radius = 0;
         for (uint32_t j = start; j < end; j++) {
-            score_t radius = distance(node->center, database.records[indexes[j]]);
+            score_t radius = distance(node->center, database.at(indexes[j]));
             if (radius > node->radius)
                 node->radius = radius;
         }
@@ -151,14 +151,14 @@ BallTree BuildBallTree(const Database& database, uint32_t* indexes, const uint32
     };
 }
 
-BallForest BuildBallForest(const Database& database, const c_map_t& C_map) {
+BallForest BuildBallForest(const Database& database) {
     uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
     for (uint32_t i = 0; i < database.length; i++) {
         indexes[i] = i;
     }
 
     std::map<uint32_t, BallTree> trees;
-    for (auto cat : C_map) {
+    for (auto cat : database.C_map) {
         trees[cat.first] = BuildBallTree(database, indexes, cat.second.first, cat.second.second + 1);
     }
 
@@ -174,7 +174,7 @@ void SearchBallNode(const Database& database, const Query& query,
     if (IsLeaf(node)) {
         for (uint32_t i = node->start; i < node->end; i++) {
             const uint32_t p = tree.indexes[i];
-            const score_t distance_query_p = distance(query, database.records[p]);
+            const score_t distance_query_p = distance(query, database.at(p));
             scoreboard.push(p, distance_query_p);
         }
     } else {
@@ -201,7 +201,7 @@ void SearchBallTree(const Database& database, const Query& query, Scoreboard& sc
         SearchBallNode(database, query, scoreboard, tree, tree.root, distance_query_root);
 }
 
-void SearchBallForest(const BallForest& forest, const Database& database, const c_map_t& C_map, Result& result, const Query& query) {
+void SearchBallForest(const BallForest& forest, const Database& database, Result& result, const Query& query) {
     Scoreboard gboard;
 
     #ifdef DISATTEND_CHECKS
@@ -221,7 +221,7 @@ void SearchBallForest(const BallForest& forest, const Database& database, const 
     assert (gboard.full());
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
-        result.data[rank] = gboard.top().index;
+        result.data[rank] = database.indexes[gboard.top().index];
         gboard.pop();
         rank--;
     }

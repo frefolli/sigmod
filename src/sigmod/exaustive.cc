@@ -12,12 +12,12 @@ void FilterIndexesByT(const Database& database, uint32_t& start_index, uint32_t&
     // it's guaranteed that the database is ordered by C, T, fields
     // in such "order"
     start_index = SeekHigh(
-        [&database](uint32_t i) { return database.records[i].T; },
+        [&database](uint32_t i) { return database.at(i).T; },
         start_index, end_index, l
     );
 
     end_index = SeekLow(
-        [&database](uint32_t i) { return database.records[i].T; },
+        [&database](uint32_t i) { return database.at(i).T; },
         start_index, end_index, r
     );
 }
@@ -29,8 +29,8 @@ void FilterIndexesByC(const c_map_t& C_map, uint32_t& start_index, uint32_t& end
 
 void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
     for (uint32_t i = start_index; i < end_index; i++) {
-        if (elegible_by_T(query, database.records[i])) {
-            score_t score = distance(query, database.records[i]);
+        if (elegible_by_T(query, database.at(i))) {
+            score_t score = distance(query, database.at(i));
             scoreboard.push(i, score);
         }
     }
@@ -38,12 +38,12 @@ void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard
 
 void ExaustiveSearch(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
     for (uint32_t i = start_index; i < end_index; i++) {
-        score_t score = distance(query, database.records[i]);
+        score_t score = distance(query, database.at(i));
         scoreboard.push(i, score);
     }
 }
 
-void SearchExaustive(const Database& database, const c_map_t& C_map, Result& result, const Query& query) {
+void SearchExaustive(const Database& database, Result& result, const Query& query) {
     // maximum distance in the front
     Scoreboard scoreboard;
 
@@ -58,7 +58,7 @@ void SearchExaustive(const Database& database, const c_map_t& C_map, Result& res
 
     switch(query_type) {
         case BY_T: {
-            for (auto C_it : C_map) {
+            for (auto C_it : database.C_map) {
                 start_index = C_it.second.first;
                 end_index = C_it.second.second + 1;
                 FilterIndexesByT(database, start_index, end_index, query.l, query.r);
@@ -67,12 +67,12 @@ void SearchExaustive(const Database& database, const c_map_t& C_map, Result& res
             break;
         }; 
         case BY_C: {
-            FilterIndexesByC(C_map, start_index, end_index, query.v);
+            FilterIndexesByC(database.C_map, start_index, end_index, query.v);
             ExaustiveSearch(database, query, scoreboard, start_index, end_index);
             break;
         }; 
         case BY_C_AND_T: {
-            FilterIndexesByC(C_map, start_index, end_index, query.v);
+            FilterIndexesByC(database.C_map, start_index, end_index, query.v);
             FilterIndexesByT(database, start_index, end_index, query.l, query.r);
             ExaustiveSearchByT(database, query, scoreboard, start_index, end_index);
             break;
@@ -86,7 +86,7 @@ void SearchExaustive(const Database& database, const c_map_t& C_map, Result& res
     assert (scoreboard.full());
     uint32_t rank = scoreboard.size() - 1;
     while(!scoreboard.empty()) {
-        result.data[rank] = scoreboard.top().index;
+        result.data[rank] = database.indexes[scoreboard.top().index];
         scoreboard.pop();
         rank -= 1;
     }

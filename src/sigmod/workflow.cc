@@ -11,7 +11,6 @@
 #include <sigmod/debug.hh>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
-                                      const c_map_t& C_map,
                                       const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
@@ -22,14 +21,13 @@ Solution SolveForQueriesWithExaustive(const Database& database,
         if (i >= TOT_ELEMENTS)
             break;
         #endif
-        SearchExaustive(database, C_map, solution.results[i], query_set.queries[i]);
+        SearchExaustive(database, solution.results[i], query_set.queries[i]);
     }
     return solution;
 }
 
 Solution SolveForQueriesWithKDForest(const Database& database,
                                      const KDForest& forest,
-                                     const c_map_t& C_map,
                                      const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
@@ -40,14 +38,13 @@ Solution SolveForQueriesWithKDForest(const Database& database,
         if (i >= TOT_ELEMENTS)
             break;
         #endif
-        SearchKDForest(forest, database, C_map, solution.results[i], query_set.queries[i]);
+        SearchKDForest(forest, database, solution.results[i], query_set.queries[i]);
     }
     return solution;
 }
 
 Solution SolveForQueriesWithBallForest(const Database& database,
                                        const BallForest& forest,
-                                       const c_map_t& C_map,
                                        const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
@@ -58,7 +55,7 @@ Solution SolveForQueriesWithBallForest(const Database& database,
         if (i >= TOT_ELEMENTS)
             break;
         #endif
-        SearchBallForest(forest, database, C_map, solution.results[i], query_set.queries[i]);
+        SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
     }
     return solution;
 }
@@ -71,34 +68,33 @@ void Workflow(const std::string database_path,
     QuerySet query_set = ReadQuerySet(query_set_path);
     LogTime("Read query_set, length = " + std::to_string(query_set.length));
 
-    c_map_t C_map;
-    IndexDatabase(database, C_map);
+    IndexDatabase(database);
     LogTime("Indexes Database");
 
     /* Initialization */
     #ifdef ENABLE_BALL_FOREST
-    BallForest ball_forest = BuildBallForest(database, C_map);
+    BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
     #endif
 
     #ifdef ENABLE_KD_FOREST
-    KDForest kd_forest = BuildKDForest(database, C_map);
+    KDForest kd_forest = BuildKDForest(database);
     LogTime("Built KD Forest");
     #endif
 
     /* Usage */
     #ifdef ENABLE_BALL_FOREST
-    Solution ball_forest_solution = SolveForQueriesWithBallForest(database, ball_forest, C_map, query_set);
+    Solution ball_forest_solution = SolveForQueriesWithBallForest(database, ball_forest, query_set);
     LogTime("Used Ball Forest");
     #endif
 
     #ifdef ENABLE_KD_FOREST
-    Solution kd_forest_solution = SolveForQueriesWithKDForest(database, kd_forest, C_map, query_set);
+    Solution kd_forest_solution = SolveForQueriesWithKDForest(database, kd_forest, query_set);
     LogTime("Used KD Forest");
     #endif
 
     #ifdef ENABLE_EXAUSTIVE
-    Solution exaustive_solution = SolveForQueriesWithExaustive(database, C_map, query_set);
+    Solution exaustive_solution = SolveForQueriesWithExaustive(database, query_set);
     LogTime("Used Exaustive");
     #endif
 

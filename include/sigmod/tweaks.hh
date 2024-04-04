@@ -4,7 +4,7 @@
 #include <sigmod/config.hh>
 
 /* Ball Tree EPSILON (amplification of radius consideration) */
-#define EPSILON 1
+#define EPSILON 0.5
 
 /* Ball Tree leaf max size */
 #define GAMMA k_nearest_neighbors

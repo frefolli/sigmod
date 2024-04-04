@@ -8,13 +8,19 @@
 struct Database {
     uint32_t length;
     Record* records;
+    c_map_t C_map;
+    uint32_t* indexes;
+
+    // indirection of indexes[index]
+    inline const Record& at(uint32_t index) const {
+      return records[indexes[index]];
+    };
 };
 
 Database ReadDatabase(std::string input_path);
 void FreeDatabase(Database& database);
 void StatsDatabase(Database& database);
 
-void IndexDatabase(Database& database,
-                   c_map_t& C_map);
+void IndexDatabase(Database& database);
 
 #endif

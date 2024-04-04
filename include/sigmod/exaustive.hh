@@ -16,6 +16,6 @@ void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard
 
 void ExaustiveSearch(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index);
 
-void SearchExaustive(const Database& database, const c_map_t& C_map, Result& result, const Query& query);
+void SearchExaustive(const Database& database, Result& result, const Query& query);
 
 #endif

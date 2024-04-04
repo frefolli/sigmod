@@ -5,7 +5,6 @@
 #include <sigmod/record.hh>
 #include <sigmod/query.hh>
 #include <vector>
-#include <iostream>
 
 template <typename WFA, typename WFB>
 inline score_t distance(const WFA& query, const WFB& record) {
