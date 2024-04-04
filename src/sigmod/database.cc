@@ -46,7 +46,7 @@ bool operator<(const Record& a, const Record& b) {
         return (a.C < b.C);
     if (a.T != b.T)
         return (a.T < b.T);
-    for (uint32_t i = 0; i < vector_num_dimension; i++) {
+    for (uint32_t i = 0; i < actual_vector_size; i++) {
         if (a.fields[i] != b.fields[i])
             return (a.fields[i] < b.fields[i]);
     }
@@ -90,7 +90,7 @@ void StatsDatabase(const Database& database) {
         database.length, "record.T"
     ) << std::endl;
 
-    for (uint32_t j = 0; j < vector_num_dimension; j++) {
+    for (uint32_t j = 0; j < actual_vector_size; j++) {
         std::cout << ScalarEntry::forArrayCellField(
             [&database, &j](uint32_t i) { return database.at(i).fields[j]; },
             database.length, "record.field#" + std::to_string(j)

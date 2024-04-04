@@ -49,7 +49,7 @@ uint32_t MaximizeSpread(const Database& database, uint32_t* indexes, const uint3
   float32_t best_min = cur_min;
   float32_t best_max = cur_max;
 
-  for (uint32_t dim = 1; dim < vector_num_dimension; dim++) {
+  for (uint32_t dim = 1; dim < actual_vector_size; dim++) {
     cur_min = database.at(start).fields[dim];
     cur_max = database.at(start).fields[dim];
     for (uint32_t i = start + 1; i <= end; i++) {
@@ -87,12 +87,12 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
     
     if (median-1 != end && start <= median-1 && median-1 <= database.length) {
         #ifdef KD_FOREST_DIMENSION_RANDOMIZE
-        const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+        const uint32_t next_dim = RandomUINT32T(0, actual_vector_size);
         #else
           #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
           const uint32_t next_dim = MaximizeSpread(database, indexes, start, median - 1);
           #else
-          const uint32_t next_dim = (dim + 1) % vector_num_dimension;
+          const uint32_t next_dim = (dim + 1) % actual_vector_size;
           #endif
         #endif
         node->left = BuildKDNode(database, indexes, start, median-1, next_dim);
@@ -101,12 +101,12 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
     }
     if (median + 1 != start && median + 1 <= end && end <= database.length) {
         #ifdef KD_FOREST_DIMENSION_RANDOMIZE
-        const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+        const uint32_t next_dim = RandomUINT32T(0, actual_vector_size);
         #else
           #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
           const uint32_t next_dim = MaximizeSpread(database, indexes, median + 1, end);
           #else
-          const uint32_t next_dim = (dim + 1) % vector_num_dimension;
+          const uint32_t next_dim = (dim + 1) % actual_vector_size;
           #endif
         #endif
         node->right = BuildKDNode(database, indexes, median + 1, end, next_dim);
@@ -118,7 +118,7 @@ KDNode* BuildKDNode(const Database& database, uint32_t* indexes, const uint32_t 
 
 KDTree BuildKDTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end, const uint32_t first_dim) {
     #ifdef KD_FOREST_DIMENSION_RANDOMIZE
-    const uint32_t next_dim = RandomUINT32T(0, vector_num_dimension);
+    const uint32_t next_dim = RandomUINT32T(0, actual_vector_size);
     #else
       #ifdef KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
       const uint32_t next_dim = MaximizeSpread(database, indexes, start, end);

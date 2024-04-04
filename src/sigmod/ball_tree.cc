@@ -70,11 +70,11 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
         node->start = start;
         node->end = end;
         const uint32_t length = end - start;
-        for (uint32_t i = 0; i < vector_num_dimension; i++) {
+        for (uint32_t i = 0; i < actual_vector_size; i++) {
             node->center.fields[i] = database.at(indexes[start]).fields[i] / length;
         }
         for (uint32_t j = start + 1; j < end; j++) {
-            for (uint32_t i = 0; i < vector_num_dimension; i++) {
+            for (uint32_t i = 0; i < actual_vector_size; i++) {
                 node->center.fields[i] += database.at(indexes[j]).fields[i] / length;
             }
         }
@@ -127,7 +127,7 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
     
     // const float32_t alpha = (node->left->end - node->left->start) / (node->end - node->start);
     // const float32_t beta = (node->right->end - node->right->start) / (node->end - node->start);
-    for (uint32_t i = 0; i < vector_num_dimension; i++) {
+    for (uint32_t i = 0; i < actual_vector_size; i++) {
         node->center.fields[i] = (node->left->center.fields[i] + node->right->center.fields[i]) / 2;
         // node->center.fields[i] = alpha * node->left->center.fields[i] + beta * node->right->center.fields[i];
     }
