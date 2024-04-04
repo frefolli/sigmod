@@ -30,12 +30,12 @@ ComponentResults* MallocComponentResults(const uint32_t n_principal_components, 
  * 
  * @param si 
  * @param iterations n iterations that algorithm compute
- * @param tollerance threashold 
+ * @param threshold threshold 
  * @return a ComponentResults with the first most important eigenvalue and its 
  *  associated unit vector r of covariance matrix
  */
 
-ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations, float32_t tollerance) {
+ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations, float32_t threshold) {
     float32_t* r = MallocVector(vector_num_dimension);
     NormalizeVector(r, r, vector_num_dimension);
     float32_t* s;
@@ -68,7 +68,7 @@ ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations, f
         FreeVector(temp_vector);
         FreeVector(s);
 
-        if (abs(ComputeVectorNorm2(temp_vector)) < tollerance) {
+        if (abs(ComputeVectorNorm2(temp_vector, vector_num_dimension)) < threshold) {
             break;
         }
     }

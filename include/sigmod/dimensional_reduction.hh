@@ -10,7 +10,9 @@ struct ComponentResults{
 
 ComponentResults* MallocComponentResults(const uint32_t n_principal_components, 
     const uint32_t dimension);
-ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations);
-ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations, float32_t tollerance);
+ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations, float32_t threshold);
 void FreeComponentResults(ComponentResults* cr);
+
+
+
 #endif

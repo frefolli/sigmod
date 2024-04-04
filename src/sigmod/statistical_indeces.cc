@@ -8,7 +8,7 @@ StatisticalIndeces* MallocStatisticalIndeces(Database& database,
     si->db = &database;
     si->mean = (float32_t*) std::malloc(sizeof(float32_t) * vector_num_dimension);
     si->var = (float32_t*) std::malloc(sizeof(float32_t) * vector_num_dimension);
-    si->covarianceMatrix = (float32_t*) std::malloc(sizeof(float32_t) * vector_num_dimension + 1);
+    return si;
 }
 
 void InitializeStatisticalIndeces(StatisticalIndeces& si) {
@@ -64,7 +64,4 @@ void FreeStatisticalIndeces(StatisticalIndeces& si) {
         std::free(si.var);
     }
 
-    if (si.covarianceMatrix != nullptr) {
-        std::free(si.covarianceMatrix);
-    }
 }
