@@ -3,6 +3,7 @@
 #include <sigmod/tweaks.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/scoreboard.hh>
+#include <sigmod/random.hh>
 #include <algorithm>
 #include <cassert>
 
@@ -41,10 +42,10 @@ bool IsLeaf(const VPNode* node) {
     return (node->left == nullptr && node->right == nullptr);
 }
 
-VPNode* BuildVPNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
+VPNode* BuildVPNode(const Database& database, uint32_t* indexes, score_t* distances, const uint32_t start, const uint32_t end) {
     assert(start < end && end <= database.length);
 
-    if (end - start <= GAMMA) {
+    if (end - start <= VP_NODE_SIZE) {
         VPNode* node = (VPNode*) malloc (sizeof(VPNode));
         node->start = start;
         node->end = end;
@@ -55,10 +56,14 @@ VPNode* BuildVPNode(const Database& database, uint32_t* indexes, const uint32_t 
         return node;
     }
 
+    // std::swap(indexes[RandomUINT32T(start, end)], indexes[start]);
     const uint32_t center = start;
-    // skip center ....
-    std::sort(indexes + start + 1, indexes + end, [&database, &indexes, &center](const uint32_t a, const uint32_t b) {
-        return distance(database.at(indexes[center]), database.at(a)) < distance(database.at(indexes[center]), database.at(b));
+    for (uint32_t i = start + 1; i < end; i++) {
+        distances[i] = distance(database.at(indexes[center]), database.at(indexes[i]));
+    }
+
+    std::sort(indexes + start + 1, indexes + end, [&distances](const uint32_t a, const uint32_t b) {
+        return distances[a] < distances[b];
     });
 
     const uint32_t middle = (start + end) / 2;
@@ -69,16 +74,16 @@ VPNode* BuildVPNode(const Database& database, uint32_t* indexes, const uint32_t 
     node->start = start;
     node->end = end;
     node->center = center;
-    node->radius = distance(database.at(indexes[center]), database.at(indexes[middle]));
+    node->radius = distances[middle];
 
-    node->left = BuildVPNode(database, indexes, start, next_end);
-    node->right = BuildVPNode(database, indexes, next_start, end);
+    node->left = BuildVPNode(database, indexes, distances, start, next_end);
+    node->right = BuildVPNode(database, indexes, distances, next_start, end);
 
     assert(node->left != nullptr && node->right != nullptr);
     return node;
 }
 
-VPTree BuildVPTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
+VPTree BuildVPTree(const Database& database, uint32_t* indexes, score_t* distances, const uint32_t start, const uint32_t end) {
     if (start >= end || end > database.length)
         return {
             .root = nullptr,
@@ -86,7 +91,7 @@ VPTree BuildVPTree(const Database& database, uint32_t* indexes, const uint32_t s
         };
 
     return {
-        .root = BuildVPNode(database, indexes, start, end),
+        .root = BuildVPNode(database, indexes, distances, start, end),
         .indexes = indexes
     };
 }
@@ -97,10 +102,14 @@ VPForest BuildVPForest(const Database& database) {
         indexes[i] = i;
     }
 
+    score_t* distances = (score_t*) malloc (sizeof(score_t) * database.length);
+
     std::map<uint32_t, VPTree> trees;
     for (auto cat : database.C_map) {
-        trees[cat.first] = BuildVPTree(database, indexes, cat.second.first, cat.second.second + 1);
+        trees[cat.first] = BuildVPTree(database, indexes, distances, cat.second.first, cat.second.second + 1);
     }
+
+    free(distances);
 
     return {
         .indexes = indexes,
@@ -123,12 +132,14 @@ void SearchVPNode(const Database& database, const Query& query,
         scoreboard.push(center, distance_query_center);
 
         if (distance_query_center < node->radius) {
-            SearchVPNode(database, query, scoreboard, tree, node->left);
-            if (scoreboard.empty() || (node->radius * EPSILON) - distance_query_center < scoreboard.top().score)
+            if (scoreboard.empty() || distance_query_center - (node->radius * VP_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
+                SearchVPNode(database, query, scoreboard, tree, node->left);
+            if (scoreboard.empty() || (node->radius * VP_RADIUS_AMPLIFICATION) - distance_query_center <= scoreboard.top().score)
                 SearchVPNode(database, query, scoreboard, tree, node->right);
         } else {
-            SearchVPNode(database, query, scoreboard, tree, node->right);
-            if (scoreboard.empty() || distance_query_center - (node->radius * EPSILON) < scoreboard.top().score)
+            if (scoreboard.empty() || (node->radius * VP_RADIUS_AMPLIFICATION) - distance_query_center <= scoreboard.top().score)
+                SearchVPNode(database, query, scoreboard, tree, node->right);
+            if (scoreboard.empty() || distance_query_center - (node->radius * VP_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
                 SearchVPNode(database, query, scoreboard, tree, node->left);
         }
     }

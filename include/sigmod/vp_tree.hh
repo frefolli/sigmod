@@ -29,8 +29,8 @@ void FreeVPNode(VPNode* node);
 void FreeVPTree(VPTree& tree);
 void FreeVPForest(VPForest& forest);
 
-VPNode* BuildVPNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end);
-VPTree BuildVPTree(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end);
+VPNode* BuildVPNode(const Database& database, uint32_t* indexes, score_t* distances, const uint32_t start, const uint32_t end);
+VPTree BuildVPTree(const Database& database, uint32_t* indexes, score_t* distances, const uint32_t start, const uint32_t end);
 VPForest BuildVPForest(const Database& database);
 
 void SearchVPNode(const Database& database, const Query& query,
