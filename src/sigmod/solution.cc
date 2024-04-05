@@ -44,15 +44,15 @@ score_t CompareSolutions(const Database& database, const QuerySet& query_set, co
             if (expected.results[i].data[j] == got.results[i].data[j]) {
                 recall++;
             } else {
-                /*
+                #ifdef SHOW_MISMATCH_IN_COMPARISON
                 const uint32_t a = expected.results[i].data[j];
                 const uint32_t b = got.results[i].data[j];
                 const Query& query = query_set.queries[i];
                 std::cout << "Solution conflit! with i = " << i << ", j = " << j << "; "
-                          << distance(query, database.records[a]) << " vs " << distance(query, database.records[b]) << "; "
+                          << distance(query, database.records[a])) << " vs " << distance(query, database.records[b])) << "; "
                           << a << " vs " << b << "; "
                           << std::endl;
-                */
+                #endif
             }
         }
     }

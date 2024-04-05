@@ -166,12 +166,12 @@ void SearchKDNode(const Database& database, const Query& query,
         if (delta > 0) {
             if (node->right != nullptr)
                 SearchKDNode(database, query, scoreboard, tree, node->right);
-            if (node->left != nullptr && delta * delta < scoreboard.top().score)
+            if (node->left != nullptr && (scoreboard.empty() || delta * delta < scoreboard.top().score))
                 SearchKDNode(database, query, scoreboard, tree, node->left);
         } else {
             if (node->left != nullptr)
                 SearchKDNode(database, query, scoreboard, tree, node->left);
-            if (node->right != nullptr && delta * delta < scoreboard.top().score)
+            if (node->right != nullptr && (scoreboard.empty() || delta * delta < scoreboard.top().score))
                 SearchKDNode(database, query, scoreboard, tree, node->right);
         }
     }
