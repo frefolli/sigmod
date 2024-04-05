@@ -66,9 +66,7 @@ VPNode* BuildVPNode(const Database& database, uint32_t* indexes, score_t* distan
         return distances[a] < distances[b];
     });
 
-    const uint32_t middle = (start + end) / 2;
-    const uint32_t next_start = middle;
-    const uint32_t next_end = middle;
+    const uint32_t middle = (start + 1 + end) / 2;
 
     VPNode* node = (VPNode*) malloc (sizeof(VPNode));
     node->start = start;
@@ -76,8 +74,8 @@ VPNode* BuildVPNode(const Database& database, uint32_t* indexes, score_t* distan
     node->center = center;
     node->radius = distances[middle];
 
-    node->left = BuildVPNode(database, indexes, distances, start, next_end);
-    node->right = BuildVPNode(database, indexes, distances, next_start, end);
+    node->left = BuildVPNode(database, indexes, distances, start + 1, middle);
+    node->right = BuildVPNode(database, indexes, distances, middle, end);
 
     assert(node->left != nullptr && node->right != nullptr);
     return node;
@@ -123,23 +121,31 @@ void SearchVPNode(const Database& database, const Query& query,
     if (IsLeaf(node)) {
         for (uint32_t i = node->start; i < node->end; i++) {
             const uint32_t p = tree.indexes[i];
+            #ifndef DISATTEND_CHECKS
+              if (!check_if_elegible_by_T(query, database.at(p)))
+                continue;
+            #endif
             const score_t distance_query_p = distance(query, database.at(p));
             scoreboard.push(p, distance_query_p);
         }
     } else {
         const uint32_t center = tree.indexes[node->center];
         const score_t distance_query_center = distance(query, database.at(center));
+
+        #ifndef DISATTEND_CHECKS
+          if (!check_if_elegible_by_T(query, database.at(center)))
+        #endif
         scoreboard.push(center, distance_query_center);
 
         if (distance_query_center < node->radius) {
-            if (scoreboard.empty() || distance_query_center - (node->radius * VP_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
+            if (scoreboard.empty() || distance_query_center - scoreboard.top().score <= node->radius)
                 SearchVPNode(database, query, scoreboard, tree, node->left);
-            if (scoreboard.empty() || (node->radius * VP_RADIUS_AMPLIFICATION) - distance_query_center <= scoreboard.top().score)
+            // if (scoreboard.empty() || distance_query_center + scoreboard.top().score >= node->radius)
                 SearchVPNode(database, query, scoreboard, tree, node->right);
         } else {
-            if (scoreboard.empty() || (node->radius * VP_RADIUS_AMPLIFICATION) - distance_query_center <= scoreboard.top().score)
+            if (scoreboard.empty() || distance_query_center + scoreboard.top().score >= node->radius)
                 SearchVPNode(database, query, scoreboard, tree, node->right);
-            if (scoreboard.empty() || distance_query_center - (node->radius * VP_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
+            // if (scoreboard.empty() || distance_query_center - scoreboard.top().score <= node->radius)
                 SearchVPNode(database, query, scoreboard, tree, node->left);
         }
     }

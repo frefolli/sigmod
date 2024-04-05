@@ -157,7 +157,11 @@ void SearchKDNode(const Database& database, const Query& query,
     const score_t score = distance(query, database.at(index));
     const float32_t delta = query.fields[node->dim] - node->value;
 
-    scoreboard.push(index, score);
+    #ifndef DISATTEND_CHECKS
+      if (check_if_elegible_by_T(query, database.at(index)))
+    #endif
+      scoreboard.push(index, score);
+
     if (!IsLeaf(node)) {
         if (delta > 0) {
             if (node->right != nullptr)

@@ -174,6 +174,10 @@ void SearchBallNode(const Database& database, const Query& query,
     if (IsLeaf(node)) {
         for (uint32_t i = node->start; i < node->end; i++) {
             const uint32_t p = tree.indexes[i];
+            #ifndef DISATTEND_CHECKS
+              if (!check_if_elegible_by_T(query, database.at(p)))
+                continue;
+            #endif
             const score_t distance_query_p = distance(query, database.at(p));
             scoreboard.push(p, distance_query_p);
         }

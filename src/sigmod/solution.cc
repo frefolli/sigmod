@@ -44,6 +44,7 @@ score_t CompareSolutions(const Database& database, const QuerySet& query_set, co
             if (expected.results[i].data[j] == got.results[i].data[j]) {
                 recall++;
             } else {
+                /*
                 const uint32_t a = expected.results[i].data[j];
                 const uint32_t b = got.results[i].data[j];
                 const Query& query = query_set.queries[i];
@@ -51,6 +52,7 @@ score_t CompareSolutions(const Database& database, const QuerySet& query_set, co
                           << distance(query, database.records[a]) << " vs " << distance(query, database.records[b]) << "; "
                           << a << " vs " << b << "; "
                           << std::endl;
+                */
             }
         }
     }

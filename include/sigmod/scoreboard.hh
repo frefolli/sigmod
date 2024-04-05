@@ -16,6 +16,16 @@ inline score_t distance(const WFA& query, const WFB& record) {
     return sum;
 }
 
+inline bool check_if_elegible_by_T(const Query& query, const Record& record) {
+    if (query.query_type == BY_C || query.query_type == NORMAL)
+      return true;
+    return (query.l <= record.T && query.r >= record.T );
+}
+
+inline bool elegible_by_T(const Query& query, const Record& record) {
+    return (query.l <= record.T && query.r >= record.T );
+}
+
 struct Candidate {
     uint32_t index;
     score_t score;
