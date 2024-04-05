@@ -2,6 +2,9 @@ from typing import Generator, Iterable
 import re, os, sys
 import yaml
 
+def join_paths(*paths):
+    return os.path.normcase(os.path.join(*paths)).replace("\\", "/")
+
 class SourceGraph:
   def __init__(self, include_dirs: list[str], source_dirs: list[str], links: list[str], options: list[str], builddir: str, runs: dict[str, str]):
     self.load_files(include_dirs, source_dirs)
@@ -20,9 +23,9 @@ class SourceGraph:
 
   def get_all_files(self, dir: str) -> Generator[str, None, None]:
     for entry in os.listdir(dir):
-      path = os.path.join(dir, entry)
+      path = join_paths(dir, entry)
       if os.path.isfile(path):
-        yield os.path.normcase(path)
+        yield path
       elif os.path.isdir(path):
         for _ in self.get_all_files(path):
           yield _
@@ -43,11 +46,11 @@ class SourceGraph:
         if candidate in self.includes:
             yield candidate
         for dir in self.include_dirs:
-            candidate = os.path.normcase(os.path.join(dir, gdep))
+            candidate = join_paths(dir, gdep)
             if candidate in self.includes:
                 yield candidate
       for ldep in re.findall('#include\\s*"([a-zA-Z_./]+)"', text):
-        candidate = os.path.normcase(os.path.join(local_dir, ldep))
+        candidate = join_paths(local_dir, ldep)
         if candidate in self.includes:
             yield candidate
     
@@ -105,11 +108,11 @@ class SourceGraph:
   def assemble(self, builddir: str):
     self.builddir = builddir
     objects = []
-    executable = os.path.normcase(os.path.join(self.builddir, "main.exe"))
+    executable = join_paths(self.builddir, "main.exe")
     self.executable = executable
     self.default_hook(executable)
     for source in self.sources:
-      object = os.path.normcase(os.path.join(builddir, source.replace(".cc", ".o").replace(".cpp", ".o")))
+      object = join_paths(builddir, source.replace(".cc", ".o").replace(".cpp", ".o"))
       objects.append(object)
       dependencies = list(self.dependencies[source])
       self.add_object_rule(source, object, dependencies)
