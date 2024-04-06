@@ -34,6 +34,8 @@ uint32_t SeekLow(const Accessor accessor,
             l = m + 1;
             m = (l + r) / 2;
         } else {
+            while(m < end - 1 && accessor(m + 1) == value)
+              m++;
             return m;
         }
     }
@@ -59,6 +61,8 @@ uint32_t SeekHigh(const Accessor accessor,
             l = m + 1;
             m = (l + r) / 2;
         } else {
+            while(m > start && accessor(m - 1) == value)
+              m--;
             return m;
         }
     }

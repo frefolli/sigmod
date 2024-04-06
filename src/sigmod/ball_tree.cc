@@ -65,16 +65,16 @@ inline bool is_leftist(const Database& database, const uint32_t* indexes, const 
 BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
     assert(start < end && end <= database.length);
 
-    if (end - start <= GAMMA) {
+    if (end - start <= BALL_NODE_SIZE) {
         BallNode* node = (BallNode*) malloc (sizeof(BallNode));
         node->start = start;
         node->end = end;
         const uint32_t length = end - start;
-        for (uint32_t i = 0; i < vector_num_dimension; i++) {
+        for (uint32_t i = 0; i < actual_vector_size; i++) {
             node->center.fields[i] = database.at(indexes[start]).fields[i] / length;
         }
         for (uint32_t j = start + 1; j < end; j++) {
-            for (uint32_t i = 0; i < vector_num_dimension; i++) {
+            for (uint32_t i = 0; i < actual_vector_size; i++) {
                 node->center.fields[i] += database.at(indexes[j]).fields[i] / length;
             }
         }
@@ -127,7 +127,7 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
     
     // const float32_t alpha = (node->left->end - node->left->start) / (node->end - node->start);
     // const float32_t beta = (node->right->end - node->right->start) / (node->end - node->start);
-    for (uint32_t i = 0; i < vector_num_dimension; i++) {
+    for (uint32_t i = 0; i < actual_vector_size; i++) {
         node->center.fields[i] = (node->left->center.fields[i] + node->right->center.fields[i]) / 2;
         // node->center.fields[i] = alpha * node->left->center.fields[i] + beta * node->right->center.fields[i];
     }
@@ -174,6 +174,10 @@ void SearchBallNode(const Database& database, const Query& query,
     if (IsLeaf(node)) {
         for (uint32_t i = node->start; i < node->end; i++) {
             const uint32_t p = tree.indexes[i];
+            #ifndef DISATTEND_CHECKS
+              if (!check_if_elegible_by_T(query, database.at(p)))
+                continue;
+            #endif
             const score_t distance_query_p = distance(query, database.at(p));
             scoreboard.push(p, distance_query_p);
         }
@@ -182,14 +186,14 @@ void SearchBallNode(const Database& database, const Query& query,
         const score_t distance_query_right = distance(query, node->right->center);
 
         if (distance_query_left < distance_query_right) {
-            if (scoreboard.empty() || distance_query_left - (node->left->radius * EPSILON) < scoreboard.top().score)
+            if (scoreboard.empty() || distance_query_left - (node->left->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
                 SearchBallNode(database, query, scoreboard, tree, node->left, distance_query_left);
-            if (scoreboard.empty() || distance_query_right - (node->right->radius * EPSILON) < scoreboard.top().score)
+            if (scoreboard.empty() || distance_query_right - (node->right->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
                 SearchBallNode(database, query, scoreboard, tree, node->right, distance_query_right);
         } else {
-            if (scoreboard.empty() || distance_query_right - (node->right->radius * EPSILON) < scoreboard.top().score)
+            if (scoreboard.empty() || distance_query_right - (node->right->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
                 SearchBallNode(database, query, scoreboard, tree, node->right, distance_query_right);
-            if (scoreboard.empty() || distance_query_left - (node->left->radius * EPSILON) < scoreboard.top().score)
+            if (scoreboard.empty() || distance_query_left - (node->left->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
                 SearchBallNode(database, query, scoreboard, tree, node->left, distance_query_left);
         }
     }
@@ -197,7 +201,7 @@ void SearchBallNode(const Database& database, const Query& query,
 
 void SearchBallTree(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree) {
     const score_t distance_query_root = distance(query, tree.root->center);
-    if (scoreboard.empty() || distance_query_root - (tree.root->radius * EPSILON) < scoreboard.top().score)
+    if (scoreboard.empty() || distance_query_root - (tree.root->radius * BALL_RADIUS_AMPLIFICATION) < scoreboard.top().score)
         SearchBallNode(database, query, scoreboard, tree, tree.root, distance_query_root);
 }
 

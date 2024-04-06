@@ -3,10 +3,10 @@
 
 #include <sigmod/config.hh>
 
-/* Ball Tree EPSILON (amplification of radius consideration) */
-#define EPSILON 0.7
+#define BALL_RADIUS_AMPLIFICATION 1
+#define BALL_NODE_SIZE k_nearest_neighbors
 
-/* Ball Tree leaf max size */
-#define GAMMA k_nearest_neighbors
+#define VP_RADIUS_AMPLIFICATION 1
+#define VP_NODE_SIZE k_nearest_neighbors
 
 #endif

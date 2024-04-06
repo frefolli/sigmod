@@ -4,10 +4,6 @@
 #include <sigmod/debug.hh>
 #include <cassert>
 
-bool elegible_by_T(const Query& query, const Record& record) {
-    return (query.l <= record.T && query.r >= record.T );
-}
-
 void FilterIndexesByT(const Database& database, uint32_t& start_index, uint32_t& end_index, const float32_t l, const float32_t r) {
     // it's guaranteed that the database is ordered by C, T, fields
     // in such "order"
@@ -19,7 +15,7 @@ void FilterIndexesByT(const Database& database, uint32_t& start_index, uint32_t&
     end_index = SeekLow(
         [&database](uint32_t i) { return database.at(i).T; },
         start_index, end_index, r
-    );
+    ) + 1;
 }
 
 void FilterIndexesByC(const c_map_t& C_map, uint32_t& start_index, uint32_t& end_index, const float32_t v) {
