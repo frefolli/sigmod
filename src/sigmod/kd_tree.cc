@@ -162,18 +162,16 @@ void SearchKDNode(const Database& database, const Query& query,
     #endif
       scoreboard.push(index, score);
 
-    if (!IsLeaf(node)) {
-        if (delta > 0) {
-            if (node->right != nullptr)
-                SearchKDNode(database, query, scoreboard, tree, node->right);
-            if (node->left != nullptr && (scoreboard.empty() || delta * delta < scoreboard.top().score))
-                SearchKDNode(database, query, scoreboard, tree, node->left);
-        } else {
-            if (node->left != nullptr)
-                SearchKDNode(database, query, scoreboard, tree, node->left);
-            if (node->right != nullptr && (scoreboard.empty() || delta * delta < scoreboard.top().score))
-                SearchKDNode(database, query, scoreboard, tree, node->right);
-        }
+    if (delta > 0) {
+        if (node->right != nullptr)
+            SearchKDNode(database, query, scoreboard, tree, node->right);
+        if (node->left != nullptr && (scoreboard.empty() || delta * delta < scoreboard.top().score))
+            SearchKDNode(database, query, scoreboard, tree, node->left);
+    } else {
+        if (node->left != nullptr)
+            SearchKDNode(database, query, scoreboard, tree, node->left);
+        if (node->right != nullptr && (scoreboard.empty() || delta * delta < scoreboard.top().score))
+            SearchKDNode(database, query, scoreboard, tree, node->right);
     }
 }
 
@@ -200,7 +198,11 @@ void SearchKDForest(const KDForest& forest, const Database& database, Result& re
 
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
+        #ifdef FAST_INDEX
+        result.data[rank] = gboard.top().index;
+        #else
         result.data[rank] = database.indexes[gboard.top().index];
+        #endif
         gboard.pop();
         rank--;
     }

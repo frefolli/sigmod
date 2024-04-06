@@ -8,8 +8,8 @@
 // #define DISATTEND_CHECKS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-// #define TOT_ELEMENTS 1000
-// #define STOP_AFTER_TOT_ELEMENTS
+#define TOT_ELEMENTS 1000
+#define STOP_AFTER_TOT_ELEMENTS
 
 /* Build a KD Forest and uses it to craft a solution */
 // #define ENABLE_KD_FOREST
@@ -21,7 +21,7 @@
 // #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
 
 /* Build a Ball Forest and uses it to craft a solution */
-// #define ENABLE_BALL_FOREST
+#define ENABLE_BALL_FOREST
 
 /* Build a VP Forest and uses it to craft a solution */
 // #define ENABLE_VP_FOREST
@@ -34,5 +34,11 @@
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
+
+/* Enables thread pools */
+#define CONCURRENCY
+
+/* Enables Fast Index */
+#define FAST_INDEX
 
 #endif

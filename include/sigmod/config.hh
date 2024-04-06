@@ -14,7 +14,4 @@ const uint32_t vector_num_dimension = 100;
 /* This is eql to vector_num_dimension at startup */
 extern uint32_t actual_vector_size;
 
-/* Used while reading/writing things from/to files */
-const uint32_t batch_size = 10000;
-
 #endif
