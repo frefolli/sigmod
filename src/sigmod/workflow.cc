@@ -56,11 +56,7 @@ Solution SolveForQueriesWithBallForest(const Database& database,
         if (i >= TOT_ELEMENTS)
             break;
         #endif
-        // if (query_set.queries[i].query_type == BY_T || query_set.queries[i].query_type == BY_C_AND_T) {
-            // SearchExaustive(database, solution.results[i], query_set.queries[i]);
-        // } else {
-            SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
-        //}
+        SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
     }
     return solution;
 }
