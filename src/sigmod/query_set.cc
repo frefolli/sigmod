@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <iostream>
 #include <sigmod/lin_alg.hh>
-#include <random_projection.hh>
+#include <sigmod/random_projection.hh>
 
 QuerySet ReadQuerySet(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -107,7 +107,7 @@ void SetFields(
 
 void ReduceDimensionality(QuerySet& queryset, const float32_t** prj_matrix, const uint32_t final_dimension) {
     float32_t** fields = GetFields(queryset, vector_num_dimension);
-    RamdomProjectionFromGivenProjMatrix(fields, queryset.length, vector_num_dimension, prj_matrix, final_dimension);
+    RamdomProjectionGivenProjMatrix(fields, queryset.length, vector_num_dimension, prj_matrix, final_dimension);
     SetFields(queryset, fields, final_dimension);
     FreeMatrix(fields);
 }

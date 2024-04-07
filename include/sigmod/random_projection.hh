@@ -15,7 +15,7 @@
 
 const float32_t** GenerateProjectionMatrix(
     const uint32_t final_dimension, 
-    const uint32_t n_observation);
+    const uint32_t initial_dimension);
 
 const float32_t** RamdomProjection(
     float32_t** dataset_matrix, 
@@ -23,7 +23,7 @@ const float32_t** RamdomProjection(
     const uint32_t dimension, 
     const uint32_t final_dimension);
 
-void RamdomProjectionFromGivenProjMatrix(
+void RamdomProjectionGivenProjMatrix(
     float32_t** dataset_matrix, 
     const uint32_t n_observation, 
     const uint32_t dimension, 

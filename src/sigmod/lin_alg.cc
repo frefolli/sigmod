@@ -15,7 +15,9 @@ float32_t* MallocVector(const uint32_t dimension, const float32_t initial_value)
 }    
 
 float32_t** MallocMatrix(const uint32_t rows, const uint32_t columns) {
-    float32_t** matrix = (float32_t**) malloc(sizeof(float32_t) * rows * columns);
+    float32_t** matrix = (float32_t **)malloc(rows * sizeof(float32_t*));
+    for(uint32_t i = 0; i < rows; i++)
+        matrix[i] = (float32_t *)malloc(columns * sizeof(float32_t));
     return matrix;
 }    
 

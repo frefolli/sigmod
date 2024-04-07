@@ -21,7 +21,7 @@
  #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
 
 /* Build a Ball Forest and uses it to craft a solution */
- #define ENABLE_BALL_FOREST
+// #define ENABLE_BALL_FOREST
 
 /* Build a VP Forest and uses it to craft a solution */
  #define ENABLE_VP_FOREST
@@ -34,5 +34,11 @@
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
+
+/* Apply dimensional reduction before indexing */
+#define ENABLE_DIM_REDUCTION
+
+/* Number of dimension preserve in during reduction fase */
+#define DIM_REDUCTION 10
 
 #endif

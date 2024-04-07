@@ -128,11 +128,10 @@ void SetFields(
 const float32_t** ReduceDimensionality(
         Database& database, 
         const uint32_t final_dimension) {
-    
     float32_t** fields = GetFields(database, vector_num_dimension);
-    const float32_t** prj_matrix = GenerateProjectionMatrix(final_dimension, database.length);
+    const float32_t** prj_matrix = GenerateProjectionMatrix(final_dimension, vector_num_dimension);
 
-    RamdomProjectionFromGivenProjMatrix(fields, database.length, vector_num_dimension, prj_matrix, final_dimension);
+    RamdomProjectionGivenProjMatrix(fields, (const uint32_t) database.length, (const uint32_t) vector_num_dimension, prj_matrix, (const uint32_t) final_dimension);
 
     SetFields(database, fields, final_dimension);
 

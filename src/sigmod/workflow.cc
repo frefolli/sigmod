@@ -10,6 +10,7 @@
 #include <sigmod/exaustive.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
+#include <sigmod/random_projection.hh>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
                                       const QuerySet& query_set) {
@@ -84,7 +85,18 @@ void Workflow(const std::string database_path,
     Database database = ReadDatabase(database_path);
     LogTime("Read database, length = " + std::to_string(database.length));
     QuerySet query_set = ReadQuerySet(query_set_path);
+    
     LogTime("Read query_set, length = " + std::to_string(query_set.length));
+
+    #ifdef ENABLE_DIM_REDUCTION
+    const float32_t** prj_matrix = ReduceDimensionality(database, DIM_REDUCTION);
+    LogTime("Dimensional reduction database");
+    
+    ReduceDimensionality(query_set, prj_matrix, DIM_REDUCTION);
+
+    FreeProjectionMatrix((float32_t**) prj_matrix);
+    LogTime("Dimensional reduction queryset");
+    #endif
 
     IndexDatabase(database);
     LogTime("Indexes Database");
