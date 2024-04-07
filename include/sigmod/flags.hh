@@ -38,7 +38,7 @@
 /* Apply dimensional reduction before indexing */
 #define ENABLE_DIM_REDUCTION
 
-/* Number of dimension preserve in during reduction fase */
-#define DIM_REDUCTION 10
+/* Dimension to preserve during reduction phase */
+#define N_DIM_REDUCTION 10
 
 #endif

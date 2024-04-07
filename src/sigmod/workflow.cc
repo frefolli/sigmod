@@ -89,10 +89,10 @@ void Workflow(const std::string database_path,
     LogTime("Read query_set, length = " + std::to_string(query_set.length));
 
     #ifdef ENABLE_DIM_REDUCTION
-    const float32_t** prj_matrix = ReduceDimensionality(database, DIM_REDUCTION);
+    const float32_t** prj_matrix = ReduceDimensionality(database, N_DIM_REDUCTION);
     LogTime("Dimensional reduction database");
     
-    ReduceDimensionality(query_set, prj_matrix, DIM_REDUCTION);
+    ReduceDimensionality(query_set, prj_matrix, N_DIM_REDUCTION);
 
     FreeProjectionMatrix((float32_t**) prj_matrix);
     LogTime("Dimensional reduction queryset");

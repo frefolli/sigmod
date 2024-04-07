@@ -4,6 +4,7 @@
 // Theory https://en.wikipedia.org/wiki/Random_projection
 
 #include <sigmod/config.hh>
+#include <sigmod/database.hh>
 
 /**
  * Riduce dimensionality of the dataset by projecting all data from starting 
@@ -23,10 +24,19 @@ const float32_t** RamdomProjection(
     const uint32_t dimension, 
     const uint32_t final_dimension);
 
+const float32_t** RamdomProjectionOnDataset(
+    Database& dataset, 
+    const uint32_t final_dimension);
+
 void RamdomProjectionGivenProjMatrix(
     float32_t** dataset_matrix, 
     const uint32_t n_observation, 
     const uint32_t dimension, 
+    const float32_t** prj_matrix, 
+    const uint32_t final_dimension);
+
+void RamdomProjectionGivenProjMatrixOnDataset(
+    Database& dataset, 
     const float32_t** prj_matrix, 
     const uint32_t final_dimension);
 

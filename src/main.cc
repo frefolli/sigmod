@@ -12,8 +12,8 @@ void assert_file_exists(std::string path, std::string what) {
 
 int main(int argc, char** args) {
     std::srand(std::time(0));
-    std::string database_path = "contest-data-release-1m.bin";
-    std::string query_set_path = "contest-queries-release-1m.bin";
+    std::string database_path = "dummy-data.bin";
+    std::string query_set_path = "dummy-queries.bin";
     std::string output_path = "output.bin";
 
     if (argc > 1) {

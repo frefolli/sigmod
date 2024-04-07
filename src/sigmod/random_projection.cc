@@ -47,6 +47,12 @@ const float32_t** RamdomProjection(
     return prj_matrix;
 }
 
+const float32_t** RamdomProjectionOnDataset(
+    Database& dataset, 
+    const uint32_t final_dimension) {
+    // TODO
+}
+
 void RamdomProjectionGivenProjMatrix(
         float32_t** dataset_matrix, 
         const uint32_t n_observation, 
@@ -60,6 +66,13 @@ void RamdomProjectionGivenProjMatrix(
     FreeProjectionMatrix(dataset_prj);
 }
 
+
+void RamdomProjectionGivenProjMatrixOnDataset(
+    Database& dataset, 
+    const float32_t** prj_matrix, 
+    const uint32_t final_dimension) {
+    // TODO
+}
 
 void FreeProjectionMatrix(float32_t** matrix) {
     FreeMatrix(matrix);
