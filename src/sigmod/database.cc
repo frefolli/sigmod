@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <iostream>
 #include <sigmod/debug.hh>
+#include <sigmod/dimensional_reduction.hh>
+#include <sigmod/lin_alg.hh>
 
 Database ReadDatabase(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -96,4 +98,47 @@ void StatsDatabase(const Database& database) {
             database.length, "record.field#" + std::to_string(j)
         ) << std::endl;
     }
+}
+
+float32_t** GetFields(
+        const Database& database,
+        const uint32_t dimension) {
+    float32_t** fields = MallocMatrix(database.length, dimension);
+    
+    for (uint32_t i = 0; i < database.length; i++) {
+        Record r = database.records[i];
+        fields[i] = r.fields;
+    }    
+
+    return fields;
+}
+
+void SetFields(
+        Database& database,
+        float32_t** fields,
+        const uint32_t n_component) {
+
+    for (uint32_t i = 0; i < database.length; i++) {
+        for (uint32_t j = 0; j < n_component; j++) {
+            database.records[i].fields[j] = fields[i][j];
+        }
+    }    
+}
+
+const float32_t** ReduceDimensionality(
+        Database& database, 
+        const uint32_t final_dimension) {
+    
+    float32_t** fields = GetFields(database, vector_num_dimension);
+    const float32_t** prj_matrix = GenerateProjectionMatrix(final_dimension, database.length);
+
+    RamdomProjectionFromGivenProjMatrix(fields, database.length, vector_num_dimension, prj_matrix, final_dimension);
+
+    SetFields(database, fields, final_dimension);
+
+    FreeMatrix(fields);
+    
+    actual_vector_size = final_dimension;
+
+    return prj_matrix;
 }

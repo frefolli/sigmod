@@ -75,7 +75,7 @@ ComponentResults* pca(const StatisticalIndeces& si, const uint32_t iterations, f
 
     ComponentResults* cr = MallocComponentResults(1, vector_num_dimension);
     cr->eigenvalue[0] = eigenvalue;
-    CopyVector(r, cr->r[0], vector_num_dimension);
+    CopyVectorFrom(r, cr->r[0], vector_num_dimension);
     FreeVector(r);
 
     return cr;

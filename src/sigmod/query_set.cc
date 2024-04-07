@@ -2,6 +2,8 @@
 #include <sigmod/stats.hh>
 #include <cstdio>
 #include <iostream>
+#include <sigmod/lin_alg.hh>
+#include <random_projection.hh>
 
 QuerySet ReadQuerySet(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -76,4 +78,36 @@ void StatsQuerySet(const QuerySet& query_set) {
         [&query_set](uint32_t i) { return query_set.queries[i].r; },
         query_set.length, "query.r"
     ) << std::endl;
+}
+
+float32_t** GetFields(
+        const QuerySet& queryset,
+        const uint32_t dimension) {
+    float32_t** fields = MallocMatrix(queryset.length, dimension);
+    
+    for (uint32_t i = 0; i < queryset.length; i++) {
+        Query q = queryset.queries[i];
+        fields[i] = q.fields;
+    }    
+
+    return fields;
+}
+
+void SetFields(
+        QuerySet& queryset,
+        float32_t** fields,
+        const uint32_t n_component) {
+
+    for (uint32_t i = 0; i < queryset.length; i++) {
+        for (uint32_t j = 0; j < n_component; j++) {
+            queryset.queries[i].fields[j] = fields[i][j];
+        }
+    }    
+}
+
+void ReduceDimensionality(QuerySet& queryset, const float32_t** prj_matrix, const uint32_t final_dimension) {
+    float32_t** fields = GetFields(queryset, vector_num_dimension);
+    RamdomProjectionFromGivenProjMatrix(fields, queryset.length, vector_num_dimension, prj_matrix, final_dimension);
+    SetFields(queryset, fields, final_dimension);
+    FreeMatrix(fields);
 }
