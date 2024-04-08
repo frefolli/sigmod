@@ -1,7 +1,6 @@
 #include <sigmod/random_projection.hh>
 #include <cstdlib>
 #include <random>
-#include <sigmod/lin_alg.hh>
 #include <iostream>
 
 const float32_t** GenerateProjectionMatrix(
@@ -33,7 +32,7 @@ const float32_t** GenerateProjectionMatrix(
     return (const float32_t**) R;
 }
 
-const float32_t** RamdomProjection(
+const float32_t** RandomProjection(
         float32_t** dataset_matrix, 
         const uint32_t n_observation, 
         const uint32_t dimension, 
@@ -47,13 +46,27 @@ const float32_t** RamdomProjection(
     return prj_matrix;
 }
 
-const float32_t** RamdomProjectionOnDataset(
+const float32_t** RandomProjectionOnDataset(
     Database& dataset, 
+    const uint32_t dimension, 
     const uint32_t final_dimension) {
-    // TODO
+
+    const float32_t** prj_matrix = GenerateProjectionMatrix(final_dimension, dimension);
+    RandomProjectionGivenProjMatrixOnDataset(dataset, dimension, prj_matrix, final_dimension);
+
+    return prj_matrix;
 }
 
-void RamdomProjectionGivenProjMatrix(
+void RandomProjectionOnQuerySet(
+    QuerySet& queryset, 
+    const uint32_t dimension, 
+    const uint32_t final_dimension) {
+
+    const float32_t** prj_matrix = GenerateProjectionMatrix(final_dimension, dimension);
+    RandomProjectionGivenProjMatrixOnQuerySet(queryset, dimension, prj_matrix, final_dimension);
+}
+
+void RandomProjectionGivenProjMatrix(
         float32_t** dataset_matrix, 
         const uint32_t n_observation, 
         const uint32_t dimension, 
@@ -67,11 +80,20 @@ void RamdomProjectionGivenProjMatrix(
 }
 
 
-void RamdomProjectionGivenProjMatrixOnDataset(
+void RandomProjectionGivenProjMatrixOnDataset(
     Database& dataset, 
+    const uint32_t dimension, 
     const float32_t** prj_matrix, 
     const uint32_t final_dimension) {
-    // TODO
+    MultiplyDatabaseMatrix(dataset, dimension, prj_matrix, final_dimension);
+}
+
+void RandomProjectionGivenProjMatrixOnQuerySet(
+    QuerySet& queryset, 
+    const uint32_t dimension, 
+    const float32_t** prj_matrix, 
+    const uint32_t final_dimension) {
+    MultiplyQuerySetMatrix(queryset, dimension, prj_matrix, final_dimension);
 }
 
 void FreeProjectionMatrix(float32_t** matrix) {

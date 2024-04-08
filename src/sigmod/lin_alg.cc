@@ -80,7 +80,7 @@ void MatrixProduct(const float32_t** matrix1, const uint32_t rows, const uint32_
         for (uint32_t j = 0; j < columns2; j++) {
             sum = 0;
             for (uint32_t k = 0; k < columns1; k++) {
-                sum += matrix1[i][k] * matrix2[k][i];
+                sum += matrix1[i][k] * matrix2[k][j];
             }
             out[i][j] = sum;
         }
