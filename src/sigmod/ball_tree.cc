@@ -91,13 +91,17 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
         return node;
     }
 
-    const uint32_t a = FindFurthestPoint(database, indexes, start, end, start);
-    const uint32_t b = FindFurthestPoint(database, indexes, start, end, a);
+    uint32_t a = FindFurthestPoint(database, indexes, start, end, start);
+    uint32_t b = FindFurthestPoint(database, indexes, start, end, a);
     
-    if (a != start)
+    if (a != start) {
         std::swap(indexes[a], indexes[start]);
-    if (b != end - 1)
+        a = start;
+    }
+    if (b != end - 1) {
         std::swap(indexes[b], indexes[end - 1]);
+        b = end - 1;
+    }
 
     uint32_t i = start + 1;
     uint32_t j = end - 2;
