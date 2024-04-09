@@ -12,6 +12,7 @@ void assert_file_exists(std::string path, std::string what) {
 
 int main(int argc, char** args) {
     std::srand(std::time(0));
+
     std::string database_path = "dummy-data.bin";
     std::string query_set_path = "dummy-queries.bin";
     std::string output_path = "output.bin";
@@ -30,6 +31,34 @@ int main(int argc, char** args) {
 
     assert_file_exists(database_path, "database_path");
     assert_file_exists(query_set_path, "query_set_path");
+    
+    #ifdef COMPARE_SOLUTIONS
+
+    std::string first_solutions[] = {
+        "./output/output-exaustive.bin",
+        "./output/output-ball-forest.bin",
+        "./output/output-kd-forest.bin",
+        "./output/output-vp-forest.bin"
+    };
+
+    std::string second_solutions[] = {
+        "./output/output-red-70d-exaustive.bin",
+        "./output/output-red-70d-ball-forest.bin",
+        "./output/output-red-70d-kd-forest.bin",
+        "./output/output-red-70d-vp-forest.bin",
+    };
+
+    for (uint32_t i = 0; i < sizeof(first_solutions)/sizeof(first_solutions[0]); i++) {
+        assert_file_exists(first_solutions[i], "first_solutions");
+        assert_file_exists(second_solutions[i], "second_solutions");
+    
+        std::cout << "Recall between " << first_solutions[i] << " - " 
+            << second_solutions[i] << " := " 
+            << CompareSolutionsFromFiles(first_solutions[i], second_solutions[i], 1000)
+            << std::endl;
+    }
+
+    #else
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -41,4 +70,6 @@ int main(int argc, char** args) {
         << "# ETA (ms): " 
         << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()  
         << std::endl;
+        
+    #endif
 }

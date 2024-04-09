@@ -7,3 +7,5 @@ test
 .ipynb_checkpoints
 __pycache__
 builddir
+.vscode
+.venv

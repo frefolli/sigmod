@@ -9,5 +9,6 @@
 #include <sigmod/stats.hh>
 #include <sigmod/solution.hh>
 #include <sigmod/workflow.hh>
+#include <sigmod/flags.hh>
 
 #endif

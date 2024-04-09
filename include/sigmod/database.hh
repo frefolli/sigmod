@@ -31,4 +31,6 @@ void StatsDatabase(const Database& database);
 
 void IndexDatabase(Database& database);
 
+const float32_t** ReduceDimensionality(Database& database, const uint32_t final_dimension);
+
 #endif

@@ -6,6 +6,10 @@
 #include <sigmod/query.hh>
 #include <vector>
 
+/* 
+* In case we reduce dataset using RP distance changed by sqrt(d/k)*original distance,
+* were d is initial dimension and k is final dimension.
+*/
 template <typename WFA, typename WFB>
 inline score_t distance(const WFA& query, const WFB& record) {
     score_t sum = 0;

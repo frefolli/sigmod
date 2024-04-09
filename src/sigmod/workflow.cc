@@ -10,6 +10,7 @@
 #include <sigmod/exaustive.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
+#include <sigmod/random_projection.hh>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
                                       const QuerySet& query_set) {
@@ -84,7 +85,20 @@ void Workflow(const std::string database_path,
     Database database = ReadDatabase(database_path);
     LogTime("Read database, length = " + std::to_string(database.length));
     QuerySet query_set = ReadQuerySet(query_set_path);
+    
     LogTime("Read query_set, length = " + std::to_string(query_set.length));
+
+    #ifdef ENABLE_DIM_REDUCTION
+    const float32_t** prj_matrix = ReduceDimensionality(database, N_DIM_REDUCTION);
+    LogTime("Dimensional reduction database");
+    
+    ReduceDimensionality(query_set, prj_matrix, N_DIM_REDUCTION);
+
+    FreeProjectionMatrix((float32_t**) prj_matrix);
+    LogTime("Dimensional reduction queryset");
+
+    actual_vector_size = N_DIM_REDUCTION;
+    #endif
 
     IndexDatabase(database);
     LogTime("Indexes Database");
@@ -145,6 +159,33 @@ void Workflow(const std::string database_path,
         #endif
     #endif
 
+    /* Save Solution */
+    #ifdef SAVE_SOLUTION
+        std::string out_path;
+        std::string suffix = "";
+        #ifdef ENABLE_DIM_REDUCTION 
+        #ifdef N_DIM_REDUCTION 
+            suffix += "-red-" + std::to_string(N_DIM_REDUCTION) + "d";
+        #endif
+        #endif
+        #ifdef ENABLE_EXAUSTIVE
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-exaustive");
+            WriteSolution(exaustive_solution, out_path);
+        #endif
+        #ifdef ENABLE_BALL_FOREST
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-ball-forest");
+            WriteSolution(ball_forest_solution, out_path);
+        #endif
+        #ifdef ENABLE_KD_FOREST
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-kd-forest");
+            WriteSolution(kd_forest_solution, out_path);
+        #endif
+        #ifdef ENABLE_VP_FOREST
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-vp-forest");
+            WriteSolution(vp_forest_solution, out_path);
+        #endif
+    #endif
+    
     /* Free Solution */
     #ifdef ENABLE_BALL_FOREST
     FreeSolution(ball_forest_solution);
