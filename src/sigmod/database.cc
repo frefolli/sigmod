@@ -132,6 +132,5 @@ const float32_t** ReduceDimensionality(
     
     RandomProjectionOnDataset(database, vector_num_dimension, final_dimension);
 
-    actual_vector_size = final_dimension;
     return prj_matrix;
 }

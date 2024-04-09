@@ -15,10 +15,10 @@
 #define ENABLE_KD_FOREST
 
 /* Randomize KD Node dimensions */
- #define KD_FOREST_DIMENSION_RANDOMIZE
+// #define KD_FOREST_DIMENSION_RANDOMIZE
 
 /* Assign KD Node dimensions in order to maximize spread */
- #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+// #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
 
 /* Build a Ball Forest and uses it to craft a solution */
 // #define ENABLE_BALL_FOREST
@@ -30,15 +30,15 @@
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
  * */
-// #define ENABLE_EXAUSTIVE
+#define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
 
 /* Apply dimensional reduction before indexing */
-#define ENABLE_DIM_REDUCTION
+//#define ENABLE_DIM_REDUCTION
 
 /* Dimension to preserve during reduction phase */
-#define N_DIM_REDUCTION 10
+//#define N_DIM_REDUCTION 10
 
 #endif

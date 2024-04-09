@@ -160,7 +160,7 @@ void SearchKDNode(const Database& database, const Query& query,
     #ifndef DISATTEND_CHECKS
       if (check_if_elegible_by_T(query, database.at(index)))
     #endif
-      scoreboard.push(index, score);
+    scoreboard.push(index, score);
 
     if (!IsLeaf(node)) {
         if (delta > 0) {
