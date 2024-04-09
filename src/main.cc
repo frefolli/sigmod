@@ -54,7 +54,7 @@ int main(int argc, char** args) {
     
         std::cout << "Recall between " << first_solutions[i] << " - " 
             << second_solutions[i] << " := " 
-            << CompareSolutionsFromFiles(first_solutions[i], second_solutions[i], TOT_ELEMENTS)
+            << CompareSolutionsFromFiles(first_solutions[i], second_solutions[i], 1000)
             << std::endl;
     }
 

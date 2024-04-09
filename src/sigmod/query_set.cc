@@ -107,5 +107,5 @@ void SetFields(
 }
 
 void ReduceDimensionality(QuerySet& queryset, const float32_t** prj_matrix, const uint32_t final_dimension) {
-    RandomProjectionGivenProjMatrixOnQuerySet(queryset, vector_num_dimension, prj_matrix, final_dimension);
+    MultiplyQuerySetMatrix(queryset, queryset.length, prj_matrix, final_dimension);
 }

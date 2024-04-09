@@ -78,19 +78,7 @@ void RandomProjectionGivenProjMatrix(
     const uint32_t dimension, 
     const float32_t** prj_matrix, 
     const uint32_t final_dimension);
-
-void RandomProjectionGivenProjMatrixOnDataset(
-    Database& dataset, 
-    const uint32_t dimension, 
-    const float32_t** prj_matrix, 
-    const uint32_t final_dimension);
-
-void RandomProjectionGivenProjMatrixOnQuerySet(
-    QuerySet& queryset, 
-    const uint32_t dimension, 
-    const float32_t** prj_matrix, 
-    const uint32_t final_dimension);
-
+    
 void FreeProjectionMatrix(float32_t** matrix);
 
 #endif
