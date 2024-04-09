@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <iostream>
 #include <sigmod/debug.hh>
+#include <cstring>
+#include <sigmod/flags.hh>
+#include <sigmod/tweaks.hh>
 #include <sigmod/dimensional_reduction.hh>
 #include <sigmod/lin_alg.hh>
 
@@ -14,24 +17,44 @@ Database ReadDatabase(const std::string input_path) {
     fread(&db_length, sizeof(uint32_t), 1, dbfile);
 
     Record* records = (Record*) std::malloc(sizeof(Record) * db_length);
-    Record* records_entry_point = records;
+    #ifdef FAST_INDEX
+    RawRecord* records_entry_point = (RawRecord*) records;
+    #else
+    Record* records_entry_point = (Record*) records;
+    #endif
     uint32_t records_to_read = db_length;
     while(records_to_read > 0) {
-        uint32_t this_batch = batch_size;
+        uint32_t this_batch = BATCH_SIZE;
         if (this_batch > records_to_read) {
             this_batch = records_to_read;
         }
+        #ifdef FAST_INDEX
+        fread(records_entry_point, sizeof(RawRecord), this_batch, dbfile);
+        #else
         fread(records_entry_point, sizeof(Record), this_batch, dbfile);
+        #endif
         records_to_read -= this_batch;
         records_entry_point += this_batch;
     }
     fclose(dbfile);
 
+    #ifdef FAST_INDEX
+    records_entry_point -= 1;
+    for (uint32_t i = db_length - 1; i > 0; i--) {
+        std::memmove(records + i, records_entry_point, sizeof(RawRecord));
+        records_entry_point -= 1;
+        records[i].index = i;
+    }
+    records[0].index = 0;
+    #endif
+
     return {
         .length = db_length,
         .records = records,
         .C_map = {},
+        #ifndef FAST_INDEX
         .indexes = nullptr
+        #endif
     };
 }
 
@@ -56,14 +79,25 @@ bool operator<(const Record& a, const Record& b) {
 }
 
 void IndexDatabase(Database& database) {
+    #ifndef FAST_INDEX
     database.indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
     for (uint32_t i = 0; i < database.length; i++) {
       database.indexes[i] = i;
     }
+    #endif
+
+    #ifdef FAST_INDEX
+    std::sort(database.records, database.records + database.length,
+              [&database](const Record& a, const Record& b) {
+        return a < b;
+    });
+    #else
     std::sort(database.indexes, database.indexes + database.length,
               [&database](uint32_t a, uint32_t b) {
         return database.records[a] < database.records[b];
     });
+    #endif
+    
     float32_t cur_C = database.at(0).C;
     uint32_t cur_start = 0;
     uint32_t cur_end = 0;

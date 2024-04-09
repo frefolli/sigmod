@@ -2,6 +2,7 @@
 #define DEBUG_HH
 
 #include <iostream>
+#include <string>
 
 inline void Debug(const std::string s) {
     std::cout << "# DEBUG | " << s << std::endl;
@@ -13,5 +14,9 @@ inline void Panic(const std::string s) {
 }
 
 void LogTime(const std::string s);
+
+extern long long SIGMOD_MEMORY_TRACKER;
+std::string BytesToString(long long bytes);
+void LogMemory(const std::string s);
 
 #endif

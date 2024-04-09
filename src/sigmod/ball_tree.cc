@@ -5,6 +5,8 @@
 #include <sigmod/scoreboard.hh>
 #include <algorithm>
 #include <cassert>
+#include <sigmod/thread_pool.hh>
+#include <iostream>
 
 void FreeBallNode(BallNode* node) {
     if (node == nullptr)
@@ -89,13 +91,17 @@ BallNode* BuildBallNode(const Database& database, uint32_t* indexes, const uint3
         return node;
     }
 
-    const uint32_t a = FindFurthestPoint(database, indexes, start, end, start);
-    const uint32_t b = FindFurthestPoint(database, indexes, start, end, a);
+    uint32_t a = FindFurthestPoint(database, indexes, start, end, start);
+    uint32_t b = FindFurthestPoint(database, indexes, start, end, a);
     
-    if (a != start)
+    if (a != start) {
         std::swap(indexes[a], indexes[start]);
-    if (b != end - 1)
+        a = start;
+    }
+    if (b != end - 1) {
         std::swap(indexes[b], indexes[end - 1]);
+        b = end - 1;
+    }
 
     uint32_t i = start + 1;
     uint32_t j = end - 2;
@@ -158,9 +164,21 @@ BallForest BuildBallForest(const Database& database) {
     }
 
     std::map<uint32_t, BallTree> trees;
+    std::mutex mutex;
+    #ifdef CONCURRENCY
+    ThreadPool pool;
+    pool.run([&trees, &database, &indexes, &mutex](typename c_map_t::const_iterator cat) {
+        BallTree tree = BuildBallTree(database, indexes, cat->second.first, cat->second.second + 1);
+        std::lock_guard<std::mutex>* guard = new std::lock_guard<std::mutex>(mutex);
+        trees[cat->first] = tree;
+        delete guard;
+    }, database.C_map);
+    assert (trees.size() == database.C_map.size());
+    #else
     for (auto cat : database.C_map) {
         trees[cat.first] = BuildBallTree(database, indexes, cat.second.first, cat.second.second + 1);
     }
+    #endif
 
     return {
         .indexes = indexes,
@@ -174,10 +192,6 @@ void SearchBallNode(const Database& database, const Query& query,
     if (IsLeaf(node)) {
         for (uint32_t i = node->start; i < node->end; i++) {
             const uint32_t p = tree.indexes[i];
-            #ifndef DISATTEND_CHECKS
-              if (!check_if_elegible_by_T(query, database.at(p)))
-                continue;
-            #endif
             const score_t distance_query_p = distance(query, database.at(p));
             scoreboard.push(p, distance_query_p);
         }
@@ -199,10 +213,47 @@ void SearchBallNode(const Database& database, const Query& query,
     }
 }
 
+void SearchBallNodeByT(const Database& database, const Query& query,
+                    Scoreboard& scoreboard, const BallTree& tree,
+                    const BallNode* node, const score_t distance_query_center) {
+    if (IsLeaf(node)) {
+        for (uint32_t i = node->start; i < node->end; i++) {
+            const uint32_t p = tree.indexes[i];
+            #ifndef DISATTEND_CHECKS
+              if (!elegible_by_T(query, database.at(p)))
+                continue;
+            #endif
+            const score_t distance_query_p = distance(query, database.at(p));
+            scoreboard.push(p, distance_query_p);
+        }
+    } else {
+        const score_t distance_query_left = distance(query, node->left->center);
+        const score_t distance_query_right = distance(query, node->right->center);
+
+        if (distance_query_left < distance_query_right) {
+            if (scoreboard.empty() || distance_query_left - (node->left->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
+                SearchBallNodeByT(database, query, scoreboard, tree, node->left, distance_query_left);
+            if (scoreboard.empty() || distance_query_right - (node->right->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
+                SearchBallNodeByT(database, query, scoreboard, tree, node->right, distance_query_right);
+        } else {
+            if (scoreboard.empty() || distance_query_right - (node->right->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
+                SearchBallNodeByT(database, query, scoreboard, tree, node->right, distance_query_right);
+            if (scoreboard.empty() || distance_query_left - (node->left->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
+                SearchBallNodeByT(database, query, scoreboard, tree, node->left, distance_query_left);
+        }
+    }
+}
+
 void SearchBallTree(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree) {
     const score_t distance_query_root = distance(query, tree.root->center);
     if (scoreboard.empty() || distance_query_root - (tree.root->radius * BALL_RADIUS_AMPLIFICATION) < scoreboard.top().score)
         SearchBallNode(database, query, scoreboard, tree, tree.root, distance_query_root);
+}
+
+void SearchBallTreeByT(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree) {
+    const score_t distance_query_root = distance(query, tree.root->center);
+    if (scoreboard.empty() || distance_query_root - (tree.root->radius * BALL_RADIUS_AMPLIFICATION) < scoreboard.top().score)
+        SearchBallNodeByT(database, query, scoreboard, tree, tree.root, distance_query_root);
 }
 
 void SearchBallForest(const BallForest& forest, const Database& database, Result& result, const Query& query) {
@@ -214,8 +265,14 @@ void SearchBallForest(const BallForest& forest, const Database& database, Result
     const uint32_t query_type = (uint32_t) (query.query_type);
     #endif
 
-    if (query_type == BY_C || query_type == BY_C_AND_T) {
+    if (query_type == BY_C) {
         SearchBallTree(database, query, gboard, forest.trees.at(query.v));
+    } else if (query_type == BY_C_AND_T) {
+        SearchBallTreeByT(database, query, gboard, forest.trees.at(query.v));
+    } else if (query_type == BY_T) {
+        for (auto tree : forest.trees) {
+            SearchBallTreeByT(database, query, gboard, tree.second);
+        }
     } else {
         for (auto tree : forest.trees) {
             SearchBallTree(database, query, gboard, tree.second);
@@ -225,7 +282,11 @@ void SearchBallForest(const BallForest& forest, const Database& database, Result
     //assert (gboard.full());
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
+        #ifdef FAST_INDEX
+        result.data[rank] = gboard.top().index;
+        #else
         result.data[rank] = database.indexes[gboard.top().index];
+        #endif
         gboard.pop();
         rank--;
     }

@@ -4,16 +4,24 @@
 #include <sigmod/record.hh>
 #include <sigmod/c_map.hh>
 #include <string>
+#include <sigmod/flags.hh>
 
 struct Database {
     uint32_t length;
     Record* records;
     c_map_t C_map;
+
+    #ifndef FAST_INDEX
     uint32_t* indexes;
+    #endif
 
     // indirection of indexes[index]
     inline const Record& at(const uint32_t index) const {
+      #ifdef FAST_INDEX
+      return records[index];
+      #else
       return records[indexes[index]];
+      #endif
     };
 };
 

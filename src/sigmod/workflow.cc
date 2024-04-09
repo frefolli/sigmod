@@ -223,6 +223,8 @@ void Workflow(const std::string database_path,
     LogTime("Freed VP Forest");
     #endif
 
+    Debug("Remember that solution must be converted in the end by taking `i := database.records[i].index`");
+
     FreeDatabase(database);
     FreeQuerySet(query_set);
     LogTime("Freed DB&QS");

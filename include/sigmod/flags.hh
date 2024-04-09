@@ -29,6 +29,7 @@
 
 /* Build a Ball Forest and uses it to craft a solution */
 #define ENABLE_BALL_FOREST
+#define ENABLE_BALL_FOREST
 
 /* Build a VP Forest and uses it to craft a solution */
 #define ENABLE_VP_FOREST
@@ -41,6 +42,12 @@
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
+
+/* Enables thread pools */
+// #define CONCURRENCY
+
+/* Enables Fast Index */
+#define FAST_INDEX
 
 /* Save solution in file */
 #define SAVE_SOLUTION

@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <iostream>
 #include <algorithm>
+#include <sigmod/tweaks.hh>
 
 void WriteSolution(const Solution& solution, const std::string output_path) {
     FILE* output = fopen(output_path.c_str(), "wb");
@@ -12,7 +13,7 @@ void WriteSolution(const Solution& solution, const std::string output_path) {
     Result* results_entry_point = solution.results;
     uint32_t results_to_write = solution.length;
     while(results_to_write > 0) {
-        uint32_t this_batch = batch_size;
+        uint32_t this_batch = BATCH_SIZE;
         if (this_batch > results_to_write) {
             this_batch = results_to_write;
         }
