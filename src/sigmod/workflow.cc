@@ -159,6 +159,33 @@ void Workflow(const std::string database_path,
         #endif
     #endif
 
+    /* Save Solution */
+    #ifdef SAVE_SOLUTION
+        std::string out_path;
+        std::string suffix = "";
+        #ifdef ENABLE_DIM_REDUCTION 
+        #ifdef N_DIM_REDUCTION 
+            suffix += "-red-" + std::to_string(N_DIM_REDUCTION) + "d";
+        #endif
+        #endif
+        #ifdef ENABLE_EXAUSTIVE
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-exaustive");
+            WriteSolution(exaustive_solution, out_path);
+        #endif
+        #ifdef ENABLE_BALL_FOREST
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-ball-forest");
+            WriteSolution(ball_forest_solution, out_path);
+        #endif
+        #ifdef ENABLE_KD_FOREST
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-kd-forest");
+            WriteSolution(kd_forest_solution, out_path);
+        #endif
+        #ifdef ENABLE_VP_FOREST
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-vp-forest");
+            WriteSolution(vp_forest_solution, out_path);
+        #endif
+    #endif
+    
     /* Free Solution */
     #ifdef ENABLE_BALL_FOREST
     FreeSolution(ball_forest_solution);

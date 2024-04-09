@@ -38,8 +38,8 @@ inline void MultiplyDatabaseMatrix(
             for (uint32_t k = 0; k < dimension; k++) {
                 temp_vect[j] += dataset.records[i].fields[k] * prj_matrix[k][j];
             }
-            CopyVectorFrom(temp_vect, dataset.records[i].fields, final_dimension);
         }
+        CopyVectorFrom(temp_vect, dataset.records[i].fields, final_dimension);
     }
     FreeVector(temp_vect);
 }
@@ -56,8 +56,8 @@ inline void MultiplyQuerySetMatrix(
             for (uint32_t k = 0; k < dimension; k++) {
                 temp_vect[j] += queryset.queries[i].fields[k] * prj_matrix[k][j];
             }
-            CopyVectorFrom(temp_vect, queryset.queries[i].fields, final_dimension);
         }
+        CopyVectorFrom(temp_vect, queryset.queries[i].fields, final_dimension);
     }
     FreeVector(temp_vect);
 }
