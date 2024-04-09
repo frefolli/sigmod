@@ -35,17 +35,17 @@ int main(int argc, char** args) {
     #ifdef COMPARE_SOLUTIONS
 
     std::string first_solutions[] = {
-        "output-exaustive.bin",
-        "output-ball-forest.bin",
-        "output-kd-forest.bin",
-        "output-vp-forest.bin"
+        "./output/output-exaustive.bin",
+        "./output/output-ball-forest.bin",
+        "./output/output-kd-forest.bin",
+        "./output/output-vp-forest.bin"
     };
 
     std::string second_solutions[] = {
-        "output-red-10d-exaustive.bin",
-        "output-red-10d-ball-forest.bin",
-        "output-red-10d-kd-forest.bin",
-        "output-red-10d-vp-forest.bin",
+        "./output/output-red-70d-exaustive.bin",
+        "./output/output-red-70d-ball-forest.bin",
+        "./output/output-red-70d-kd-forest.bin",
+        "./output/output-red-70d-vp-forest.bin",
     };
 
     for (uint32_t i = 0; i < sizeof(first_solutions)/sizeof(first_solutions[0]); i++) {
