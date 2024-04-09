@@ -2,6 +2,7 @@
 #include <sigmod/stats.hh>
 #include <cstdio>
 #include <iostream>
+#include <sigmod/tweaks.hh>
 
 QuerySet ReadQuerySet(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -13,7 +14,7 @@ QuerySet ReadQuerySet(const std::string input_path) {
     Query* queries_entry_point = queries;
     uint32_t queries_to_read = db_length;
     while(queries_to_read > 0) {
-        uint32_t this_batch = batch_size;
+        uint32_t this_batch = BATCH_SIZE;
         if (this_batch > queries_to_read) {
             this_batch = queries_to_read;
         }
@@ -36,7 +37,7 @@ void WriteQuerySet(const QuerySet& query_set, const std::string output_path) {
     Query* query_set_entry_point = query_set.queries;
     uint32_t query_set_to_write = query_set.length;
     while(query_set_to_write > 0) {
-        uint32_t this_batch = batch_size;
+        uint32_t this_batch = BATCH_SIZE;
         if (this_batch > query_set_to_write) {
             this_batch = query_set_to_write;
         }

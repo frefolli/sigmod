@@ -66,7 +66,7 @@ VPNode* BuildVPNode(const Database& database, uint32_t* indexes, score_t* distan
         return distances[a] < distances[b];
     });
 
-    const uint32_t middle = (start + 1 + end) / 2;
+    const uint32_t middle = (start + end) / 2;
 
     VPNode* node = (VPNode*) malloc (sizeof(VPNode));
     node->start = start;
@@ -137,17 +137,10 @@ void SearchVPNode(const Database& database, const Query& query,
         #endif
         scoreboard.push(center, distance_query_center);
 
-        if (distance_query_center < node->radius) {
-            if (scoreboard.empty() || distance_query_center - scoreboard.top().score <= node->radius)
-                SearchVPNode(database, query, scoreboard, tree, node->left);
-            // if (scoreboard.empty() || distance_query_center + scoreboard.top().score >= node->radius)
-                SearchVPNode(database, query, scoreboard, tree, node->right);
-        } else {
-            if (scoreboard.empty() || distance_query_center + scoreboard.top().score >= node->radius)
-                SearchVPNode(database, query, scoreboard, tree, node->right);
-            // if (scoreboard.empty() || distance_query_center - scoreboard.top().score <= node->radius)
-                SearchVPNode(database, query, scoreboard, tree, node->left);
-        }
+        //if (scoreboard.empty() || distance_query_center - scoreboard.top().score <= node->radius)
+            SearchVPNode(database, query, scoreboard, tree, node->left);
+        //if (scoreboard.empty() || distance_query_center + scoreboard.top().score >= node->radius)
+            SearchVPNode(database, query, scoreboard, tree, node->right);
     }
 }
 
@@ -175,7 +168,11 @@ void SearchVPForest(const VPForest& forest, const Database& database, Result& re
     assert (gboard.full());
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
+        #ifdef FAST_INDEX
+        result.data[rank] = gboard.top().index;
+        #else
         result.data[rank] = database.indexes[gboard.top().index];
+        #endif
         gboard.pop();
         rank--;
     }

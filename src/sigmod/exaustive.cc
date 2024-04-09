@@ -25,10 +25,10 @@ void FilterIndexesByC(const c_map_t& C_map, uint32_t& start_index, uint32_t& end
 
 void ExaustiveSearchByT(const Database& database, const Query& query, Scoreboard& scoreboard, const uint32_t start_index, const uint32_t end_index) {
     for (uint32_t i = start_index; i < end_index; i++) {
-        if (elegible_by_T(query, database.at(i))) {
-            score_t score = distance(query, database.at(i));
-            scoreboard.push(i, score);
-        }
+        if (!elegible_by_T(query, database.at(i)))
+            continue;
+        score_t score = distance(query, database.at(i));
+        scoreboard.push(i, score);
     }
 }
 
@@ -82,7 +82,11 @@ void SearchExaustive(const Database& database, Result& result, const Query& quer
     assert (scoreboard.full());
     uint32_t rank = scoreboard.size() - 1;
     while(!scoreboard.empty()) {
+        #ifdef FAST_INDEX
+        result.data[rank] = scoreboard.top().index;
+        #else
         result.data[rank] = database.indexes[scoreboard.top().index];
+        #endif
         scoreboard.pop();
         rank -= 1;
     }
