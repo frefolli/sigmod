@@ -2,10 +2,11 @@ include_dirs:
     - include
 source_dirs:
     - src
-links: []
+links:
 options:
     - --std=c++17
     - -O3
+    - -pthread
 builddir: builddir
 runs:
   dummy: dummy-data.bin dummy-queries.bin

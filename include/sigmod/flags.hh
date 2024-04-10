@@ -44,7 +44,7 @@
 // #define SHOW_MISMATCH_IN_COMPARISON
 
 /* Enables thread pools */
-// #define CONCURRENCY
+#define CONCURRENCY
 
 /* Enables Fast Index */
 #define FAST_INDEX
