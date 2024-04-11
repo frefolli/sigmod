@@ -13,6 +13,8 @@ struct Result {
 struct Solution {
     uint32_t length;
     Result* results;
+    
+    std::pair<uint32_t, long long> time_score_queries[4];
 };
 
 void FreeSolution(Solution& solution);

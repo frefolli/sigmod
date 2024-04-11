@@ -27,15 +27,17 @@ void WriteSolution(const Solution& solution, const std::string output_path) {
 
 Solution ReadSolution(const std::string input_path, const uint32_t length) {
     FILE* input = fopen(input_path.c_str(), "rb");
+    
     Solution solution = {
         .length = length,
-        .results = (Result*) malloc(sizeof(Result) * length)
+        .results = (Result*) malloc(sizeof(Result) * length),
+        .time_score_queries = {{0, 0}, {0, 0},{0, 0}}
     };
 
     Result* results_entry_point = solution.results;
     uint32_t results_to_read = solution.length;
     while(results_to_read > 0) {
-        uint32_t this_batch = batch_size;
+        uint32_t this_batch = BATCH_SIZE;
         if (this_batch > results_to_read) {
             this_batch = results_to_read;
         }
