@@ -31,7 +31,6 @@ Solution ReadSolution(const std::string input_path, const uint32_t length) {
     Solution solution = {
         .length = length,
         .results = (Result*) malloc(sizeof(Result) * length),
-        .time_score_queries = {{0, 0}, {0, 0},{0, 0}}
     };
 
     Result* results_entry_point = solution.results;

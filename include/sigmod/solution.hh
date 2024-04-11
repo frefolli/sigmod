@@ -14,7 +14,7 @@ struct Solution {
     uint32_t length;
     Result* results;
     
-    std::pair<uint32_t, long long> time_score_queries[4];
+    std::map<uint32_t, std::pair<uint32_t, long long>> time_score_queries;
 };
 
 void FreeSolution(Solution& solution);

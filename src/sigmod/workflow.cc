@@ -18,7 +18,6 @@ Solution SolveForQueriesWithExaustive(const Database& database,
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length),
-        .time_score_queries = {{0, 0}, {0, 0},{0, 0}}
     };
 
     for (uint32_t i = 0; i < query_set.length; i++) {
@@ -27,7 +26,6 @@ Solution SolveForQueriesWithExaustive(const Database& database,
             break;
         #endif
         uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
-        std::pair<uint32_t, long long>* time_score_queries = solution.time_score_queries;
 
         auto start_query_timer = std::chrono::high_resolution_clock::now();
         
@@ -37,9 +35,9 @@ Solution SolveForQueriesWithExaustive(const Database& database,
         
         long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
 
-        time_score_queries[query_type].second = 
-            time_score_queries[query_type].first / (time_score_queries[query_type].first + 1) * time_score_queries[query_type].second 
-            + sample / (time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
     }
 
     return solution;
@@ -51,7 +49,6 @@ Solution SolveForQueriesWithKDForest(const Database& database,
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length),
-        .time_score_queries = {{0, 0}, {0, 0},{0, 0}}
     };
     for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
@@ -59,7 +56,6 @@ Solution SolveForQueriesWithKDForest(const Database& database,
             break;
         #endif
         uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
-        std::pair<uint32_t, long long>* time_score_queries = solution.time_score_queries;
 
         auto start_query_timer = std::chrono::high_resolution_clock::now();
         
@@ -69,9 +65,9 @@ Solution SolveForQueriesWithKDForest(const Database& database,
         
         long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
 
-        time_score_queries[query_type].second = 
-            time_score_queries[query_type].first / (time_score_queries[query_type].first + 1) * time_score_queries[query_type].second 
-            + sample / (time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
     }
 
     return solution;
@@ -83,7 +79,6 @@ Solution SolveForQueriesWithBallForest(const Database& database,
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length),
-        .time_score_queries = {{0, 0}, {0, 0},{0, 0}}
     };
     for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
@@ -92,7 +87,6 @@ Solution SolveForQueriesWithBallForest(const Database& database,
         #endif
 
         uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
-        std::pair<uint32_t, long long>* time_score_queries = solution.time_score_queries;
 
         auto start_query_timer = std::chrono::high_resolution_clock::now();
         
@@ -102,9 +96,9 @@ Solution SolveForQueriesWithBallForest(const Database& database,
         
         long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
 
-        time_score_queries[query_type].second = 
-            time_score_queries[query_type].first / (time_score_queries[query_type].first + 1) * time_score_queries[query_type].second 
-            + sample / (time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
     }
 
     return solution;
@@ -116,7 +110,6 @@ Solution SolveForQueriesWithVPForest(const Database& database,
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length),
-        .time_score_queries = {{0, 0}, {0, 0},{0, 0}}
     };
     for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
@@ -124,7 +117,6 @@ Solution SolveForQueriesWithVPForest(const Database& database,
             break;
         #endif
         uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
-        std::pair<uint32_t, long long>* time_score_queries = solution.time_score_queries;
 
         auto start_query_timer = std::chrono::high_resolution_clock::now();
 
@@ -134,9 +126,9 @@ Solution SolveForQueriesWithVPForest(const Database& database,
         
         long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
 
-        time_score_queries[query_type].second = 
-            time_score_queries[query_type].first / (time_score_queries[query_type].first + 1) * time_score_queries[query_type].second 
-            + sample / (time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
     
     }
 
