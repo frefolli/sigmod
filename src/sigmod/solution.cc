@@ -27,9 +27,10 @@ void WriteSolution(const Solution& solution, const std::string output_path) {
 
 Solution ReadSolution(const std::string input_path, const uint32_t length) {
     FILE* input = fopen(input_path.c_str(), "rb");
+    
     Solution solution = {
         .length = length,
-        .results = (Result*) malloc(sizeof(Result) * length)
+        .results = (Result*) malloc(sizeof(Result) * length),
     };
 
     Result* results_entry_point = solution.results;
