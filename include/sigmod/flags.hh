@@ -33,6 +33,9 @@
 /* Build a VP Forest and uses it to craft a solution */
 #define ENABLE_VP_FOREST
 
+/* Build a MVP Forest and uses it to craft a solution */
+#define ENABLE_MVP_FOREST
+
 /* Uses the classic linear search to get a solution
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall

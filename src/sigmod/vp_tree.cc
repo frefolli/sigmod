@@ -32,6 +32,7 @@ void FreeVPTree(VPTree& tree) {
 void FreeVPForest(VPForest& forest) {
     for (auto tree : forest.trees)
         FreeVPTree(tree.second);
+    forest.trees = {};
     if (forest.indexes != nullptr) {
         free(forest.indexes);
         forest.indexes = nullptr;

@@ -7,6 +7,7 @@
 #include <sigmod/kd_tree.hh>
 #include <sigmod/ball_tree.hh>
 #include <sigmod/vp_tree.hh>
+#include <sigmod/mvp_tree.hh>
 #include <sigmod/exaustive.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
@@ -79,6 +80,23 @@ Solution SolveForQueriesWithVPForest(const Database& database,
     return solution;
 }
 
+Solution SolveForQueriesWithMVPForest(const Database& database,
+                                      const MVPForest& forest,
+                                      const QuerySet& query_set) {
+    Solution solution = {
+        .length = query_set.length,
+        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+    };
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        MVPForest::Search(forest, database, solution.results[i], query_set.queries[i]);
+    }
+    return solution;
+}
+
 void Workflow(const std::string database_path,
               const std::string query_set_path,
               const std::string output_path) {
@@ -119,6 +137,11 @@ void Workflow(const std::string database_path,
     LogTime("Built VP Forest");
     #endif
 
+    #ifdef ENABLE_MVP_FOREST
+    MVPForest mvp_forest = MVPForest::Build(database);
+    LogTime("Built MVP Forest");
+    #endif
+
     /* Usage */
     #ifdef ENABLE_BALL_FOREST
     Solution ball_forest_solution = SolveForQueriesWithBallForest(database, ball_forest, query_set);
@@ -133,6 +156,11 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_VP_FOREST
     Solution vp_forest_solution = SolveForQueriesWithVPForest(database, vp_forest, query_set);
     LogTime("Used VP Forest");
+    #endif
+
+    #ifdef ENABLE_MVP_FOREST
+    Solution mvp_forest_solution = SolveForQueriesWithMVPForest(database, mvp_forest, query_set);
+    LogTime("Used MVP Forest");
     #endif
 
     #ifdef ENABLE_EXAUSTIVE
@@ -157,6 +185,11 @@ void Workflow(const std::string database_path,
             Debug("Recall(VP Forest) := " + std::to_string(vp_forest_score));
             LogTime("Compared VP Forest to Exaustive");
         #endif
+        #ifdef ENABLE_MVP_FOREST
+            score_t mvp_forest_score = CompareSolutions(database, query_set, exaustive_solution, mvp_forest_solution);
+            Debug("Recall(MVP Forest) := " + std::to_string(mvp_forest_score));
+            LogTime("Compared MVP Forest to Exaustive");
+        #endif
     #endif
 
     /* Save Solution */
@@ -180,9 +213,9 @@ void Workflow(const std::string database_path,
             out_path = GenerateOutputPathFileName(output_path, "", suffix + "-kd-forest");
             WriteSolution(kd_forest_solution, out_path);
         #endif
-        #ifdef ENABLE_VP_FOREST
-            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-vp-forest");
-            WriteSolution(vp_forest_solution, out_path);
+        #ifdef ENABLE_MVP_FOREST
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-mvp-forest");
+            WriteSolution(mvp_forest_solution, out_path);
         #endif
     #endif
     
@@ -200,6 +233,11 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_VP_FOREST
     FreeSolution(vp_forest_solution);
     LogTime("Freed VP Forest Solution");
+    #endif
+
+    #ifdef ENABLE_MVP_FOREST
+    FreeSolution(mvp_forest_solution);
+    LogTime("Freed MVP Forest Solution");
     #endif
 
     #ifdef ENABLE_EXAUSTIVE
@@ -221,6 +259,11 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_VP_FOREST
     FreeVPForest(vp_forest);
     LogTime("Freed VP Forest");
+    #endif
+
+    #ifdef ENABLE_MVP_FOREST
+    MVPForest::Free(mvp_forest);
+    LogTime("Freed MVP Forest");
     #endif
 
     Debug("Remember that solution must be converted in the end by taking `i := database.records[i].index`");

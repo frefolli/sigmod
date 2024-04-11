@@ -29,6 +29,13 @@ void FreeKDTree(KDTree& tree) {
 }
 
 void FreeKDForest(KDForest& forest) {
+    for (auto tree : forest.trees)
+        FreeKDTree(tree.second);
+    forest.trees = {};
+    if (forest.indexes != nullptr) {
+        free(forest.indexes);
+        forest.indexes = nullptr;
+    }
 }
 
 bool IsLeaf(const KDNode* node) {

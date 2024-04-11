@@ -35,6 +35,7 @@ void FreeBallTree(BallTree& tree) {
 void FreeBallForest(BallForest& forest) {
     for (auto tree : forest.trees)
         FreeBallTree(tree.second);
+    forest.trees = {};
     if (forest.indexes != nullptr) {
         free(forest.indexes);
         forest.indexes = nullptr;
