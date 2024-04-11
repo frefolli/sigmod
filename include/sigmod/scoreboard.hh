@@ -66,6 +66,13 @@ struct Scoreboard {
         bool empty() const;
         bool full() const;
         inline bool not_full() const { return !full(); }
+        inline void pushf(const uint32_t index, const score_t score) {
+          // assumes score < furthest().score has been done
+          if (full()) {
+              pop();
+          }
+          add(index, score);
+        }
         inline void push(const uint32_t index, const score_t score) {
           if (full()) {
               if (score < top().score) {

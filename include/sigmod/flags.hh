@@ -11,7 +11,7 @@
 // #define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 4
+#define TOT_ELEMENTS 1000
 #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
@@ -43,7 +43,7 @@
 #define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
-// #define SHOW_MISMATCH_IN_COMPARISON
+#define SHOW_MISMATCH_IN_COMPARISON
 
 /* Enables thread pools */
 // #define CONCURRENCY
@@ -55,6 +55,6 @@
 // #define SAVE_SOLUTION
 
 /* Tracks num of distance() calls */
-#define TRACK_DISTANCE_COMPUTATIONS
+// #define TRACK_DISTANCE_COMPUTATIONS
 
 #endif

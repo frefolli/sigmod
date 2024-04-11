@@ -83,6 +83,7 @@ Solution SolveForQueriesWithVPForest(const Database& database,
 Solution SolveForQueriesWithMVPForest(const Database& database,
                                       const MVPForest& forest,
                                       const QuerySet& query_set) {
+    score_t* PATH = smalloc<score_t>(forest.max_p);
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
@@ -92,7 +93,8 @@ Solution SolveForQueriesWithMVPForest(const Database& database,
         if (i >= TOT_ELEMENTS)
             break;
         #endif
-        MVPForest::Search(forest, database, solution.results[i], query_set.queries[i]);
+        std::cout << "query#" << i << std::endl;
+        MVPForest::Search(forest, database, PATH, solution.results[i], query_set.queries[i]);
     }
     return solution;
 }

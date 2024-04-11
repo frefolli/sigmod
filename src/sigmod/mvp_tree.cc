@@ -253,24 +253,24 @@ uint32_t MVPTree::OptimalP(uint32_t n_of_records) {
 void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* PATH, score_t& r, uint32_t level, const MVPNode* node) const {
   const uint32_t Sv1 = at(node->Sv1);
   const score_t dSv1 = distance(q, records[Sv1]);
-  if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 < r) {
-    scoreboard.push(Sv1, dSv1);
+  if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 <= r) {
+    scoreboard.pushf(Sv1, dSv1);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
   }
 
-  if (node->Sv2 == -1)
+  if (node->D1 == nullptr)
       return;
 
   const uint32_t Sv2 = at(node->Sv2);
   const score_t dSv2 = distance(q, records[Sv2]);
-  if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 < r) {
-    scoreboard.push(Sv2, dSv2);
+  if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 <= r) {
+    scoreboard.pushf(Sv2, dSv2);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
   }
 
-  if (node->D1 == nullptr || node->D2 == nullptr)
+  if (node->D2 == nullptr)
       return;
 
   uint32_t length = node->end - node->start;
@@ -281,26 +281,36 @@ void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* P
         continue;
     if (scoreboard.not_full()) {
       const score_t diq = distance(q, records[index]);
-      scoreboard.push(index, diq);
+      scoreboard.pushf(index, diq);
       if (scoreboard.full())
         r = scoreboard.furthest().score;
     } else {
       if (std::fabs(dSv1 - node->D1[i + 1]) <= r) {
-          if (std::fabs(dSv2 - node->D2[i]) <= r) {
+          if (true || std::fabs(dSv2 - node->D2[i]) <= r) {
             bool compute_d = true;
-            for (uint32_t j = 0; j < level; j++) {
-              if (!(std::fabs(PATH[j] - paths[p_index + j]) <= r)) {
+            for (uint32_t j = 0; j < level && j < p; j++) {
+              if (std::fabs(PATH[j] - paths[p_index + j]) > r) {
                   compute_d = false;
+                  break;
               }
             }
             if (compute_d) {
               const score_t diq = distance(q, records[index]);
-              if (diq < r) {
-                scoreboard.push(index, diq);
+              if (diq <= r) {
+                scoreboard.pushf(index, diq);
                 r = scoreboard.furthest().score;
+              } else {
+                if (index == 9481) std::cout << "rejected by r := " << r << std::endl;
               }
-            }
-        }
+            } else {
+                if (index == 9481) std::cout << "rejected by PATH" << std::endl;
+              }
+        } else {
+            if (index == 9481)
+                std::cout << "rejected by dSv2: " << "abs(" << dSv2 << " - " << node->D2[i] << ") = " << std::fabs(dSv2 - node->D2[i]) << " > " << r << std::endl;
+          }
+      } else {
+        if (index == 9481) std::cout << "rejected by dSv1" << std::endl;
       }
     }
   }
@@ -313,13 +323,13 @@ void MVPTree::knn_search_internal(const Query& q, Scoreboard& scoreboard, score_
   const score_t dSv1 = distance(q, records[Sv1]);
   const score_t dSv2 = distance(q, records[Sv2]);
 
-  if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 < r) {
-    scoreboard.push(Sv1, dSv1);
+  if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 <= r) {
+    scoreboard.pushf(Sv1, dSv1);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
   }
-  if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 < r) {
-    scoreboard.push(Sv2, dSv2);
+  if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 <= r) {
+    scoreboard.pushf(Sv2, dSv2);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
   }
@@ -396,6 +406,17 @@ void MVPTree::Free(MVPTree& tree) {
 void MVPTree::Check(MVPTree& tree, MVPNode* node) {
   if (node != nullptr) {
     if (node->type == MVPNode::LEAF) {
+        if (node->D1 != nullptr) {
+            uint32_t length = node->end - node->start;
+            for (uint32_t i = 0; i < length - 1; i++) {
+                assert(node->D1[i] == distance(tree.records[tree.at(node->Sv1)], tree.records[tree.at(node->start + 1 + i)]));
+            }
+            if (node->D2 != nullptr) {
+                for (uint32_t i = 0; i < length - 2; i++) {
+                    assert(node->D2[i] == distance(tree.records[tree.at(node->Sv2)], tree.records[tree.at(node->start + 2 + i)]));
+                }
+            }
+        }
     } else {
       uint32_t length = node->end - node->start;
       uint32_t C1_length = node->C1->end - node->C1->start;
@@ -503,7 +524,7 @@ MVPForest MVPForest::Build(const Database& database) {
     };
 }
 
-void MVPForest::Search(const MVPForest& forest, const Database& database, Result& result, const Query& query) {
+void MVPForest::Search(const MVPForest& forest, const Database& database, score_t* PATH, Result& result, const Query& query) {
   Scoreboard gboard;
 
   #ifdef DISATTEND_CHECKS
@@ -512,9 +533,6 @@ void MVPForest::Search(const MVPForest& forest, const Database& database, Result
   const uint32_t query_type = (uint32_t) (query.query_type);
   #endif
 
-  score_t* PATH = smalloc<score_t>(forest.max_p);
-  for (uint32_t i = 0; i < forest.max_p; i++)
-      PATH[i] = -1;
   if (query_type == BY_C) {
     forest.trees.at(query.v).knn_search(query, gboard, PATH);
   } else if (query_type == BY_C_AND_T) {
@@ -528,7 +546,6 @@ void MVPForest::Search(const MVPForest& forest, const Database& database, Result
       tree.second.knn_search(query, gboard, PATH);
     }
   }
-  free(PATH);
 
   assert (gboard.full());
   uint32_t rank = gboard.size() - 1;

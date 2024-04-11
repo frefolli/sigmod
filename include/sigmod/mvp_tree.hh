@@ -99,7 +99,7 @@ struct MVPForest {
   uint32_t max_p;
 
   static MVPForest Build(const Database& database);
-  static void Search(const MVPForest& forest, const Database& database, Result& result, const Query& query);
+  static void Search(const MVPForest& forest, const Database& database, score_t* PATH, Result& result, const Query& query);
   static void Free(MVPForest& forest);
 };
 
