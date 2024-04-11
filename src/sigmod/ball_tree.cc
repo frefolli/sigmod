@@ -3,9 +3,10 @@
 #include <sigmod/tweaks.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/scoreboard.hh>
+#include <sigmod/thread_pool.hh>
+#include <sigmod/tree_utils.hh>
 #include <algorithm>
 #include <cassert>
-#include <sigmod/thread_pool.hh>
 #include <iostream>
 #include <cfloat>
 
@@ -42,21 +43,6 @@ void FreeBallForest(BallForest& forest) {
 
 bool IsLeaf(const BallNode* node) {
     return (node->left == nullptr && node->right == nullptr);
-}
-
-uint32_t FindFurthestPoint(const Database& database, uint32_t* indexes,
-                           const uint32_t start, const uint32_t end,
-                           const uint32_t target) {
-    uint32_t furthest = start;
-    score_t furthest_score = distance(database.at(indexes[target]), database.at(indexes[furthest]));
-    for (uint32_t i = start + 1; i < end; i++) {
-        score_t score = distance(database.at(indexes[target]), database.at(indexes[i]));
-        if (score > furthest_score) {
-            furthest_score = score;
-            furthest = i;
-        }
-    }
-    return furthest;
 }
 
 inline bool is_leftist(const Database& database, const uint32_t* indexes, const uint32_t a, const uint32_t b, const uint32_t x) {

@@ -51,4 +51,7 @@
 /* Save solution in file */
 // #define SAVE_SOLUTION
 
+/* Tracks num of distance() calls */
+#define TRACK_DISTANCE_COMPUTATIONS
+
 #endif

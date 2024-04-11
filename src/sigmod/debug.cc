@@ -32,6 +32,8 @@ std::string BytesToString(long long bytes) {
 }
 
 long long SIGMOD_MEMORY_TRACKER = 0;
+long long SIGMOD_DISTANCE_COMPUTATIONS = 0;
+
 void LogMemory(const std::string s) {
     std::cout << "# MEMORY | " << s << " | Allocated " << BytesToString(SIGMOD_MEMORY_TRACKER) << std::endl;
     SIGMOD_MEMORY_TRACKER = 0;

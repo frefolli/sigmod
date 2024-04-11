@@ -3,6 +3,7 @@
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/random.hh>
+#include <sigmod/tree_utils.hh>
 #include <algorithm>
 
 void FreeKDNode(KDNode* node) {
@@ -32,41 +33,6 @@ void FreeKDForest(KDForest& forest) {
 
 bool IsLeaf(const KDNode* node) {
     return (node->left == nullptr && node->right == nullptr);
-}
-
-uint32_t MaximizeSpread(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
-  uint32_t best_dim = 0;
-  float32_t cur_min = database.at(start).fields[best_dim];
-  float32_t cur_max = database.at(start).fields[best_dim];
-  for (uint32_t i = start + 1; i <= end; i++) {
-    const float32_t val = database.at(indexes[i]).fields[best_dim];
-    if (val < cur_min)
-        cur_min = val;
-    if (val > cur_max)
-        cur_max = val;
-  }
-
-  float32_t best_min = cur_min;
-  float32_t best_max = cur_max;
-
-  for (uint32_t dim = 1; dim < actual_vector_size; dim++) {
-    cur_min = database.at(start).fields[dim];
-    cur_max = database.at(start).fields[dim];
-    for (uint32_t i = start + 1; i <= end; i++) {
-      const float32_t val = database.at(indexes[i]).fields[best_dim];
-      if (val < cur_min)
-          cur_min = val;
-      if (val > cur_max)
-          cur_max = val;
-    }
-    if (cur_max - cur_min > best_max - best_min) {
-      best_min = cur_min;
-      best_max = cur_max;
-      best_dim = dim;
-    }
-  }
-
-  return best_dim;
 }
 
 // for interval [start, end]

@@ -2,6 +2,8 @@
 #define SCOREBOARD_HH
 
 #include <sigmod/config.hh>
+#include <sigmod/flags.hh>
+#include <sigmod/debug.hh>
 #include <sigmod/record.hh>
 #include <sigmod/query.hh>
 #include <vector>
@@ -12,6 +14,7 @@
 */
 template <typename WFA, typename WFB>
 inline score_t distance(const WFA& query, const WFB& record) {
+    SIGMOD_DISTANCE_COMPUTATIONS++;
     score_t sum = 0;
     for (uint32_t i = 0; i < actual_vector_size; i++) {
         score_t m = query.fields[i] - record.fields[i];
@@ -34,7 +37,7 @@ struct Candidate {
     uint32_t index;
     score_t score;
 
-    Candidate(const uint32_t index, const score_t score);
+    Candidate(const uint32_t index = -1, const score_t score = -1);
 };
 
 /*
@@ -47,7 +50,14 @@ struct Scoreboard {
         std::vector<Candidate> board = {};
     public:
         uint32_t size() const;
-        const Candidate& top() const;
+        const Candidate& furthest() const;
+        const Candidate& nearest() const;
+        inline const Candidate& top() const {
+            return furthest();
+        };
+        inline const Candidate& bottom() const {
+            return nearest();
+        };
         void pop();
         void add(const uint32_t index, const score_t score);
         void consider(const Candidate& candidate);
@@ -66,6 +76,7 @@ struct Scoreboard {
               add(index, score);
           }
         }
+        void clear();
 };
 
 #endif
