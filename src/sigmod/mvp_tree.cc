@@ -282,7 +282,8 @@ void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* P
 
   uint32_t length = node->end - node->start;
   for (uint32_t i = 0; i < length - 2; i++) {
-   const  uint32_t index = at(node->start + 2 + i);
+    const uint32_t index = at(node->start + 2 + i);
+    const uint32_t p_index = pindex(node->start + 2 + i);
     if (!check_if_elegible_by_T(q, records[index]))
         continue;
     if (scoreboard.not_full()) {
@@ -294,7 +295,6 @@ void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* P
       if (std::fabs(dSv1 - node->D1[i + 1]) <= r) {
           if (std::fabs(dSv2 - node->D2[i]) <= r) {
             bool compute_d = true;
-           const  uint32_t p_index = index * p;
             for (uint32_t j = 0; j < level; j++) {
               if (!(std::fabs(PATH[j] - paths[p_index + j]) <= r)) {
                   compute_d = false;
@@ -489,7 +489,7 @@ MVPForest MVPForest::Build(const Database& database) {
     std::mutex mutex;
     ThreadPool pool;
     pool.run([&trees, &database, &indexes, &mutex](typename c_map_t::const_iterator cat) {
-        BallTree tree = MVPTree::Build(database, paths, p, indexes, cat->second.first, cat->second.second + 1);
+        BallTree tree = MVPTree::Build(database, paths, max_p, indexes, cat->second.first, cat->second.second + 1);
         std::lock_guard<std::mutex>* guard = new std::lock_guard<std::mutex>(mutex);
         trees[cat->first] = tree;
         delete guard;
@@ -518,8 +518,8 @@ void MVPForest::Search(const MVPForest& forest, const Database& database, Result
   const uint32_t query_type = (uint32_t) (query.query_type);
   #endif
 
-  score_t* PATH = smalloc<score_t>(40); // TODO: segnati max_p
-  for (uint32_t i = 0; i < 40; i++)
+  score_t* PATH = smalloc<score_t>(forest.max_p);
+  for (uint32_t i = 0; i < forest.max_p; i++)
       PATH[i] = -1;
   if (query_type == BY_C) {
     forest.trees.at(query.v).knn_search(query, gboard, PATH);

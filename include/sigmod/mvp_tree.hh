@@ -96,7 +96,7 @@ struct MVPForest {
   uint32_t* indexes;
   score_t* paths;
   std::map<uint32_t, MVPTree> trees;
-  uint32_t p;
+  uint32_t max_p;
 
   static MVPForest Build(const Database& database);
   static void Search(const MVPForest& forest, const Database& database, Result& result, const Query& query);
