@@ -4,6 +4,7 @@
 // actual dependencies
 #include <sigmod/config.hh>
 #include <sigmod/scoreboard.hh>
+#include <sigmod/solution.hh>
 #include <sigmod/query.hh>
 #include <sigmod/memory.hh>
 #include <sigmod/tree_utils.hh>
@@ -68,7 +69,7 @@ struct MVPTree {
   MVPNode* build_leaf(uint32_t start, uint32_t end, uint32_t length);
   MVPNode* build_internal(uint32_t start, uint32_t end, uint32_t length, uint32_t level);
   MVPNode* build_node(uint32_t start, uint32_t end, uint32_t level);
-  void build(Record* records, uint32_t length);
+  void build(Record* records, uint32_t length, uint32_t* indexes);
 
   void knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* PATH, float32_t& r, uint32_t level, const MVPNode* node);
   void knn_search_internal(const Query& q, Scoreboard& scoreboard, score_t* PATH, float32_t& r, uint32_t level, const MVPNode* node);
@@ -83,6 +84,15 @@ struct MVPTree {
 
   static MVPTree New();
   static void Free(MVPTree& tree);
+  static MVPTree Build(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end);
+};
+
+struct MVPForest {
+  uint32_t* indexes;
+  std::map<uint32_t, MVPTree> trees;
+
+  static MVPForest Build(const Database& database);
+  void knn_search(const Database& database, Result& result, const Query& query);
 };
 
 #endif

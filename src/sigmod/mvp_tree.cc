@@ -1,4 +1,5 @@
 #include <sigmod/mvp_tree.hh>
+#include <sigmod/thread_pool.hh>
 
 #include <cstdint>
 #include <cmath>
@@ -14,11 +15,11 @@
 #include <cfloat>
 
 // main dependencies
-#include <sigmod/database.hh>
-#include <sigmod/query_set.hh>
-#include <sigmod/random.hh>
-#include <sigmod/debug.hh>
-#include <sigmod/flags.hh>
+// #include <sigmod/database.hh>
+// #include <sigmod/query_set.hh>
+// #include <sigmod/random.hh>
+// #include <sigmod/debug.hh>
+// #include <sigmod/flags.hh>
 
 const uint32_t DATABASE_LENGTH = 1000000;
 const uint32_t QUERYSET_LENGTH = 1;
@@ -224,14 +225,12 @@ MVPNode* MVPTree::build_node(uint32_t start, uint32_t end, uint32_t level) {
   }
 }
 
-void MVPTree::build(Record* records, uint32_t length) {
+void MVPTree::build(Record* records, uint32_t length, uint32_t* indexes) {
   this->k = MVPTree::OptimalK(k_nearest_neighbors);
   this->p = MVPTree::OptimalP(length);
   this->records = records;
   this->length = length;
-  this->indexes = smalloc<uint32_t>(this->length);
-  for (uint32_t i = 0; i < this->length; i++)
-      this->indexes[i] = i;
+  this->indexes = indexes;
   this->paths = smalloc<score_t>(this->length * this->p);
   for (uint32_t i = 0; i < this->length; i++)
       this->paths[i] = -1;
@@ -345,18 +344,6 @@ void MVPTree::knn_search(const Query& q, Scoreboard& scoreboard, score_t* PATH) 
   knn_search(q, scoreboard, PATH, r, 0, root);
 }
 
-MVPTree MVPTree::New() {
-  return {
-    .records = nullptr,
-    .length = 0,
-    .indexes = nullptr,
-    .root = nullptr,
-    .paths = nullptr,
-    .k = 1,
-    .p = 1
-  };
-}
-
 uint32_t MVPTree::OptimalK(uint32_t n_of_nearest_neighbors) {
   return n_of_nearest_neighbors;
 }
@@ -368,6 +355,18 @@ uint32_t MVPTree::OptimalP(uint32_t n_of_records) {
   static const float32_t d = -3.57875462e+00;
   static const float32_t y = a * std::log(b * n_of_records + c) + d;
   return std::round(y);
+}
+
+MVPTree MVPTree::New() {
+  return {
+    .records = nullptr,
+    .length = 0,
+    .indexes = nullptr,
+    .root = nullptr,
+    .paths = nullptr,
+    .k = 1,
+    .p = 1
+  };
 }
 
 void MVPTree::Free(MVPTree& tree) {
@@ -447,6 +446,79 @@ void MVPTree::Check(MVPTree& tree, MVPNode* node) {
 
 void MVPTree::Check(MVPTree& tree) {
   Check(tree, tree.root);
+}
+
+MVPTree MVPTree::Build(const Database& database, uint32_t* indexes, const uint32_t start, const uint32_t end) {
+  MVPTree tree = MVPTree::New();
+  tree.build(database.records + start, end - start, indexes);
+  return tree;
+}
+
+MVPForest MVPForest::Build(const Database& database) {
+    uint32_t* indexes = (uint32_t*) malloc (sizeof(uint32_t) * database.length);
+    for (uint32_t i = 0; i < database.length; i++) {
+        indexes[i] = i;
+    }
+
+    std::map<uint32_t, MVPTree> trees;
+    #ifdef CONCURRENCY
+    std::mutex mutex;
+    ThreadPool pool;
+    pool.run([&trees, &database, &indexes, &mutex](typename c_map_t::const_iterator cat) {
+        BallTree tree = MVPTree::Build(database, indexes, cat->second.first, cat->second.second + 1);
+        std::lock_guard<std::mutex>* guard = new std::lock_guard<std::mutex>(mutex);
+        trees[cat->first] = tree;
+        delete guard;
+    }, database.C_map);
+    assert (trees.size() == database.C_map.size());
+    #else
+    for (auto cat : database.C_map) {
+        trees[cat.first] = MVPTree::Build(database, indexes, cat.second.first, cat.second.second + 1);
+    }
+    #endif
+
+    return {
+        .indexes = indexes,
+        .trees = trees
+    };
+}
+
+void MVPForest::knn_search(const Database& database, Result& result, const Query& query) {
+  Scoreboard gboard;
+
+  #ifdef DISATTEND_CHECKS
+  const uint32_t query_type = NORMAL;
+  #else
+  const uint32_t query_type = (uint32_t) (query.query_type);
+  #endif
+
+  score_t* PATH = smalloc<score_t>(40); // TODO: segnati max_p
+  if (query_type == BY_C) {
+    // trees.at(query.v).knn_search(query, gboard, PATH);
+  } else if (query_type == BY_C_AND_T) {
+    // trees.at(query.v).knn_search(query, gboard, PATH);
+  } else if (query_type == BY_T) {
+    for (auto tree : trees) {
+      // tree.second.knn_search(query, gboard, PATH);
+    }
+  } else {
+    for (auto tree : trees) {
+      // tree.second.knn_search(query, gboard, PATH);
+    }
+  }
+  free(PATH);
+
+  assert (gboard.full());
+  uint32_t rank = gboard.size() - 1;
+  while(!gboard.empty()) {
+    #ifdef FAST_INDEX
+    result.data[rank] = gboard.top().index;
+    #else
+    result.data[rank] = database.indexes[gboard.top().index];
+    #endif
+    gboard.pop();
+    rank--;
+  }
 }
 
 /*

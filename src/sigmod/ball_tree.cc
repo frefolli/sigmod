@@ -151,8 +151,8 @@ BallForest BuildBallForest(const Database& database) {
     }
 
     std::map<uint32_t, BallTree> trees;
-    std::mutex mutex;
     #ifdef CONCURRENCY
+    std::mutex mutex;
     ThreadPool pool;
     pool.run([&trees, &database, &indexes, &mutex](typename c_map_t::const_iterator cat) {
         BallTree tree = BuildBallTree(database, indexes, cat->second.first, cat->second.second + 1);
