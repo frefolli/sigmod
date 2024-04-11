@@ -60,16 +60,21 @@ struct MVPTree {
    * */
   score_t* paths;
   uint32_t k;
+  uint32_t max_p;
   uint32_t p;
 
   inline uint32_t& at(const uint32_t i) const {
     return this->indexes[i];
   }
 
+  inline uint32_t pindex(const uint32_t i) const {
+    return this->indexes[i] * max_p;
+  }
+
   MVPNode* build_leaf(uint32_t start, uint32_t end, uint32_t length);
   MVPNode* build_internal(uint32_t start, uint32_t end, uint32_t length, uint32_t level);
   MVPNode* build_node(uint32_t start, uint32_t end, uint32_t level);
-  void build(Record* records, uint32_t length, uint32_t* indexes, score_t* paths, uint32_t p);
+  void build(Record* records, uint32_t length, uint32_t* indexes, score_t* paths, uint32_t max_p);
 
   void knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* PATH, score_t& r, uint32_t level, const MVPNode* node) const;
   void knn_search_internal(const Query& q, Scoreboard& scoreboard, score_t* PATH, score_t& r, uint32_t level, const MVPNode* node) const;
@@ -84,13 +89,14 @@ struct MVPTree {
 
   static MVPTree New();
   static void Free(MVPTree& tree);
-  static MVPTree Build(const Database& database, score_t* paths, uint32_t p, uint32_t* indexes, const uint32_t start, const uint32_t end);
+  static MVPTree Build(const Database& database, score_t* paths, uint32_t max_p, uint32_t* indexes, const uint32_t start, const uint32_t end);
 };
 
 struct MVPForest {
   uint32_t* indexes;
   score_t* paths;
   std::map<uint32_t, MVPTree> trees;
+  uint32_t p;
 
   static MVPForest Build(const Database& database);
   static void Search(const MVPForest& forest, const Database& database, Result& result, const Query& query);

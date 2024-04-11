@@ -142,7 +142,7 @@ MVPNode* MVPTree::build_internal(uint32_t start, uint32_t end, uint32_t length, 
   for (uint32_t i = 0; i < length - 1; i++) {
     D1[i] = distance(records[at(start + 1 + i)], records[at(Sv1)]);
     if (level < this->p) {
-      uint32_t p_index = at(start + 1 + i) * this->p;
+      uint32_t p_index = pindex(start + 1 + i);
       this->paths[p_index + level] = D1[i];
     }
   }
@@ -164,7 +164,7 @@ MVPNode* MVPTree::build_internal(uint32_t start, uint32_t end, uint32_t length, 
     D2[i] = distance(records[at(SS1_start + i)],
                       records[at(Sv2)]);
     if (level + 1 < this->p) {
-      uint32_t p_index = at(SS1_start + i) * this->p;
+      uint32_t p_index = pindex(SS1_start + i);
       this->paths[p_index + level + 1] = D2[i];
     }
   }
@@ -175,7 +175,7 @@ MVPNode* MVPTree::build_internal(uint32_t start, uint32_t end, uint32_t length, 
     D3[i] = distance(records[at(SS2_start + 1 + i)],
                       records[at(Sv2)]);
     if (level + 1 < this->p) {
-      uint32_t p_index = at(SS2_start + 1 + i) * this->p;
+      uint32_t p_index = pindex(SS2_start + 1 + i);
       this->paths[p_index + level + 1] = D3[i];
     }
   }
@@ -233,9 +233,10 @@ MVPNode* MVPTree::build_node(uint32_t start, uint32_t end, uint32_t level) {
   }
 }
 
-void MVPTree::build(Record* records, uint32_t length, uint32_t* indexes, score_t* paths, uint32_t p) {
+void MVPTree::build(Record* records, uint32_t length, uint32_t* indexes, score_t* paths, uint32_t max_p) {
   this->k = MVPTree::OptimalK(k_nearest_neighbors);
-  this->p = p;
+  this->p = MVPTree::OptimalK(length);
+  this->max_p = max_p;
   this->records = records;
   this->length = length;
   this->indexes = indexes;
@@ -258,16 +259,18 @@ uint32_t MVPTree::OptimalP(uint32_t n_of_records) {
 
 void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* PATH, score_t& r, uint32_t level, const MVPNode* node) const {
   const uint32_t Sv1 = at(node->Sv1);
-  const uint32_t Sv2 = at(node->Sv2);
-
   const score_t dSv1 = distance(q, records[Sv1]);
-  const score_t dSv2 = distance(q, records[Sv2]);
-
   if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 <= r) {
     scoreboard.push(Sv1, dSv1);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
   }
+
+  if (node->Sv2 == -1)
+      return;
+
+  const uint32_t Sv2 = at(node->Sv2);
+  const score_t dSv2 = distance(q, records[Sv2]);
   if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 <= r) {
     scoreboard.push(Sv2, dSv2);
     if (scoreboard.full())
@@ -501,7 +504,8 @@ MVPForest MVPForest::Build(const Database& database) {
     return {
         .indexes = indexes,
         .paths = paths,
-        .trees = trees
+        .trees = trees,
+        .max_p = max_p
     };
 }
 
@@ -509,9 +513,9 @@ void MVPForest::Search(const MVPForest& forest, const Database& database, Result
   Scoreboard gboard;
 
   #ifdef DISATTEND_CHECKS
-    const uint32_t query_type = NORMAL;
+  const uint32_t query_type = NORMAL;
   #else
-    const uint32_t query_type = (uint32_t) (query.query_type);
+  const uint32_t query_type = (uint32_t) (query.query_type);
   #endif
 
   score_t* PATH = smalloc<score_t>(40); // TODO: segnati max_p
