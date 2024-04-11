@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Generator, Iterable
 import re, os, sys
 import yaml

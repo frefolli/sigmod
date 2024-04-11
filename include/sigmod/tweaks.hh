@@ -12,6 +12,6 @@
 /* Used while reading/writing things from/to files */
 #define BATCH_SIZE 100000
 
-#define CORES 5
+#define CORES 30
 
 #endif

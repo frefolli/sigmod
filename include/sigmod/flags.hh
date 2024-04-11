@@ -15,8 +15,8 @@
 #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
-// #define ENABLE_DIM_REDUCTION
-// #define N_DIM_REDUCTION 90
+#define ENABLE_DIM_REDUCTION
+#define N_DIM_REDUCTION 70
 
 /* Build a KD Forest and uses it to craft a solution */
 #define ENABLE_KD_FOREST
@@ -43,7 +43,7 @@
 // #define SHOW_MISMATCH_IN_COMPARISON
 
 /* Enables thread pools */
-// #define CONCURRENCY
+#define CONCURRENCY
 
 /* Enables Fast Index */
 #define FAST_INDEX
