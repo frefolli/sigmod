@@ -14,13 +14,6 @@
 #include <map>
 #include <cfloat>
 
-// main dependencies
-// #include <sigmod/database.hh>
-// #include <sigmod/query_set.hh>
-// #include <sigmod/random.hh>
-// #include <sigmod/debug.hh>
-// #include <sigmod/flags.hh>
-
 const uint32_t DATABASE_LENGTH = 1000000;
 const uint32_t QUERYSET_LENGTH = 1;
 uint32_t SIGMOD_MAX_LEVEL_REACHED = 0;
@@ -260,7 +253,7 @@ uint32_t MVPTree::OptimalP(uint32_t n_of_records) {
 void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* PATH, score_t& r, uint32_t level, const MVPNode* node) const {
   const uint32_t Sv1 = at(node->Sv1);
   const score_t dSv1 = distance(q, records[Sv1]);
-  if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 <= r) {
+  if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 < r) {
     scoreboard.push(Sv1, dSv1);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
@@ -271,7 +264,7 @@ void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* P
 
   const uint32_t Sv2 = at(node->Sv2);
   const score_t dSv2 = distance(q, records[Sv2]);
-  if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 <= r) {
+  if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 < r) {
     scoreboard.push(Sv2, dSv2);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
@@ -287,8 +280,8 @@ void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* P
     if (!check_if_elegible_by_T(q, records[index]))
         continue;
     if (scoreboard.not_full()) {
-      const score_t diq = distance(q, records[i]);
-      scoreboard.push(i, diq);
+      const score_t diq = distance(q, records[index]);
+      scoreboard.push(index, diq);
       if (scoreboard.full())
         r = scoreboard.furthest().score;
     } else {
@@ -302,7 +295,7 @@ void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* P
             }
             if (compute_d) {
               const score_t diq = distance(q, records[index]);
-              if (diq <= r) {
+              if (diq < r) {
                 scoreboard.push(index, diq);
                 r = scoreboard.furthest().score;
               }
@@ -320,12 +313,12 @@ void MVPTree::knn_search_internal(const Query& q, Scoreboard& scoreboard, score_
   const score_t dSv1 = distance(q, records[Sv1]);
   const score_t dSv2 = distance(q, records[Sv2]);
 
-  if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 <= r) {
+  if (check_if_elegible_by_T(q, records[Sv1]) && dSv1 < r) {
     scoreboard.push(Sv1, dSv1);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
   }
-  if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 <= r) {
+  if (check_if_elegible_by_T(q, records[Sv2]) && dSv2 < r) {
     scoreboard.push(Sv2, dSv2);
     if (scoreboard.full())
       r = scoreboard.furthest().score;
@@ -498,6 +491,7 @@ MVPForest MVPForest::Build(const Database& database) {
     #else
     for (auto cat : database.C_map) {
         trees[cat.first] = MVPTree::Build(database, paths, max_p, indexes, cat.second.first, cat.second.second + 1);
+        MVPTree::Check(trees[cat.first]);
     }
     #endif
 
