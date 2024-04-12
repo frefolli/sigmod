@@ -7,6 +7,7 @@ options:
     - --std=c++17
     - -O3
     - -pthread
+    - -fopenmp
 builddir: builddir
 runs:
   dummy: dummy-data.bin dummy-queries.bin

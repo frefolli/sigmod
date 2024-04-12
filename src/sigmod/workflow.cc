@@ -178,6 +178,11 @@ void Workflow(const std::string database_path,
     IndexDatabase(database);
     LogTime("Indexes Database");
 
+    #ifdef KMC_EOTI_FS
+    ClusterizeDatabase(database);
+    LogTime("Clusterized Database");
+    #endif
+
     /* Initialization */
     #ifdef ENABLE_BALL_FOREST
     BallForest ball_forest = BuildBallForest(database);
