@@ -11,17 +11,9 @@ struct Database {
     Record* records;
     c_map_t C_map;
 
-    #ifndef FAST_INDEX
-    uint32_t* indexes;
-    #endif
-
     // indirection of indexes[index]
     inline const Record& at(const uint32_t index) const {
-      #ifdef FAST_INDEX
       return records[index];
-      #else
-      return records[indexes[index]];
-      #endif
     };
 };
 
@@ -30,6 +22,7 @@ void FreeDatabase(Database& database);
 void StatsDatabase(const Database& database);
 
 void IndexDatabase(Database& database);
+void ClusterizeDatabase(const Database& database);
 
 const float32_t** ReduceDimensionality(Database& database, const uint32_t final_dimension);
 

@@ -3,10 +3,12 @@
 #include <sigmod/tweaks.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/scoreboard.hh>
+#include <sigmod/thread_pool.hh>
+#include <sigmod/tree_utils.hh>
 #include <algorithm>
 #include <cassert>
-#include <sigmod/thread_pool.hh>
 #include <iostream>
+#include <cfloat>
 
 void FreeBallNode(BallNode* node) {
     if (node == nullptr)
@@ -33,6 +35,7 @@ void FreeBallTree(BallTree& tree) {
 void FreeBallForest(BallForest& forest) {
     for (auto tree : forest.trees)
         FreeBallTree(tree.second);
+    forest.trees = {};
     if (forest.indexes != nullptr) {
         free(forest.indexes);
         forest.indexes = nullptr;
@@ -41,21 +44,6 @@ void FreeBallForest(BallForest& forest) {
 
 bool IsLeaf(const BallNode* node) {
     return (node->left == nullptr && node->right == nullptr);
-}
-
-uint32_t FindFurthestPoint(const Database& database, uint32_t* indexes,
-                           const uint32_t start, const uint32_t end,
-                           const uint32_t target) {
-    uint32_t furthest = start;
-    score_t furthest_score = distance(database.at(indexes[target]), database.at(indexes[furthest]));
-    for (uint32_t i = start + 1; i < end; i++) {
-        score_t score = distance(database.at(indexes[target]), database.at(indexes[i]));
-        if (score > furthest_score) {
-            furthest_score = score;
-            furthest = i;
-        }
-    }
-    return furthest;
 }
 
 inline bool is_leftist(const Database& database, const uint32_t* indexes, const uint32_t a, const uint32_t b, const uint32_t x) {
@@ -164,8 +152,8 @@ BallForest BuildBallForest(const Database& database) {
     }
 
     std::map<uint32_t, BallTree> trees;
-    std::mutex mutex;
     #ifdef CONCURRENCY
+    std::mutex mutex;
     ThreadPool pool;
     pool.run([&trees, &database, &indexes, &mutex](typename c_map_t::const_iterator cat) {
         BallTree tree = BuildBallTree(database, indexes, cat->second.first, cat->second.second + 1);
@@ -188,34 +176,39 @@ BallForest BuildBallForest(const Database& database) {
 
 void SearchBallNode(const Database& database, const Query& query,
                     Scoreboard& scoreboard, const BallTree& tree,
-                    const BallNode* node, const score_t distance_query_center) {
+                    const BallNode* node, score_t& Dsofar, const score_t Dminp) {
     if (IsLeaf(node)) {
         for (uint32_t i = node->start; i < node->end; i++) {
             const uint32_t p = tree.indexes[i];
             const score_t distance_query_p = distance(query, database.at(p));
             scoreboard.push(p, distance_query_p);
+            if (scoreboard.full())
+                Dsofar = scoreboard.top().score;
         }
     } else {
         const score_t distance_query_left = distance(query, node->left->center);
         const score_t distance_query_right = distance(query, node->right->center);
 
+        const score_t LDminp = std::max(distance_query_left - node->left->radius, Dminp);
+        const score_t RDminp = std::max(distance_query_right - node->right->radius, Dminp);
+
         if (distance_query_left < distance_query_right) {
-            if (scoreboard.empty() || distance_query_left - (node->left->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
-                SearchBallNode(database, query, scoreboard, tree, node->left, distance_query_left);
-            if (scoreboard.empty() || distance_query_right - (node->right->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
-                SearchBallNode(database, query, scoreboard, tree, node->right, distance_query_right);
+            if (LDminp < Dsofar)
+                SearchBallNode(database, query, scoreboard, tree, node->left, Dsofar, LDminp);
+            if (RDminp < Dsofar)
+                SearchBallNode(database, query, scoreboard, tree, node->right, Dsofar, RDminp);
         } else {
-            if (scoreboard.empty() || distance_query_right - (node->right->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
-                SearchBallNode(database, query, scoreboard, tree, node->right, distance_query_right);
-            if (scoreboard.empty() || distance_query_left - (node->left->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
-                SearchBallNode(database, query, scoreboard, tree, node->left, distance_query_left);
+            if (RDminp < Dsofar)
+                SearchBallNode(database, query, scoreboard, tree, node->right, Dsofar, RDminp);
+            if (LDminp < Dsofar)
+                SearchBallNode(database, query, scoreboard, tree, node->left, Dsofar, LDminp);
         }
     }
 }
 
 void SearchBallNodeByT(const Database& database, const Query& query,
                     Scoreboard& scoreboard, const BallTree& tree,
-                    const BallNode* node, const score_t distance_query_center) {
+                    const BallNode* node, score_t& Dsofar, const score_t Dminp) {
     if (IsLeaf(node)) {
         for (uint32_t i = node->start; i < node->end; i++) {
             const uint32_t p = tree.indexes[i];
@@ -225,35 +218,48 @@ void SearchBallNodeByT(const Database& database, const Query& query,
             #endif
             const score_t distance_query_p = distance(query, database.at(p));
             scoreboard.push(p, distance_query_p);
+            if (scoreboard.full())
+                Dsofar = scoreboard.top().score;
         }
     } else {
         const score_t distance_query_left = distance(query, node->left->center);
         const score_t distance_query_right = distance(query, node->right->center);
 
+        const score_t LDminp = std::max(distance_query_left - node->left->radius, Dminp);
+        const score_t RDminp = std::max(distance_query_right - node->right->radius, Dminp);
+
         if (distance_query_left < distance_query_right) {
-            if (scoreboard.empty() || distance_query_left - (node->left->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
-                SearchBallNodeByT(database, query, scoreboard, tree, node->left, distance_query_left);
-            if (scoreboard.empty() || distance_query_right - (node->right->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
-                SearchBallNodeByT(database, query, scoreboard, tree, node->right, distance_query_right);
+            if (LDminp < Dsofar)
+                SearchBallNodeByT(database, query, scoreboard, tree, node->left, Dsofar, LDminp);
+            if (RDminp < Dsofar)
+                SearchBallNodeByT(database, query, scoreboard, tree, node->right, Dsofar, RDminp);
         } else {
-            if (scoreboard.empty() || distance_query_right - (node->right->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
-                SearchBallNodeByT(database, query, scoreboard, tree, node->right, distance_query_right);
-            if (scoreboard.empty() || distance_query_left - (node->left->radius * BALL_RADIUS_AMPLIFICATION) <= scoreboard.top().score)
-                SearchBallNodeByT(database, query, scoreboard, tree, node->left, distance_query_left);
+            if (RDminp < Dsofar)
+                SearchBallNodeByT(database, query, scoreboard, tree, node->right, Dsofar, RDminp);
+            if (LDminp < Dsofar)
+                SearchBallNodeByT(database, query, scoreboard, tree, node->left, Dsofar, LDminp);
         }
     }
 }
 
 void SearchBallTree(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree) {
     const score_t distance_query_root = distance(query, tree.root->center);
-    if (scoreboard.empty() || distance_query_root - (tree.root->radius * BALL_RADIUS_AMPLIFICATION) < scoreboard.top().score)
-        SearchBallNode(database, query, scoreboard, tree, tree.root, distance_query_root);
+    const score_t Dminp = std::max(distance_query_root - tree.root->radius, (score_t) 0);
+    score_t Dsofar = DBL_MAX;
+    if (scoreboard.full())
+        Dsofar = scoreboard.top().score;
+    if (Dminp < Dsofar)
+        SearchBallNode(database, query, scoreboard, tree, tree.root, Dsofar, Dminp);
 }
 
 void SearchBallTreeByT(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree) {
     const score_t distance_query_root = distance(query, tree.root->center);
-    if (scoreboard.empty() || distance_query_root - (tree.root->radius * BALL_RADIUS_AMPLIFICATION) < scoreboard.top().score)
-        SearchBallNodeByT(database, query, scoreboard, tree, tree.root, distance_query_root);
+    const score_t Dminp = std::max(distance_query_root - tree.root->radius, (score_t) 0);
+    score_t Dsofar = DBL_MAX;
+    if (scoreboard.full())
+        Dsofar = scoreboard.top().score;
+    if (Dminp < Dsofar)
+        SearchBallNodeByT(database, query, scoreboard, tree, tree.root, Dsofar, Dminp);
 }
 
 void SearchBallForest(const BallForest& forest, const Database& database, Result& result, const Query& query) {
@@ -279,14 +285,10 @@ void SearchBallForest(const BallForest& forest, const Database& database, Result
         }
     }
 
-    //assert (gboard.full());
+    assert (gboard.full());
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
-        #ifdef FAST_INDEX
         result.data[rank] = gboard.top().index;
-        #else
-        result.data[rank] = database.indexes[gboard.top().index];
-        #endif
         gboard.pop();
         rank--;
     }

@@ -82,11 +82,7 @@ void SearchExaustive(const Database& database, Result& result, const Query& quer
     assert (scoreboard.full());
     uint32_t rank = scoreboard.size() - 1;
     while(!scoreboard.empty()) {
-        #ifdef FAST_INDEX
         result.data[rank] = scoreboard.top().index;
-        #else
-        result.data[rank] = database.indexes[scoreboard.top().index];
-        #endif
         scoreboard.pop();
         rank -= 1;
     }

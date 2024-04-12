@@ -5,8 +5,12 @@ uint32_t Scoreboard::size() const {
     return board.size();
 }
 
-const Candidate& Scoreboard::top() const {
+const Candidate& Scoreboard::furthest() const {
     return board.back();
+}
+
+const Candidate& Scoreboard::nearest() const {
+    return board[0];
 }
 
 void Scoreboard::pop() {
@@ -60,4 +64,8 @@ void Scoreboard::update(const Scoreboard& input) {
 
 bool Scoreboard::full() const {
     return board.size() == k_nearest_neighbors;
+}
+
+void Scoreboard::clear() {
+  board.resize(0);
 }

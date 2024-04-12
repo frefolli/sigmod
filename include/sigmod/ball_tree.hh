@@ -35,8 +35,13 @@ BallForest BuildBallForest(const Database& database);
 
 void SearchBallNode(const Database& database, const Query& query,
                     Scoreboard& scoreboard, const BallTree& tree,
-                    const BallNode* node, const score_t distance_query_center);
+                    const BallNode* node, score_t& Dsofar, const score_t Dminp);
+void SearchBallNodeByT(const Database& database, const Query& query,
+                    Scoreboard& scoreboard, const BallTree& tree,
+                    const BallNode* node, score_t& Dsofar, const score_t Dminp);
+
 void SearchBallTree(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree);
+void SearchBallTreeByT(const Database& database, const Query& query, Scoreboard& scoreboard, const BallTree& tree);
 void SearchBallForest(const BallForest& forest, const Database& database, Result& result, const Query& query);
 
 #endif

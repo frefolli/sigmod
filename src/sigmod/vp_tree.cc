@@ -32,6 +32,7 @@ void FreeVPTree(VPTree& tree) {
 void FreeVPForest(VPForest& forest) {
     for (auto tree : forest.trees)
         FreeVPTree(tree.second);
+    forest.trees = {};
     if (forest.indexes != nullptr) {
         free(forest.indexes);
         forest.indexes = nullptr;
@@ -168,11 +169,7 @@ void SearchVPForest(const VPForest& forest, const Database& database, Result& re
     assert (gboard.full());
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
-        #ifdef FAST_INDEX
         result.data[rank] = gboard.top().index;
-        #else
-        result.data[rank] = database.indexes[gboard.top().index];
-        #endif
         gboard.pop();
         rank--;
     }
