@@ -93,7 +93,7 @@ void IndexDatabase(Database& database) {
 }
 
 void ClusterizeDatabase(const Database& database) {
-    const uint32_t ITERATIONS = 1000;
+    const uint32_t ITERATIONS = 1;
     actual_vector_size = 10;
     for (auto it : database.C_map) {
         std::cout << "Clusterization of Category "
