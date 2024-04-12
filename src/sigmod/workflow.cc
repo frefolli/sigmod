@@ -12,20 +12,35 @@
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/random_projection.hh>
+#include <chrono>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
                                       const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
-        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+        .results = (Result*) malloc(sizeof(Result) * query_set.length),
     };
+
     for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
         if (i >= TOT_ELEMENTS)
             break;
         #endif
+        uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
+
+        auto start_query_timer = std::chrono::high_resolution_clock::now();
+        
         SearchExaustive(database, solution.results[i], query_set.queries[i]);
+        
+        auto end_query_timer = std::chrono::high_resolution_clock::now();
+        
+        long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
+
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
     }
+
     return solution;
 }
 
@@ -34,15 +49,28 @@ Solution SolveForQueriesWithKDForest(const Database& database,
                                      const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
-        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+        .results = (Result*) malloc(sizeof(Result) * query_set.length),
     };
     for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
         if (i >= TOT_ELEMENTS)
             break;
         #endif
+        uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
+
+        auto start_query_timer = std::chrono::high_resolution_clock::now();
+        
         SearchKDForest(forest, database, solution.results[i], query_set.queries[i]);
+        
+        auto end_query_timer = std::chrono::high_resolution_clock::now();
+        
+        long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
+
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
     }
+
     return solution;
 }
 
@@ -51,15 +79,29 @@ Solution SolveForQueriesWithBallForest(const Database& database,
                                        const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
-        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+        .results = (Result*) malloc(sizeof(Result) * query_set.length),
     };
     for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
         if (i >= TOT_ELEMENTS)
             break;
         #endif
+
+        uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
+
+        auto start_query_timer = std::chrono::high_resolution_clock::now();
+        
         SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
+        
+        auto end_query_timer = std::chrono::high_resolution_clock::now();
+        
+        long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
+
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
     }
+
     return solution;
 }
 
@@ -68,15 +110,29 @@ Solution SolveForQueriesWithVPForest(const Database& database,
                                      const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
-        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+        .results = (Result*) malloc(sizeof(Result) * query_set.length),
     };
     for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
         if (i >= TOT_ELEMENTS)
             break;
         #endif
+        uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
+
+        auto start_query_timer = std::chrono::high_resolution_clock::now();
+
         SearchVPForest(forest, database, solution.results[i], query_set.queries[i]);
+        
+        auto end_query_timer = std::chrono::high_resolution_clock::now();
+        
+        long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
+
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
+    
     }
+
     return solution;
 }
 
@@ -147,16 +203,31 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_BALL_FOREST
     Solution ball_forest_solution = SolveForQueriesWithBallForest(database, ball_forest, query_set);
     LogTime("Used Ball Forest");
+    for(uint8_t k = 0; k < 4; k++){
+        std::pair<uint32_t, uint64_t> time_score_query = ball_forest_solution.time_score_queries[k];
+        Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
+        std::to_string(time_score_query.second) + " ms/q");
+    }
     #endif
 
     #ifdef ENABLE_KD_FOREST
     Solution kd_forest_solution = SolveForQueriesWithKDForest(database, kd_forest, query_set);
     LogTime("Used KD Forest");
+    for(uint8_t k = 0; k < 4; k++){
+        std::pair<uint32_t, uint64_t> time_score_query = kd_forest_solution.time_score_queries[k];
+        Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
+        std::to_string(time_score_query.second) + " ms/q");
+    }
     #endif
 
     #ifdef ENABLE_VP_FOREST
     Solution vp_forest_solution = SolveForQueriesWithVPForest(database, vp_forest, query_set);
     LogTime("Used VP Forest");
+    for(uint8_t k = 0; k < 4; k++){
+        std::pair<uint32_t, uint64_t> time_score_query = vp_forest_solution.time_score_queries[k];
+        Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
+        std::to_string(time_score_query.second) + " ms/q");
+    }
     #endif
 
     #ifdef ENABLE_MVP_FOREST
@@ -167,7 +238,13 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_EXAUSTIVE
     Solution exaustive_solution = SolveForQueriesWithExaustive(database, query_set);
     LogTime("Used Exaustive");
+    for(uint8_t k = 0; k < 4; k++){
+        std::pair<uint32_t, uint64_t> time_score_query = exaustive_solution.time_score_queries[k];
+        Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
+        std::to_string(time_score_query.second) + " ms/q");
+    }
     #endif
+
 
     /* Comparison */
     #ifdef ENABLE_EXAUSTIVE
