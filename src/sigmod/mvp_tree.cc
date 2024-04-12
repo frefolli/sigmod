@@ -228,7 +228,7 @@ MVPNode* MVPTree::build_node(uint32_t start, uint32_t end, uint32_t level) {
 
 void MVPTree::build(Record* records, uint32_t length, uint32_t* indexes, score_t* paths, uint32_t max_p) {
   this->k = MVPTree::OptimalK(k_nearest_neighbors);
-  this->p = MVPTree::OptimalK(length);
+  this->p = MVPTree::OptimalP(length);
   this->max_p = max_p;
   this->records = records;
   this->length = length;
@@ -238,7 +238,7 @@ void MVPTree::build(Record* records, uint32_t length, uint32_t* indexes, score_t
 }
 
 uint32_t MVPTree::OptimalK(uint32_t n_of_nearest_neighbors) {
-  return n_of_nearest_neighbors;
+  return n_of_nearest_neighbors * 2;
 }
 
 uint32_t MVPTree::OptimalP(uint32_t n_of_records) {
