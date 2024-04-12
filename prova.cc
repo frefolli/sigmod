@@ -1,4 +1,3 @@
-// #include <bit>
 #include <limits>
 #include <cstdint>
 #include <cmath>
@@ -20,15 +19,39 @@ void RandomDoubleBatch(const double min, const double max, double* buffer, uint3
     }
 }
 
-constexpr double Q_rsqrt(double number) noexcept {
-  double const y = __builtin_bit_cast(double, 0x5FE6EC85E7DE30DA - (__builtin_bit_cast<uint64_t>(number) >> 1));
-  return y * (1.5f - (number * 0.5f * y * y));
+#define MAGIC_NUMBER_A 0x5FE6EB50C7B537A9
+#define MAGIC_NUMBER_B 0x5F1FFFF9
+
+// Method A
+#define A 1.5f
+#define B 0.5f
+
+// Method B
+#define C 0.703952253f
+#define D 2.38924456f
+
+constexpr double Q_rsqrt_A(double number) noexcept {
+  double const y = __builtin_bit_cast(double, MAGIC_NUMBER_A - (__builtin_bit_cast(uint64_t, number) >> 1));
+    return y * (A - (number * B * y * y));
 }
 
-inline constexpr double Q_sqrt(double number) noexcept {
-  double const y = __builtin_bit_cast(double, 0x5FE6EC85E7DE30DA - (__builtin_bit_cast<uint64_t>(number) >> 1));
-  return 1 / (y * (1.5f - (number * 0.5f * y * y)));
+inline constexpr double Q_sqrt_A(double number) noexcept {
+  double const y = __builtin_bit_cast(double, MAGIC_NUMBER_A - (__builtin_bit_cast(uint64_t, number) >> 1));
+    return 1 / (y * (A - (number * B * y * y)));
 }
+
+constexpr double Q_rsqrt_B(double number) noexcept {
+  double const y = __builtin_bit_cast(double, MAGIC_NUMBER_A - (__builtin_bit_cast(uint64_t, number) >> 1));
+    return y * C * (D - number * y * y);
+}
+
+inline constexpr double Q_sqrt_B(double number) noexcept {
+  double const y = __builtin_bit_cast(double, MAGIC_NUMBER_A - (__builtin_bit_cast(uint64_t, number) >> 1));
+    return 1 / (y * C * (D - number * y * y));
+}
+
+#define Q_sqrt Q_sqrt_B
+#define Q_rsqrt Q_rsqrt_B
 
 int main() {
     std::srand(std::time(0));
