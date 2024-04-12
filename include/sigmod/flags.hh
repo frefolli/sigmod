@@ -46,7 +46,7 @@
 #define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
-#define SHOW_MISMATCH_IN_COMPARISON
+// #define SHOW_MISMATCH_IN_COMPARISON
 
 /* Enables thread pools */
 // #define CONCURRENCY
@@ -58,7 +58,7 @@
 // #define FAST_DISTANCE
 
 /* Enables Fast sqrt: uses Quacke III approximation */
-#define FAST_SQRT
+// #define FAST_SQRT
 
 /* Save solution in file */
 // #define SAVE_SOLUTION
