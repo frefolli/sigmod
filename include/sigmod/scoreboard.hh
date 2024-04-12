@@ -12,6 +12,7 @@
 #include <cmath>
 #endif
 
+#ifdef FAST_SQRT
 #define QUACKE3_MAGIC_NUMBER 0x5FE6EB50C7B537A9
 #define QUACKE3_A 1.5f
 #define QUACKE3_B 0.5f
@@ -29,6 +30,7 @@ inline constexpr double quacke2_sqrt(double number) noexcept {
   double const y = __builtin_bit_cast(double, QUACKE2_MAGIC_NUMBER - (__builtin_bit_cast(uint64_t, number) >> 1));
   return 1 / (y * QUACKE2_C * (QUACKE2_D - number * y * y));
 }
+#endif
 
 /* 
 * In case we reduce dataset using RP distance changed by sqrt(d/k)*original distance,
@@ -47,7 +49,7 @@ inline score_t distance(const WFA& query, const WFB& record) {
     #ifdef FAST_DISTANCE
         return sum;
     #else
-        #ifdef FAST_SQRT
+        #ifndef FAST_SQRT
             return std::sqrt(sum);
         #else
             return quacke3_sqrt(sum);
