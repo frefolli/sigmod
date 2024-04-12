@@ -288,11 +288,7 @@ void SearchBallForest(const BallForest& forest, const Database& database, Result
     assert (gboard.full());
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
-        #ifdef FAST_INDEX
         result.data[rank] = gboard.top().index;
-        #else
-        result.data[rank] = database.indexes[gboard.top().index];
-        #endif
         gboard.pop();
         rank--;
     }

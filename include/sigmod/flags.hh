@@ -51,9 +51,6 @@
 /* Enables thread pools */
 // #define CONCURRENCY
 
-/* Enables Fast Index */
-#define FAST_INDEX
-
 /* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
 // #define FAST_DISTANCE
 
