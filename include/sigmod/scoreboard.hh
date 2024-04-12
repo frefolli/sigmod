@@ -12,22 +12,46 @@
 #include <cmath>
 #endif
 
+#define QUACKE3_MAGIC_NUMBER 0x5FE6EB50C7B537A9
+#define QUACKE3_A 1.5f
+#define QUACKE3_B 0.5f
+
+inline constexpr double quacke3_sqrt(double number) noexcept {
+  double const y = __builtin_bit_cast(double, QUACKE3_MAGIC_NUMBER - (__builtin_bit_cast(uint64_t, number) >> 1));
+  return 1 / (y * (QUACKE3_A - (number * QUACKE3_B * y * y)));
+}
+
+#define QUACKE2_MAGIC_NUMBER 0x5FE6EB50C7B537A9
+#define QUACKE2_C 0.7221722172217222F
+#define QUACKE2_D 2.3894389438943895F
+
+inline constexpr double quacke2_sqrt(double number) noexcept {
+  double const y = __builtin_bit_cast(double, QUACKE2_MAGIC_NUMBER - (__builtin_bit_cast(uint64_t, number) >> 1));
+  return 1 / (y * QUACKE2_C * (QUACKE2_D - number * y * y));
+}
+
 /* 
 * In case we reduce dataset using RP distance changed by sqrt(d/k)*original distance,
 * were d is initial dimension and k is final dimension.
 */
 template <typename WFA, typename WFB>
 inline score_t distance(const WFA& query, const WFB& record) {
-    SIGMOD_DISTANCE_COMPUTATIONS++;
+    #ifdef TRACK_DISTANCE_COMPUTATIONS
+        SIGMOD_DISTANCE_COMPUTATIONS++;
+    #endif
     score_t sum = 0;
     for (uint32_t i = 0; i < actual_vector_size; i++) {
         score_t m = query.fields[i] - record.fields[i];
         sum += (m * m);
     }
     #ifdef FAST_DISTANCE
-    return sum;
+        return sum;
     #else
-    return std::sqrt(sum);
+        #ifdef FAST_SQRT
+            return std::sqrt(sum);
+        #else
+            return quacke3_sqrt(sum);
+        #endif
     #endif
 }
 

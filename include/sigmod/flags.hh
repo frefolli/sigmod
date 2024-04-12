@@ -19,19 +19,19 @@
 // #define N_DIM_REDUCTION 70
 
 /* Build a KD Forest and uses it to craft a solution */
-// #define ENABLE_KD_FOREST
+#define ENABLE_KD_FOREST
 
 /* Randomize KD Node dimensions */
 // #define KD_FOREST_DIMENSION_RANDOMIZE
 
 /* Assign KD Node dimensions in order to maximize spread */
-// #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+#define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
 
 /* Build a Ball Forest and uses it to craft a solution */
-// #define ENABLE_BALL_FOREST
+#define ENABLE_BALL_FOREST
 
 /* Build a VP Forest and uses it to craft a solution */
-// #define ENABLE_VP_FOREST
+#define ENABLE_VP_FOREST
 
 /* Build a MVP Forest and uses it to craft a solution */
 #define ENABLE_MVP_FOREST
@@ -56,6 +56,9 @@
 
 /* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
 // #define FAST_DISTANCE
+
+/* Enables Fast sqrt: uses Quacke III approximation */
+#define FAST_SQRT
 
 /* Save solution in file */
 // #define SAVE_SOLUTION
