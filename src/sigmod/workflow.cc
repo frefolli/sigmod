@@ -93,7 +93,6 @@ Solution SolveForQueriesWithMVPForest(const Database& database,
         if (i >= TOT_ELEMENTS)
             break;
         #endif
-        std::cout << "query#" << i << std::endl;
         MVPForest::Search(forest, database, PATH, solution.results[i], query_set.queries[i]);
     }
     return solution;

@@ -286,7 +286,7 @@ void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* P
         r = scoreboard.furthest().score;
     } else {
       if (std::fabs(dSv1 - node->D1[i + 1]) <= r) {
-          if (true || std::fabs(dSv2 - node->D2[i]) <= r) {
+          if (std::fabs(dSv2 - node->D2[i]) <= r) {
             bool compute_d = true;
             for (uint32_t j = 0; j < level && j < p; j++) {
               if (std::fabs(PATH[j] - paths[p_index + j]) > r) {
@@ -299,18 +299,9 @@ void MVPTree::knn_search_leaf(const Query& q, Scoreboard& scoreboard, score_t* P
               if (diq <= r) {
                 scoreboard.pushf(index, diq);
                 r = scoreboard.furthest().score;
-              } else {
-                if (index == 9481) std::cout << "rejected by r := " << r << std::endl;
               }
-            } else {
-                if (index == 9481) std::cout << "rejected by PATH" << std::endl;
-              }
-        } else {
-            if (index == 9481)
-                std::cout << "rejected by dSv2: " << "abs(" << dSv2 << " - " << node->D2[i] << ") = " << std::fabs(dSv2 - node->D2[i]) << " > " << r << std::endl;
-          }
-      } else {
-        if (index == 9481) std::cout << "rejected by dSv1" << std::endl;
+            }
+        }
       }
     }
   }
@@ -512,6 +503,11 @@ MVPForest MVPForest::Build(const Database& database) {
     #else
     for (auto cat : database.C_map) {
         trees[cat.first] = MVPTree::Build(database, paths, max_p, indexes, cat.second.first, cat.second.second + 1);
+    }
+    #endif
+
+    #ifdef CHECK_MVP_FOREST
+    for (auto cat : database.C_map) {
         MVPTree::Check(trees[cat.first]);
     }
     #endif

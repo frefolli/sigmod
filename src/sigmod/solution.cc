@@ -94,11 +94,6 @@ score_t CompareSolutions(const Database& database, const QuerySet& query_set, co
         if (i >= TOT_ELEMENTS)
             break;
         #endif
-        std::cout << "Q := " << query_set.queries[i].query_type
-                  << " | " << query_set.queries[i].v
-                  << " | " << query_set.queries[i].l
-                  << " | " << query_set.queries[i].r
-                  << std::endl;
         for (uint32_t j = 0; j < k_nearest_neighbors; j++) {
             if (expected.results[i].data[j] == got.results[i].data[j]) {
                 recall++;

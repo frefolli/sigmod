@@ -8,6 +8,10 @@
 #include <sigmod/query.hh>
 #include <vector>
 
+#ifndef FAST_DISTANCE
+#include <cmath>
+#endif
+
 /* 
 * In case we reduce dataset using RP distance changed by sqrt(d/k)*original distance,
 * were d is initial dimension and k is final dimension.
@@ -20,7 +24,11 @@ inline score_t distance(const WFA& query, const WFB& record) {
         score_t m = query.fields[i] - record.fields[i];
         sum += (m * m);
     }
+    #ifdef FAST_DISTANCE
     return sum;
+    #else
+    return std::sqrt(sum);
+    #endif
 }
 
 inline bool check_if_elegible_by_T(const Query& query, const Record& record) {

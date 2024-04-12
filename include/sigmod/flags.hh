@@ -36,6 +36,9 @@
 /* Build a MVP Forest and uses it to craft a solution */
 #define ENABLE_MVP_FOREST
 
+/* Uses MVPForest::Check on the forest after build */
+// #define CHECK_MVP_FOREST
+
 /* Uses the classic linear search to get a solution
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
@@ -50,6 +53,9 @@
 
 /* Enables Fast Index */
 #define FAST_INDEX
+
+/* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
+// #define FAST_DISTANCE
 
 /* Save solution in file */
 // #define SAVE_SOLUTION
