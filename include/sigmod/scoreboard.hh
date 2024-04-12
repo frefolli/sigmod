@@ -17,8 +17,14 @@
 #define QUACKE3_A 1.5f
 #define QUACKE3_B 0.5f
 
+template<typename F, typename T>
+inline constexpr T bit_cast(F obj) noexcept {
+  T* ptr = (T*) &obj;
+  return *ptr;
+}
+
 inline constexpr double quacke3_sqrt(double number) noexcept {
-  double const y = __builtin_bit_cast(double, QUACKE3_MAGIC_NUMBER - (__builtin_bit_cast(uint64_t, number) >> 1));
+  double const y = bit_cast<uint64_t, double>(QUACKE3_MAGIC_NUMBER - (bit_cast<double, uint64_t>(number) >> 1));
   return 1 / (y * (QUACKE3_A - (number * QUACKE3_B * y * y)));
 }
 
@@ -27,7 +33,7 @@ inline constexpr double quacke3_sqrt(double number) noexcept {
 #define QUACKE2_D 2.3894389438943895F
 
 inline constexpr double quacke2_sqrt(double number) noexcept {
-  double const y = __builtin_bit_cast(double, QUACKE2_MAGIC_NUMBER - (__builtin_bit_cast(uint64_t, number) >> 1));
+  double const y = bit_cast<uint64_t, double>(QUACKE3_MAGIC_NUMBER - (bit_cast<double, uint64_t>(number) >> 1));
   return 1 / (y * QUACKE2_C * (QUACKE2_D - number * y * y));
 }
 #endif
