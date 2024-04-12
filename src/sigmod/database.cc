@@ -205,11 +205,11 @@ void ClusterizeDatabase(const Database& database) {
             }
 
             // print counts
-            for (uint32_t i = 0; i < n_of_clusters; i++) {
+            /*for (uint32_t i = 0; i < n_of_clusters; i++) {
                 std::cout << "len(centroids["
                           << i << "]) = "
                           << centroids[i].C << std::endl;
-            }
+            }*/
 
             free(centroids);
             free(beholds);
