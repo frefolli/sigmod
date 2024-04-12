@@ -20,15 +20,14 @@ void RandomDoubleBatch(const double min, const double max, double* buffer, uint3
 }
 
 #define MAGIC_NUMBER_A 0x5FE6EB50C7B537A9
-#define MAGIC_NUMBER_B 0x5F1FFFF9
 
 // Method A
 #define A 1.5f
 #define B 0.5f
 
 // Method B
-#define C 0.703952253f
-#define D 2.38924456f
+#define C 0.7221722172217222
+#define D 2.3894389438943895
 
 constexpr double Q_rsqrt_A(double number) noexcept {
   double const y = __builtin_bit_cast(double, MAGIC_NUMBER_A - (__builtin_bit_cast(uint64_t, number) >> 1));
@@ -60,11 +59,19 @@ int main() {
     const double MAX = 100;
     double* Xs = (double*) malloc(sizeof(double) * SIZE);
     RandomDoubleBatch(MIN, MAX, Xs, SIZE);
+    
+    double* EYs = (double*) malloc(sizeof(double) * SIZE);
+    double* AYs = (double*) malloc(sizeof(double) * SIZE);
+    
+    double* EZs = (double*) malloc(sizeof(double) * SIZE);
+    double* AZs = (double*) malloc(sizeof(double) * SIZE);
 
     auto start = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < SIZE; i++) {
         double sqrt_x = std::sqrt(Xs[i]);
         double rsqrt_x = 1 / sqrt_x;
+        EYs[i] = sqrt_x;
+        EZs[i] = rsqrt_x;
     }
     auto end = std::chrono::high_resolution_clock::now();
     ETA("sqrt_x", end, start);
@@ -73,6 +80,8 @@ int main() {
     for (uint32_t i = 0; i < SIZE; i++) {
         double q_rsqrt_x = Q_rsqrt(Xs[i]);
         double q_sqrt_x = 1 / q_rsqrt_x;
+        AYs[i] = q_sqrt_x;
+        AZs[i] = q_rsqrt_x;
     }
     end = std::chrono::high_resolution_clock::now();
     ETA("qsqrt_x", end, start);
@@ -81,4 +90,8 @@ int main() {
     std::cout << Q_sqrt(23456.4567) << std::endl;
 
     free(Xs);
+    free(EYs);
+    free(AYs);
+    free(EZs);
+    free(AZs);
 }
