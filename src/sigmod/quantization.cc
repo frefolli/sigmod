@@ -132,5 +132,5 @@ std::vector<std::vector<float32_t>> Kmeans(
         //free(beholds);
     }*/
     
-    return ;
+    return centroids;
 }
