@@ -13,11 +13,12 @@ struct CodeBook{
     std::map<uint8_t, std::map<uint8_t, float32_t[M]>> centroids;
 };
 
-std::vector<std::vector<float32_t>> Kmeans(
+void Kmeans(
+    CodeBook& cb,
     const Database& database, 
     const uint32_t ITERATIONS = 1, 
-    const uint32_t start_partition_id, 
-    const uint32_t end_partition_id);
+    const uint32_t start_partition_id = 0, 
+    const uint32_t end_partition_id = M);
 
 inline void compute_distributions(std::vector<uint32_t>& dim_centroids) {
     score_t sum = 0;
