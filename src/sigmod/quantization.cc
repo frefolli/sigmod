@@ -55,19 +55,15 @@ void Kmeans(
     uint8_t n_partition = start_partition_id / M;
     const uint16_t dimension_vector = actual_vector_size / M;
     //std::vector<uint32_t> beholds(database.length);
-
     std::vector<uint32_t> dim_centroid(K);
-
     //std::vector<std::vector<float32_t>> centroids(k);
     //for (uint32_t i = 0; i < k; i++)
     //{
     //    centroids[i] = std::vector<float32_t>(dimension_partition);
     //}
-    
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
-
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
     for (uint32_t i = 0; i < K; i++) {
@@ -78,8 +74,6 @@ void Kmeans(
             dim_centroid[i] = 0;
         }
     }
-
-
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
         // FULL ITERATION
         // computing the nearest centroid
@@ -101,7 +95,6 @@ void Kmeans(
                 }
             }
         }
-
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dimension_vector; j++) {
@@ -109,8 +102,6 @@ void Kmeans(
                 cb.centroids[n_partition][i][j] = 0;
             }
         }
-
-
         // refill centroid data
         for (uint32_t i = 0; i < database.length; i++) {
             //uint32_t centroid = beholds[i];
@@ -121,7 +112,6 @@ void Kmeans(
                 cb.centroids[n_partition][i][j] += record.fields[j + start_partition_id];
             }
         }
-
         // compute mean of cumulated coordinates
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dimension_vector; j++) {
@@ -129,12 +119,14 @@ void Kmeans(
                 cb.centroids[n_partition][i][j] /= dim_centroid[i];
             }
         }
-
         //Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
         //compute_distributions(dim_centroid);
 
     }
     score_t sum = 0;
+    for (uint32_t i = 0; i < database.length; i++) {
+        dim_centroid[i] += cb.vector_centroid[i][n_partition];
+    }
     // print counts
     for (uint32_t i = 0; i < K; i++) {
         std::cout << "len(centroids["
@@ -156,6 +148,8 @@ void Kmeans(
     Debug("var := " + std::to_string(sum/K));
     Debug("std := " + std::to_string(sqrt(sum/K)));
 
+
+    // print counts
     /*if (beholds != nullptr) {
         //free(beholds);
     }*/
