@@ -76,6 +76,7 @@ void Kmeans(
             dim_centroid[i] = 0;
         }
     }
+
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
         // FULL ITERATION
         // computing the nearest centroid
@@ -127,7 +128,7 @@ void Kmeans(
     }
     score_t sum = 0;
     for (uint32_t i = 0; i < database.length; i++) {
-        dim_centroid[i] += cb.vector_centroid[i][n_partition];
+        dim_centroid[cb.vector_centroid[i][n_partition]] ++;
     }
     // print counts
     for (uint32_t i = 0; i < K; i++) {
