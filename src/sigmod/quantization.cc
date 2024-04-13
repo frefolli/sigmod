@@ -55,7 +55,7 @@ void Kmeans(
     uint8_t n_partition = start_partition_id / M;
     Debug(std::to_string(n_partition));
     const uint16_t dimension_vector = actual_vector_size / M;
-    Debug(std::to_string(dimension_vector));
+    Debug(std::to_string(n_partition));
     //std::vector<uint32_t> beholds(database.length);
     std::vector<uint32_t> dim_centroid(K);
     //std::vector<std::vector<float32_t>> centroids(k);
@@ -84,7 +84,7 @@ void Kmeans(
             score_t min_dist = distance(cb.centroids[n_partition][0], record.fields, start_partition_id, end_partition_id);
             //beholds[i] = 0;
             cb.vector_centroid[i][n_partition] = 0;
-            dim_centroid[i] = 1;
+            dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
             for (uint32_t j = 1; j < K; j++) {
                 score_t dist = distance(cb.centroids[n_partition][i], record.fields, start_partition_id, end_partition_id);
@@ -127,7 +127,7 @@ void Kmeans(
     }
     score_t sum = 0;
     for (uint32_t i = 0; i < database.length; i++) {
-        dim_centroid[cb.vector_centroid[i][n_partition]] ++;
+        dim_centroid[i] += cb.vector_centroid[i][n_partition];
     }
     // print counts
     for (uint32_t i = 0; i < K; i++) {
