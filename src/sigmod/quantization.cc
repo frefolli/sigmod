@@ -75,10 +75,7 @@ float32_t* Kmeans(
             }
         }
 
-        #pragma omp barrier
-
         // reset centroid
-        #pragma omp for
         for (uint32_t i = 0; i < k; i++) {
             for (uint32_t j = 0; j < dimension_partition; j++) {
                 centroids[i][j] = 0;
