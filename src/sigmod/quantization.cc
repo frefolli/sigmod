@@ -122,12 +122,16 @@ float32_t* Kmeans(
     }
     Debug("Distance computed := " + std::to_string(SIGMOD_DISTANCE_COMPUTATIONS));
 
+    uint32_t sum = 0
     // print counts
     for (uint32_t i = 0; i < k; i++) {
         std::cout << "len(centroids["
                     << i << "]) = "
                     << dim_centroid[i] << std::endl;
+        sum += dim_centroid[i];
     }
+
+    Debug("tot := " + std::to_string(dim_centroid[i]));
 
     for (uint32_t i = 0; i < k; i++) {
         free(centroids[i]);
