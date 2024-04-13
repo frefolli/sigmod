@@ -20,7 +20,7 @@ void Kmeans(
     const uint32_t start_partition_id, 
     const uint32_t end_partition_id);
 
-inline void compute_distributions(std::vector<uint32_t>& dim_centroids) {
+inline void compute_distributions(const std::map<uint8_t, float32_t[M]>& centroids) {
     score_t sum = 0;
     //uint32_t k = dim_centroids.size();
 
