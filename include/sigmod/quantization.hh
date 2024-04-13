@@ -16,11 +16,12 @@ std::vector<std::vector<float32_t>> Kmeans(
 inline void compute_distributions(std::vector<uint32_t>& dim_centroids) {
     score_t sum = 0;
     uint32_t k = dim_centroids.size();
+
     for (uint32_t i = 0; i < k; i++) {
-            sum += dim_centroids[i];
+        sum += dim_centroids[i];
     }
     
-    float32_t mean =((float32_t) sum)/dim_centroids.size();
+    float32_t mean =((float32_t) sum)/k;
 
     Debug("# Vectors final distribuitions between centroids");
     Debug("tot := " + std::to_string(sum));
@@ -31,8 +32,10 @@ inline void compute_distributions(std::vector<uint32_t>& dim_centroids) {
     for (uint32_t i = 0; i < k; i++) {
         sum += pow(dim_centroids[i] -  mean, 2);
     }
-    Debug("var := " + std::to_string(sum/k));
-    Debug("std := " + std::to_string(sqrt(sum/k)));
+    float32_t var = ((float32_t) sum)/k;
+    
+    Debug("var := " + std::to_string(var));
+    Debug("std := " + std::to_string(sqrt(var)));
 }
 
 
