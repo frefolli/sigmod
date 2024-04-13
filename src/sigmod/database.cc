@@ -122,12 +122,10 @@ void ClusterizeDatabase(const Database& database) {
 
                 // DUMMY ITERATION
                 // initialization of centroids: even spread over modulo
-                #pragma omp for
                 for (uint32_t i = 0; i < length; i++) {
                     uint32_t centroid = i % n_of_clusters;
                     beholds[i] = centroid;
                     Record& record = database.records[start + i];
-                    #pragma omp critical
                     {
                         for (uint32_t j = 0; j < actual_vector_size; j++) {
                             centroids[centroid].fields[j] += record.fields[j];
@@ -179,11 +177,9 @@ void ClusterizeDatabase(const Database& database) {
                     #pragma omp barrier
 
                     // refill centroid data
-                    #pragma omp for
                     for (uint32_t i = 0; i < length; i++) {
                         uint32_t centroid = beholds[i];
                         Record& record = database.records[start + i];
-                        #pragma omp critical
                         {
                             for (uint32_t j = 0; j < actual_vector_size; j++) {
                                 centroids[centroid].fields[j] += record.fields[j];
@@ -205,11 +201,11 @@ void ClusterizeDatabase(const Database& database) {
             }
 
             // print counts
-            /*for (uint32_t i = 0; i < n_of_clusters; i++) {
+            for (uint32_t i = 0; i < n_of_clusters; i++) {
                 std::cout << "len(centroids["
                           << i << "]) = "
                           << centroids[i].C << std::endl;
-            }*/
+            }
 
             free(centroids);
             free(beholds);
