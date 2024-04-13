@@ -130,26 +130,24 @@ void Kmeans(
             }
         }
 
-        Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
-        compute_distributions(dim_centroid);
+        //Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
+        //compute_distributions(dim_centroid);
 
     }
-    /*
     score_t sum = 0;
     // print counts
-    for (uint32_t i = 0; i < k; i++) {
+    for (uint32_t i = 0; i < K; i++) {
         std::cout << "len(centroids["
                     << i << "]) = "
                     << dim_centroid[i] << std::endl;
         sum += dim_centroid[i];
     }
 
-    float32_t mean =sum/k;
+    float32_t mean =sum/K;
 
     Debug("Distribution of vectors between centroids");
     Debug("tot := " + std::to_string(sum));
     Debug("mean := " + std::to_string(mean));
-    Debug("median := " + std::to_string(dim_centroid[k/2-1]));
 
     sum = 0;
     for (uint32_t i = 0; i < k; i++) {
@@ -157,7 +155,6 @@ void Kmeans(
     }
     Debug("var := " + std::to_string(sum/k));
     Debug("std := " + std::to_string(sqrt(sum/k)));
-*/  
 
     /*if (beholds != nullptr) {
         //free(beholds);

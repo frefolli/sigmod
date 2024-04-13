@@ -28,12 +28,11 @@ inline void compute_distributions(const std::vector<uint32_t>& dim_centroids) {
         sum += dim_centroids[i];
     }
     
-    float32_t mean = sum/K;
+    float32_t mean = sum/k;
 
     Debug("# Vectors distribuitions between centroids");
     Debug("tot := " + std::to_string(sum));
     Debug("mean := " + std::to_string(mean));
-    Debug("median := " + std::to_string(dim_centroids[k/2-1]));
 
     sum = 0;
     for (uint32_t i = 0; i < K; i++) {
