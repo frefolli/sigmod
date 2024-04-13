@@ -21,7 +21,7 @@ inline void compute_distributions(std::vector<uint32_t>& dim_centroids) {
         sum += dim_centroids[i];
     }
     
-    float32_t mean =((float32_t) sum)/k;
+    float32_t mean = sum/k;
 
     Debug("# Vectors final distribuitions between centroids");
     Debug("tot := " + std::to_string(sum));
@@ -33,7 +33,7 @@ inline void compute_distributions(std::vector<uint32_t>& dim_centroids) {
         sum += pow(dim_centroids[i] -  mean, 2);
     }
     float32_t var = ((float32_t) sum)/k;
-    
+
     Debug("var := " + std::to_string(var));
     Debug("std := " + std::to_string(sqrt(var)));
 }

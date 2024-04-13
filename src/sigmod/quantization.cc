@@ -106,7 +106,7 @@ std::vector<std::vector<float32_t>> Kmeans(
             }
         }
     }
-
+    /*
     score_t sum = 0;
     // print counts
     for (uint32_t i = 0; i < k; i++) {
@@ -129,7 +129,8 @@ std::vector<std::vector<float32_t>> Kmeans(
     }
     Debug("var := " + std::to_string(sum/k));
     Debug("std := " + std::to_string(sqrt(sum/k)));
-    
+*/  
+    compute_distributions(dim_centroid);
 
     /*if (beholds != nullptr) {
         //free(beholds);
