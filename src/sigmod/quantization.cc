@@ -123,7 +123,10 @@ float32_t* Kmeans(
     }
 
     Debug("tot := " + std::to_string(sum));
-
-    free(beholds);
+    
+    if (beholds != nullptr) {
+        free(beholds);
+    }
+    
     return nullptr;
 }
