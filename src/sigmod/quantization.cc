@@ -109,12 +109,12 @@ std::vector<std::vector<float32_t>> Kmeans(
 
     score_t sum = 0;
     // print counts
-    /*for (uint32_t i = 0; i < k; i++) {
+    for (uint32_t i = 0; i < k; i++) {
         std::cout << "len(centroids["
                     << i << "]) = "
                     << dim_centroid[i] << std::endl;
         sum += dim_centroid[i];
-    }*/
+    }
 
     float32_t mean =sum/k;
 
