@@ -38,7 +38,7 @@ std::vector<std::vector<float32_t>> Kmeans(
     const uint32_t dimension_partition = end_partition_id - start_partition_id + 1;
     std::vector<uint32_t> beholds(database.length);
 
-    std::vector<uint32_t> dim_centroid(dimension_partition);
+    std::vector<uint32_t> dim_centroid(k);
 
     std::vector<std::vector<float32_t>> centroids(k);
     for (uint32_t i = 0; i < k; i++)
