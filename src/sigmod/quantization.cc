@@ -120,6 +120,5 @@ float32_t* Kmeans(
         free(centroids[i]);
     }
     free(beholds);
-    free(dim_centroid);
     return nullptr;
 }
