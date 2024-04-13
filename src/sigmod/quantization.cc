@@ -36,11 +36,7 @@ float32_t* Kmeans(
     uint32_t* beholds = smalloc<uint32_t>(database.length);
     uint32_t* dim_centroid = smalloc<uint32_t>(k);
 
-    float32_t** centroids = smalloc<float32_t*>(k);
-    for (uint32_t i = 0; i < k; i++) {
-        
-        centroids[i] = smalloc<float32_t>(dimension_partition);
-    }
+    float32_t centroids[256][10];
 
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -136,7 +132,6 @@ float32_t* Kmeans(
     for (uint32_t i = 0; i < k; i++) {
         free(centroids[i]);
     }
-    free(centroids);
     free(beholds);
     free(dim_centroid);
     return nullptr;
