@@ -138,4 +138,5 @@ float32_t* Kmeans(
     free(beholds);
     free(dim_centroid);
     Debug("OK");
+    return nullptr;
 }
