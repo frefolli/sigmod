@@ -48,6 +48,7 @@ float32_t* Kmeans(
     for (uint32_t i = 0; i < k; i++) {
         ind_init_db = uni(rd);
         for (uint32_t j = 0; j < dimension_partition; j++) {
+            Debug("ok");
             centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
             dim_centroid[i] = 0;
         }
