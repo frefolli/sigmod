@@ -184,13 +184,10 @@ void Workflow(const std::string database_path,
     std::vector<std::vector<float32_t>>* CodeBook = smalloc<std::vector<std::vector<float32_t>>>(10);
     #pragma omp parallelfor
     for (uint32_t i = 0; i < 10; i++) {
-        #pragma omp critical 
-        {
-            CodeBook[i] = Kmeans(database, 1, i * 10, i * 10 + 9, 256);
-        }
+        CodeBook[i] = Kmeans(database, 1, i * 10, i * 10 + 9, 256);
+        LogTime("Clusterized Single portion of Database");
     }
     
-    LogTime("Clusterized Single portion of Database");
 
     #endif
 
