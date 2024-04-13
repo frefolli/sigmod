@@ -33,7 +33,6 @@ std::vector<std::vector<float32_t>> Kmeans(
         const uint32_t start_partition_id, 
         const uint32_t end_partition_id,  
         const uint32_t k) {
-    //const uint32_t ITERATIONS = 1;
 
     const uint32_t dimension_partition = end_partition_id - start_partition_id + 1;
     std::vector<uint32_t> beholds(database.length);
