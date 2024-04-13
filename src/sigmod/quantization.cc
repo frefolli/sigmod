@@ -61,11 +61,9 @@ float32_t* Kmeans(
     }
 
 
-    Debug("ok");
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
         // FULL ITERATION
         // computing the nearest centroid
-        Debug("ok");
         for (uint32_t i = 0; i < database.length; i++) {
             Record& record = database.records[i];
             score_t min_dist = distance(centroids[0], record.fields, start_partition_id, end_partition_id);
@@ -85,7 +83,6 @@ float32_t* Kmeans(
         }
 
         // reset centroid
-        Debug("ok");
         for (uint32_t i = 0; i < k; i++) {
             for (uint32_t j = 0; j < dimension_partition; j++) {
                 centroids[i][j] = 0;
@@ -94,7 +91,6 @@ float32_t* Kmeans(
 
 
         // refill centroid data
-        Debug("ok");
         for (uint32_t i = 0; i < database.length; i++) {
             uint32_t centroid = beholds[i];
             Record& record = database.records[i];
@@ -111,9 +107,8 @@ float32_t* Kmeans(
             }
         }
     }
-    Debug("Distance computed := " + std::to_string(SIGMOD_DISTANCE_COMPUTATIONS));
 
-    uint32_t sum = 0;
+    score_t sum = 0;
     // print counts
     for (uint32_t i = 0; i < k; i++) {
         std::cout << "len(centroids["
