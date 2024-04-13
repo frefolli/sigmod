@@ -134,7 +134,7 @@ float32_t* Kmeans(
     for (uint32_t i = 0; i < k; i++) {
         free(centroids[i]);
     }
-
+    Debug("OK");
     free(centroids);
     free(beholds);
     free(dim_centroid);
