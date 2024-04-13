@@ -32,6 +32,7 @@ float32_t* Kmeans(
         const uint32_t end_partition_id,  
         const uint32_t k) {
     //const uint32_t ITERATIONS = 1;
+    
     const uint32_t dimension_partition = end_partition_id - start_partition_id + 1;
     uint32_t* beholds = smalloc<uint32_t>(database.length);
 
@@ -48,10 +49,10 @@ float32_t* Kmeans(
     for (uint32_t i = 0; i < k; i++) {
         ind_init_db = uni(rd);
         for (uint32_t j = 0; j < dimension_partition; j++) {
-            Debug(std::to_string(j));
             centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
             Debug(std::to_string(j));
             dim_centroid[i] = 0;
+            Debug(std::to_string(j));
         }
     }
 
