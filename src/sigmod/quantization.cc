@@ -42,6 +42,7 @@ float32_t* Kmeans(
     Debug("ok");
     float32_t** centroids = smalloc<float32_t*>(k);
     for (uint8_t i = 0; i < k; i++) {
+        Debug("alloc " + std::to_string(i) + " vec");
         centroids[i] = smalloc<float32_t>(dimension_partition);
     }
 
