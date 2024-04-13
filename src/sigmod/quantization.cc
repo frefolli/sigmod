@@ -129,7 +129,7 @@ float32_t* Kmeans(
     
 
     if (beholds != nullptr) {
-        free(beholds);
+        //free(beholds);
     }
     
     return nullptr;
