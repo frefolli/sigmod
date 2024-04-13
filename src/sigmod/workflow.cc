@@ -179,18 +179,17 @@ void Workflow(const std::string database_path,
     IndexDatabase(database);
     LogTime("Indexes Database");
 
-    #ifdef KMC_EOTI_FS
-    //ClusterizeDatabase(database);
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
+
     std::vector<std::vector<float32_t>>* CodeBook = smalloc<std::vector<std::vector<float32_t>>>(10);
-    #pragma omp parallel for //num_threads(10)
+    #pragma omp parallel for num_threads(10)
     for (uint32_t i = 0; i < 10; i++) {
-        CodeBook[i] = Kmeans(database, 1, i * 10, i * 10 + 9, 256);
+        CodeBook[i] = Kmeans(database, 1, i * M, i * M + M - 1);
     }
-
     LogTime("Clusterized Single portion of Database");
-
-
     #endif
+
+
 
     /* Initialization */
     #ifdef ENABLE_BALL_FOREST

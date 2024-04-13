@@ -18,6 +18,11 @@
 // #define ENABLE_DIM_REDUCTION
 // #define N_DIM_REDUCTION 70
 
+/* Apply product quantization before indexing */
+#define ENABLE_PRODUCT_QUANTIZATION
+#define M 10 // # of partition of dataset, note: D/M is dimension of a single centroid
+#define K 256 // # of clusters per partition
+
 /* Build a KD Forest and uses it to craft a solution */
 // #define ENABLE_KD_FOREST
 
