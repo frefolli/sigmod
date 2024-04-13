@@ -122,8 +122,19 @@ float32_t* Kmeans(
         sum += dim_centroid[i];
     }
 
+    float32_t mean =((float32_t) sum)/k;
+
     Debug("tot := " + std::to_string(sum));
+    Debug("mean := " + std::to_string(mean));
+
+    sum = 0;
+    for (uint32_t i = 0; i < k; i++) {
+        sum += pow(dim_centroid[i] -  mean, 2);
+    }
+    Debug("var := " + std::to_string(sum/k));
+    Debug("std := " + std::to_string(sqrt(sum/k)));
     
+
     if (beholds != nullptr) {
         free(beholds);
     }
