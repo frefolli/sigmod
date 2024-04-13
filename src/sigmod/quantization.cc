@@ -48,7 +48,7 @@ inline score_t distance(const float32_t* centroid, const float32_t* record, cons
 void Kmeans(
         CodeBook& cb,
         const Database& database, 
-        const uint32_t ITERATIONS = 1, 
+        const uint32_t ITERATIONS, 
         const uint32_t start_partition_id, 
         const uint32_t end_partition_id) {
 
