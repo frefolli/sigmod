@@ -3,7 +3,7 @@
 
 #include <sigmod/database.hh>
 
-float32_t* Kmeans(
+std::vector<std::vector<float32_t>> Kmeans(
     const Database& database, 
     const uint32_t ITERATIONS, 
     const uint32_t start_partition_id, 

@@ -25,7 +25,7 @@ inline score_t distance(std::vector<float32_t>& centroid, const float32_t* recor
 
 /* [start_partition_id, end_partition_id] */
 
-float32_t* Kmeans(
+std::vector<std::vector<float32_t>> Kmeans(
         const Database& database, 
         const uint32_t ITERATIONS, 
         const uint32_t start_partition_id, 
@@ -132,5 +132,5 @@ float32_t* Kmeans(
         //free(beholds);
     }*/
     
-    return nullptr;
+    return ;
 }
