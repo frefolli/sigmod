@@ -94,18 +94,22 @@ void IndexDatabase(Database& database) {
 
 void ClusterizeDatabase(const Database& database) {
     const uint32_t ITERATIONS = 1;
-    actual_vector_size = 10;
     for (auto it : database.C_map) {
-        std::cout << "Clusterization of Category "
-                  << it.first << std::endl;
         const uint32_t start = it.second.first;
         const uint32_t end = it.second.second + 1;
         const uint32_t length = end - start;
         if (length > 25) {
             const uint32_t n_of_clusters = std::sqrt(length);
+            LogTime("Clusterizing C#"
+		      + std::to_string((uint32_t) it.first)
+		      + " of length := "
+		      + std::to_string(length)
+		      + " and n_of_clusters := "
+		      + std::to_string(n_of_clusters));
             uint32_t* beholds = smalloc<uint32_t>(length);
             Record* centroids = smalloc<Record>(n_of_clusters);
 
+	    LogTime("Initializing Centroids");
             #pragma omp parallel
             {
                 #pragma omp for
@@ -117,9 +121,10 @@ void ClusterizeDatabase(const Database& database) {
                     // which are anchored to a centroid
                     centroids[i].C = 0;
                 }
-
                 #pragma omp barrier
+	    }
 
+	    LogTime("Dummy iteration");
                 // DUMMY ITERATION
                 // initialization of centroids: even spread over modulo
                 for (uint32_t i = 0; i < length; i++) {
@@ -134,8 +139,9 @@ void ClusterizeDatabase(const Database& database) {
                     }
                 }
 
-                #pragma omp barrier
-
+	    LogTime("Meaning centroids");
+            #pragma omp parallel
+            {
                 // compute mean of cumulated coordinates
                 #pragma omp for
                 for (uint32_t i = 0; i < n_of_clusters; i++) {
@@ -143,10 +149,13 @@ void ClusterizeDatabase(const Database& database) {
                         centroids[i].fields[j] /= centroids[i].C;
                     }
                 }
+		#pragma omp barrier
+	    }
+	    LogTime("Meaned centroids");
 
-                #pragma omp barrier
-
-                for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
+	    for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
+            #pragma omp parallel
+            {
                     // FULL ITERATION
                     // computing the nearest centroid
                     #pragma omp for
@@ -164,7 +173,6 @@ void ClusterizeDatabase(const Database& database) {
                     }
 
                     #pragma omp barrier
-
                     // reset centroid
                     #pragma omp for
                     for (uint32_t i = 0; i < n_of_clusters; i++) {
@@ -173,9 +181,10 @@ void ClusterizeDatabase(const Database& database) {
                         }
                         centroids[i].C = 0;
                     }
-
                     #pragma omp barrier
+	    }
 
+	            LogTime("Filling centroids");
                     // refill centroid data
                     for (uint32_t i = 0; i < length; i++) {
                         uint32_t centroid = beholds[i];
@@ -187,9 +196,10 @@ void ClusterizeDatabase(const Database& database) {
                             centroids[beholds[i]].C += 1;
                         }
                     }
-
-                    #pragma omp barrier
-
+	            LogTime("Filled centroids");
+            
+	    #pragma omp parallel
+            {
                     // compute mean of cumulated coordinates
                     #pragma omp for
                     for (uint32_t i = 0; i < n_of_clusters; i++) {
@@ -197,15 +207,17 @@ void ClusterizeDatabase(const Database& database) {
                             centroids[i].fields[j] /= centroids[i].C;
                         }
                     }
-                }
+	    }
             }
 
+	    /*
             // print counts
             for (uint32_t i = 0; i < n_of_clusters; i++) {
                 std::cout << "len(centroids["
                           << i << "]) = "
                           << centroids[i].C << std::endl;
             }
+	    */
 
             free(centroids);
             free(beholds);
@@ -224,12 +236,14 @@ void StatsDatabase(const Database& database) {
         database.length, "record.T"
     ) << std::endl;
 
+    /*
     for (uint32_t j = 0; j < actual_vector_size; j++) {
         std::cout << ScalarEntry::forArrayCellField(
             [&database, &j](uint32_t i) { return database.at(i).fields[j]; },
             database.length, "record.field#" + std::to_string(j)
         ) << std::endl;
     }
+    */
 }
 
 float32_t** GetFields(
