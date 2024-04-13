@@ -131,7 +131,7 @@ void Kmeans(
         }
 
         Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
-        compute_distributions(cb.centroids.at(n_partition));
+        compute_distributions(dim_centroid);
 
     }
     /*

@@ -20,9 +20,9 @@ void Kmeans(
     const uint32_t start_partition_id, 
     const uint32_t end_partition_id);
 
-inline void compute_distributions(const std::map<uint8_t, float32_t[M]>& centroids) {
+inline void compute_distributions(const std::vector<uint32_t>& dim_centroids) {
     score_t sum = 0;
-    //uint32_t k = dim_centroids.size();
+    uint32_t k = dim_centroids.size();
 
     for (uint32_t i = 0; i < K; i++) {
         sum += dim_centroids[i];
@@ -33,7 +33,7 @@ inline void compute_distributions(const std::map<uint8_t, float32_t[M]>& centroi
     Debug("# Vectors distribuitions between centroids");
     Debug("tot := " + std::to_string(sum));
     Debug("mean := " + std::to_string(mean));
-    Debug("median := " + std::to_string(dim_centroids[K/2-1]));
+    Debug("median := " + std::to_string(dim_centroids[k/2-1]));
 
     sum = 0;
     for (uint32_t i = 0; i < K; i++) {
