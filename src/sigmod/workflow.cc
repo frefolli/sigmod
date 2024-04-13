@@ -183,11 +183,10 @@ void Workflow(const std::string database_path,
 
     CodeBook codebook;
     #pragma omp parallel for num_threads(10)
-    {
         for (uint32_t i = 0; i < 10; i++) {
             Kmeans(codebook, database, 1, i * M, i * M + M - 1);
         }
-    }
+        
     LogTime("Clusterized Single portion of Database");
     #endif
 
