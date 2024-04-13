@@ -13,6 +13,7 @@
 #include <sigmod/debug.hh>
 #include <sigmod/random_projection.hh>
 #include <chrono>
+#include <sigmod/quantization.hh>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
                                       const QuerySet& query_set) {
@@ -179,7 +180,8 @@ void Workflow(const std::string database_path,
     LogTime("Indexes Database");
 
     #ifdef KMC_EOTI_FS
-    ClusterizeDatabase(database);
+    //ClusterizeDatabase(database);
+    Kmeans(database, 1, 0, 9, 256);
     LogTime("Clusterized Database");
     #endif
 
