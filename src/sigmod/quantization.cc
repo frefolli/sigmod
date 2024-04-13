@@ -105,6 +105,10 @@ std::vector<std::vector<float32_t>> Kmeans(
                 centroids[i][j] /= dim_centroid[i];
             }
         }
+
+        Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
+        compute_distributions(dim_centroid);
+
     }
     /*
     score_t sum = 0;
@@ -130,7 +134,6 @@ std::vector<std::vector<float32_t>> Kmeans(
     Debug("var := " + std::to_string(sum/k));
     Debug("std := " + std::to_string(sqrt(sum/k)));
 */  
-    compute_distributions(dim_centroid);
 
     /*if (beholds != nullptr) {
         //free(beholds);

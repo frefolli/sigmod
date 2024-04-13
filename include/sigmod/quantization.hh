@@ -23,7 +23,7 @@ inline void compute_distributions(std::vector<uint32_t>& dim_centroids) {
     
     float32_t mean = sum/k;
 
-    Debug("# Vectors final distribuitions between centroids");
+    Debug("# Vectors distribuitions between centroids");
     Debug("tot := " + std::to_string(sum));
     Debug("mean := " + std::to_string(mean));
     Debug("median := " + std::to_string(dim_centroids[k/2-1]));
