@@ -2,7 +2,6 @@
 #include <sigmod/memory.hh>
 #include <random>
 
-
 inline score_t distance(std::vector<float32_t>& centroid, const float32_t* record, const uint32_t start_index_field, const uint32_t end_partition_id) {
     #ifdef TRACK_DISTANCE_COMPUTATIONS
         SIGMOD_DISTANCE_COMPUTATIONS++;
@@ -22,6 +21,9 @@ inline score_t distance(std::vector<float32_t>& centroid, const float32_t* recor
         #endif
     #endif
 }
+
+
+
 
 /* [start_partition_id, end_partition_id] */
 
@@ -103,9 +105,10 @@ std::vector<std::vector<float32_t>> Kmeans(
                 centroids[i][j] /= dim_centroid[i];
             }
         }
+
+        compute_distributions(dim_centroid);
     }
 
-    score_t sum = 0;
     // print counts
     /*for (uint32_t i = 0; i < k; i++) {
         std::cout << "len(centroids["
@@ -113,21 +116,8 @@ std::vector<std::vector<float32_t>> Kmeans(
                     << dim_centroid[i] << std::endl;
         sum += dim_centroid[i];
     }*/
-
-    float32_t mean =((float32_t) sum)/k;
-
-    Debug("# Vectors final distribuitions between centroids");
-    Debug("tot := " + std::to_string(sum));
-    Debug("mean := " + std::to_string(mean));
-    Debug("median := " + std::to_string(dim_centroid[k/2-1]));
-
-    sum = 0;
-    for (uint32_t i = 0; i < k; i++) {
-        sum += pow(dim_centroid[i] -  mean, 2);
-    }
-    Debug("var := " + std::to_string(sum/k));
-    Debug("std := " + std::to_string(sqrt(sum/k)));
     
+    compute_distributions(dim_centroid);
 
     /*if (beholds != nullptr) {
         //free(beholds);
