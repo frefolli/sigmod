@@ -150,11 +150,11 @@ void Kmeans(
     Debug("mean := " + std::to_string(mean));
 
     sum = 0;
-    for (uint32_t i = 0; i < k; i++) {
+    for (uint32_t i = 0; i < K; i++) {
         sum += pow(dim_centroid[i] -  mean, 2);
     }
-    Debug("var := " + std::to_string(sum/k));
-    Debug("std := " + std::to_string(sqrt(sum/k)));
+    Debug("var := " + std::to_string(sum/K));
+    Debug("std := " + std::to_string(sqrt(sum/K)));
 
     /*if (beholds != nullptr) {
         //free(beholds);
