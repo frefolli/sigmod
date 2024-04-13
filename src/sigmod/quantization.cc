@@ -75,7 +75,7 @@ void Kmeans(
         ind_init_db = uni(rd);
         for (uint32_t j = 0; j < M / database.length; j++) {
             //centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
-            cb.centroids.at(n_partition).at(i)[j] = database.records[ind_init_db].fields[j + start_partition_id];
+            cb.centroids[n_partition][i][j] = database.records[ind_init_db].fields[j + start_partition_id];
             dim_centroid[i] = 0;
         }
     }
@@ -86,18 +86,18 @@ void Kmeans(
         // computing the nearest centroid
         for (uint32_t i = 0; i < database.length; i++) {
             Record& record = database.records[i];
-            score_t min_dist = distance(cb.centroids.at(n_partition).at(0), record.fields, start_partition_id, end_partition_id);
+            score_t min_dist = distance(cb.centroids[n_partition][0], record.fields, start_partition_id, end_partition_id);
             //beholds[i] = 0;
-            cb.vector_centroid.at(i)[n_partition] = 0;
+            cb.vector_centroid[i][n_partition] = 0;
             dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
             for (uint32_t j = 1; j < K; j++) {
-                score_t dist = distance(cb.centroids.at(n_partition).at(j), record.fields, start_partition_id, end_partition_id);
+                score_t dist = distance(cb.centroids[n_partition][i], record.fields, start_partition_id, end_partition_id);
                 if (dist < min_dist) {
                     min_dist = dist;
                     dim_centroid[anchored_centroid]--;
                     dim_centroid[j]++;
-                    cb.vector_centroid.at(i)[n_partition] = j;
+                    cb.vector_centroid[i][n_partition] = j;
                     anchored_centroid = j;
                 }
             }
@@ -107,7 +107,7 @@ void Kmeans(
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < database.length / M; j++) {
                 //centroids[i][j] = 0;
-                cb.centroids.at(n_partition).at(i)[j] = 0;
+                cb.centroids[n_partition][i][j] = 0;
             }
         }
 
@@ -115,11 +115,11 @@ void Kmeans(
         // refill centroid data
         for (uint32_t i = 0; i < database.length; i++) {
             //uint32_t centroid = beholds[i];
-            uint32_t centroid = cb.vector_centroid.at(i)[n_partition];
+            uint32_t centroid = cb.vector_centroid[i][n_partition];
             Record& record = database.records[i];
             for (uint32_t j = 0; j < database.length / M; j++) {
                 //centroids[centroid][j] += record.fields[j + start_partition_id];
-                cb.centroids.at(n_partition).at(centroid)[j] += record.fields[j + start_partition_id];
+                cb.centroids[n_partition][i][j] += record.fields[j + start_partition_id];
             }
         }
 
@@ -128,7 +128,7 @@ void Kmeans(
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < database.length / M; j++) {
                 //centroids[i][j] /= dim_centroid[i];
-                cb.centroids.at(n_partition).at(i)[j] /= dim_centroid[i];
+                cb.centroids[n_partition][i][j] /= dim_centroid[i];
             }
         }
 
