@@ -127,9 +127,9 @@ void Kmeans(
 
     }
     score_t sum = 0;
-    for (uint32_t i = 0; i < database.length; i++) {
+    /*for (uint32_t i = 0; i < database.length; i++) {
         dim_centroid[cb.vector_centroid[i][n_partition]] ++;
-    }
+    }*/
     // print counts
     for (uint32_t i = 0; i < K; i++) {
         std::cout << "len(centroids["
