@@ -124,9 +124,6 @@ float32_t* Kmeans(
 
     Debug("tot := " + std::to_string(sum));
 
-    for (uint32_t i = 0; i < k; i++) {
-        free(centroids[i]);
-    }
     free(beholds);
     return nullptr;
 }
