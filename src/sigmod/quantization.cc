@@ -47,8 +47,8 @@ float32_t* Kmeans(
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
     for (uint32_t i = 0; i < k; i++) {
-        ind_init_db = uni(rd);
         Debug("i := " + std::to_string(i) + ", ind_init_db := " + std::to_string(ind_init_db));
+        ind_init_db = uni(rd);
         for (uint32_t j = 0; j < dimension_partition; j++) {
             Debug("j := " + std::to_string(j));
             centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
