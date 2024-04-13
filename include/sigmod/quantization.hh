@@ -3,6 +3,8 @@
 
 #include <sigmod/database.hh>
 #include <vector>
+#include <sigmod/debug.hh>
+#include <cmath>
 
 std::vector<std::vector<float32_t>> Kmeans(
     const Database& database, 
