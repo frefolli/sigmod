@@ -31,7 +31,7 @@ float32_t* Kmeans(
         const uint32_t start_partition_id, 
         const uint32_t end_partition_id,  
         const uint32_t k) {
-    const uint32_t ITERATIONS = 1;
+    //const uint32_t ITERATIONS = 1;
     const uint8_t dimension_partition = end_partition_id - start_partition_id + 1;
     uint32_t* beholds = smalloc<uint32_t>(database.length);
     uint32_t* dim_centroid = smalloc<uint32_t>(k);
@@ -130,7 +130,7 @@ float32_t* Kmeans(
     for (uint32_t i = 0; i < k; i++) {
         free(centroids[i]);
     }
-    
+
     free(centroids);
     free(beholds);
     free(dim_centroid);
