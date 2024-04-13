@@ -34,7 +34,8 @@ float32_t* Kmeans(
     //const uint32_t ITERATIONS = 1;
     const uint32_t dimension_partition = end_partition_id - start_partition_id + 1;
     uint32_t* beholds = smalloc<uint32_t>(database.length);
-    uint32_t* dim_centroid = smalloc<uint32_t>(k);
+
+    uint32_t dim_centroid[10];
 
     float32_t centroids[256][10];
 
@@ -43,76 +44,62 @@ float32_t* Kmeans(
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
     uint32_t ind_init_db = 0;
     
-    #pragma omp parallel
-    {
-        #pragma omp barrier
-        // Initializing centroids random on a point
-        #pragma omp for
-        for (uint32_t i = 0; i < k; i++) {
-            ind_init_db = uni(rd);
-            for (uint32_t j = 0; j < dimension_partition; j++) {
-                centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
-                dim_centroid[i] = 0;
+    // Initializing centroids random on a point
+    for (uint32_t i = 0; i < k; i++) {
+        ind_init_db = uni(rd);
+        for (uint32_t j = 0; j < dimension_partition; j++) {
+            centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
+            dim_centroid[i] = 0;
+        }
+    }
+
+
+    for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
+        // FULL ITERATION
+        // computing the nearest centroid
+        for (uint32_t i = 0; i < database.length; i++) {
+            Record& record = database.records[i];
+            score_t min_dist = distance(centroids[0], record.fields, start_partition_id, end_partition_id);
+            beholds[i] = 0;
+            dim_centroid[0]++;
+            uint32_t anchored_centroid = 0;
+            for (uint32_t j = 1; j < k; j++) {
+                score_t dist = distance(centroids[j], record.fields, start_partition_id, end_partition_id);
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    dim_centroid[anchored_centroid]--;
+                    dim_centroid[j]++;
+                    beholds[i] = j;
+                    anchored_centroid = j;
+                }
             }
         }
 
         #pragma omp barrier
 
-        for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
-            // FULL ITERATION
-            // computing the nearest centroid
-            #pragma omp for
-            for (uint32_t i = 0; i < database.length; i++) {
-                Record& record = database.records[i];
-                score_t min_dist = distance(centroids[0], record.fields, start_partition_id, end_partition_id);
-                beholds[i] = 0;
-                dim_centroid[0]++;
-                uint32_t anchored_centroid = 0;
-                for (uint32_t j = 1; j < k; j++) {
-                    score_t dist = distance(centroids[j], record.fields, start_partition_id, end_partition_id);
-                    if (dist < min_dist) {
-                        min_dist = dist;
-                        dim_centroid[anchored_centroid]--;
-                        dim_centroid[j]++;
-                        beholds[i] = j;
-                        anchored_centroid = j;
-                    }
-                }
+        // reset centroid
+        #pragma omp for
+        for (uint32_t i = 0; i < k; i++) {
+            for (uint32_t j = 0; j < dimension_partition; j++) {
+                centroids[i][j] = 0;
             }
+        }
 
-            #pragma omp barrier
 
-            // reset centroid
-            #pragma omp for
-            for (uint32_t i = 0; i < k; i++) {
-                for (uint32_t j = 0; j < dimension_partition; j++) {
-                    centroids[i][j] = 0;
-                }
+        // refill centroid data
+        for (uint32_t i = 0; i < database.length; i++) {
+            uint32_t centroid = beholds[i];
+            Record& record = database.records[i];
+            for (uint32_t j = 0; j < dimension_partition; j++) {
+                centroids[centroid][j] += record.fields[j + start_partition_id];
             }
+        }
 
-            #pragma omp barrier
 
-            // refill centroid data
-            #pragma omp for
-            for (uint32_t i = 0; i < database.length; i++) {
-                uint32_t centroid = beholds[i];
-                Record& record = database.records[i];
-                #pragma omp critical
-                {
-                    for (uint32_t j = 0; j < dimension_partition; j++) {
-                        centroids[centroid][j] += record.fields[j + start_partition_id];
-                    }
-                }
-            }
-
-            #pragma omp barrier
-
-            // compute mean of cumulated coordinates
-            #pragma omp for
-            for (uint32_t i = 0; i < k; i++) {
-                for (uint32_t j = 0; j < dimension_partition; j++) {
-                    centroids[i][j] /= dim_centroid[i];
-                }
+        // compute mean of cumulated coordinates
+        for (uint32_t i = 0; i < k; i++) {
+            for (uint32_t j = 0; j < dimension_partition; j++) {
+                centroids[i][j] /= dim_centroid[i];
             }
         }
     }
