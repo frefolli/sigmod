@@ -131,7 +131,7 @@ float32_t* Kmeans(
         sum += dim_centroid[i];
     }
 
-    Debug("tot := " + std::to_string(dim_centroid[i]));
+    Debug("tot := " + std::to_string(sum));
 
     for (uint32_t i = 0; i < k; i++) {
         free(centroids[i]);
