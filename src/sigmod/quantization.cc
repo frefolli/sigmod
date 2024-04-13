@@ -107,7 +107,7 @@ void Kmeans(
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < database.length / M; j++) {
-                Debug("i := " + std::to_string(i) + ", j := " + std::to_string(i) + j); 
+                Debug("i := " + std::to_string(i) + ", j := " + std::to_string(j)); 
                 //centroids[i][j] = 0;
                 cb.centroids[n_partition][i][j] = 0;
             }
