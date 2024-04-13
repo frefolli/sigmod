@@ -38,6 +38,7 @@ float32_t* Kmeans(
 
     float32_t** centroids = smalloc<float32_t*>(k);
     for (uint32_t i = 0; i < k; i++) {
+        
         centroids[i] = smalloc<float32_t>(dimension_partition);
     }
 
@@ -46,7 +47,7 @@ float32_t* Kmeans(
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
     uint32_t ind_init_db = 0;
 
-    LogMemory("cluster")
+    Debug("Memory occuped := " + std::to_string(SIGMOD_MEMORY_TRACKER));
     
     #pragma omp parallel
     {
