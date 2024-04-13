@@ -34,7 +34,7 @@ float32_t* Kmeans(
     //const uint32_t ITERATIONS = 1;
 
     const uint32_t dimension_partition = end_partition_id - start_partition_id + 1;
-    uint32_t* beholds = smalloc<uint32_t>(database.length);
+    std::vector<uint32_t> beholds(database.length);
 
     std::vector<uint32_t> dim_centroid(dimension_partition);
 
@@ -128,9 +128,9 @@ float32_t* Kmeans(
     Debug("std := " + std::to_string(sqrt(sum/k)));
     
 
-    if (beholds != nullptr) {
+    /*if (beholds != nullptr) {
         //free(beholds);
-    }
+    }*/
     
     return nullptr;
 }
