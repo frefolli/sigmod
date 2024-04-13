@@ -33,7 +33,7 @@ float32_t* Kmeans(
         const uint32_t k) {
     Debug("ok");
     //const uint32_t ITERATIONS = 1;
-    const uint8_t dimension_partition = end_partition_id - start_partition_id + 1;
+    const float32_t dimension_partition = end_partition_id - start_partition_id + 1;
     Debug("ok");
     uint32_t* beholds = smalloc<uint32_t>(database.length);
     Debug("ok");
@@ -41,7 +41,7 @@ float32_t* Kmeans(
 
     Debug("ok");
     float32_t** centroids = smalloc<float32_t*>(k);
-    for (uint8_t i = 0; i < k; i++) {
+    for (float32_t i = 0; i < k; i++) {
         Debug("alloc " + std::to_string(i) + " vec");
         centroids[i] = smalloc<float32_t>(dimension_partition);
     }
