@@ -36,10 +36,14 @@ float32_t* Kmeans(
     const uint32_t dimension_partition = end_partition_id - start_partition_id + 1;
     uint32_t* beholds = smalloc<uint32_t>(database.length);
 
-    uint32_t dim_centroid[10];
+    std::vector<uint32_t> dim_centroid(dimension_partition);
 
-    float32_t centroids[256][10];
-
+    std::vector<std::vector<float32_t>> centroids(k);
+    for (uint32_t i = 0; i < k; i++)
+    {
+        centroids[i] = std::vector<float32_t>(dimension_partition);
+    }
+    
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
@@ -49,7 +53,6 @@ float32_t* Kmeans(
     for (uint32_t i = 0; i < k; i++) {
         Debug("i := " + std::to_string(i) + ", ind_init_db := " + std::to_string(ind_init_db));
         ind_init_db = uni(rd);
-        Debug("i := " + std::to_string(i) + ", ind_init_db := " + std::to_string(ind_init_db));
         for (uint32_t j = 0; j < dimension_partition; j++) {
             Debug("j := " + std::to_string(j));
             centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
