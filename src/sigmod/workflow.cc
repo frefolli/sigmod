@@ -180,6 +180,7 @@ void Workflow(const std::string database_path,
     LogTime("Indexes Database");
 
     #ifdef KMC_EOTI_FS
+    #define TRACK_DISTANCE_COMPUTATIONS
     //ClusterizeDatabase(database);
     Kmeans(database, 1, 0, 9, 256);
     LogTime("Clusterized Database");

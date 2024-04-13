@@ -45,7 +45,7 @@ float32_t* Kmeans(
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
     uint32_t ind_init_db = 0;
-
+    Debug("Memory occuped := " + std::to_string(SIGMOD_MEMORY_TRACKER));
     #pragma omp parallel
     {
         #pragma omp barrier
@@ -119,6 +119,7 @@ float32_t* Kmeans(
             }
         }
     }
+    Debug("Distance computed := " + std::to_string(SIGMOD_DISTANCE_COMPUTATIONS));
 
     // print counts
     for (uint32_t i = 0; i < k; i++) {
