@@ -53,6 +53,7 @@ void Kmeans(
         const uint32_t end_partition_id) {
 
     uint8_t n_partition = start_partition_id / M;
+    Debug(std::to_string(n_partition));
     const uint16_t dimension_vector = actual_vector_size / M;
     //std::vector<uint32_t> beholds(database.length);
     std::vector<uint32_t> dim_centroid(K);
