@@ -182,7 +182,7 @@ void Workflow(const std::string database_path,
     #ifdef KMC_EOTI_FS
     //ClusterizeDatabase(database);
     std::vector<std::vector<float32_t>>* CodeBook = smalloc<std::vector<std::vector<float32_t>>>(10);
-    #pragma omp parallel for num_threads(10)
+    #pragma omp parallel for //num_threads(10)
     for (uint32_t i = 0; i < 10; i++) {
         CodeBook[i] = Kmeans(database, 1, i * 10, i * 10 + 9, 256);
     }
