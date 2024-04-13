@@ -69,6 +69,7 @@ void Kmeans(
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
 
+    Debug("waaaa"); 
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
     for (uint32_t i = 0; i < K; i++) {
@@ -80,6 +81,7 @@ void Kmeans(
         }
     }
 
+    Debug("waaaa"); 
 
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
         // FULL ITERATION
@@ -102,6 +104,7 @@ void Kmeans(
                 }
             }
         }
+    Debug("waaaa"); 
 
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
