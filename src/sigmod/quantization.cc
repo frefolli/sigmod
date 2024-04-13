@@ -88,7 +88,7 @@ void Kmeans(
             dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
             for (uint32_t j = 1; j < K; j++) {
-                score_t dist = distance(cb.centroids[n_partition][i], record.fields, start_partition_id, end_partition_id);
+                score_t dist = distance(cb.centroids[n_partition][j], record.fields, start_partition_id, end_partition_id);
                 if (dist < min_dist) {
                     min_dist = dist;
                     dim_centroid[anchored_centroid]--;
