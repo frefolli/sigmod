@@ -3,7 +3,7 @@
 #include <random>
 
 
-inline score_t distance(const float32_t* centroid, const float32_t* record, const uint32_t start_index_field, const uint32_t end_partition_id) {
+inline score_t distance(std::vector<float32_t>& centroid, const float32_t* record, const uint32_t start_index_field, const uint32_t end_partition_id) {
     #ifdef TRACK_DISTANCE_COMPUTATIONS
         SIGMOD_DISTANCE_COMPUTATIONS++;
     #endif
