@@ -31,21 +31,28 @@ float32_t* Kmeans(
         const uint32_t start_partition_id, 
         const uint32_t end_partition_id,  
         const uint32_t k) {
+    Debug("ok");
     //const uint32_t ITERATIONS = 1;
     const uint8_t dimension_partition = end_partition_id - start_partition_id + 1;
+    Debug("ok");
     uint32_t* beholds = smalloc<uint32_t>(database.length);
+    Debug("ok");
     uint32_t* dim_centroid = smalloc<uint32_t>(k);
 
+    Debug("ok");
     float32_t** centroids = smalloc<float32_t*>(k);
     for (uint8_t i = 0; i < k; i++) {
         centroids[i] = smalloc<float32_t>(dimension_partition);
     }
 
+    Debug("ok");
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
     uint32_t ind_init_db = 0;
+
     Debug("Memory occuped := " + std::to_string(SIGMOD_MEMORY_TRACKER));
+    
     #pragma omp parallel
     {
         #pragma omp barrier
