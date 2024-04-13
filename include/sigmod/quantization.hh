@@ -2,6 +2,7 @@
 #define QUANTIZATION_HH
 
 #include <sigmod/database.hh>
+#include <vector>
 
 std::vector<std::vector<float32_t>> Kmeans(
     const Database& database, 
