@@ -48,12 +48,11 @@ float32_t* Kmeans(
     uint32_t ind_init_db = 0;
     for (uint32_t i = 0; i < k; i++) {
         ind_init_db = uni(rd);
-        Debug(std::to_string(i));
+        Debug("i := " + std::to_string(i) + ", ind_init_db := " + std::to_string(ind_init_db));
         for (uint32_t j = 0; j < dimension_partition; j++) {
+            Debug("j := " + std::to_string(j));
             centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
-            Debug(std::to_string(j));
             dim_centroid[i] = 0;
-            Debug(std::to_string(j));
         }
     }
 
