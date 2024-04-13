@@ -181,7 +181,7 @@ void Workflow(const std::string database_path,
 
     #ifdef KMC_EOTI_FS
     //ClusterizeDatabase(database);
-    float32_t* c = Kmeans(database, 1, 0, 9, 256);
+    std::vector<std::vector<float32_t>> c = Kmeans(database, 1, 0, 9, 256);
     LogTime("Clusterized Database");
     #endif
 
