@@ -107,15 +107,16 @@ std::vector<std::vector<float32_t>> Kmeans(
 
     score_t sum = 0;
     // print counts
-    for (uint32_t i = 0; i < k; i++) {
+    /*for (uint32_t i = 0; i < k; i++) {
         std::cout << "len(centroids["
                     << i << "]) = "
                     << dim_centroid[i] << std::endl;
         sum += dim_centroid[i];
-    }
+    }*/
 
     float32_t mean =((float32_t) sum)/k;
 
+    Debug("# Vectors final distribuitions between centroids");
     Debug("tot := " + std::to_string(sum));
     Debug("mean := " + std::to_string(mean));
     Debug("median := " + std::to_string(dim_centroid[k/2-1]));
