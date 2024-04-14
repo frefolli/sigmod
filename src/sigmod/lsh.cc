@@ -2,9 +2,9 @@
 #include <sigmod/scoreboard.hh>
 #include <sigmod/memory.hh>
 #include <cmath>
-#include <omp.h>
 #include <random>
 #include <fstream>
+#include <omp.h>
 
 typedef uint64_t hash_t;
 
@@ -70,25 +70,34 @@ struct HashTable {
     hash_t* hashes;
     uint32_t length;
     std::map<hash_t, std::vector<uint32_t>>* buckets;
+    uint64_t max_hash;
 
     static HashTable Build(const Database& database) {
         Chain chain = Chain::Build(database.length);
 
         hash_t* hashes = smalloc<hash_t>(database.length);
-        for (uint32_t i = 0; i < database.length; i++) {
-            hashes[i] = chain.hash(database.records[i]);
+        #pragma omp parallel
+        {
+            #pragma omp for
+            for (uint32_t i = 0; i < database.length; i++) {
+                hashes[i] = chain.hash(database.records[i]);
+            }
         }
 
         std::map<hash_t, std::vector<uint32_t>>* buckets = new std::map<hash_t, std::vector<uint32_t>>();
+        uint64_t max_hash = 0;
         for (uint32_t i = 0; i < database.length; i++) {
             buckets->operator[](hashes[i]).push_back(i);
+            if (hashes[i] > max_hash)
+                max_hash = hashes[i];
         }
 
         return {
             .chain = chain,
             .hashes = hashes,
             .length = database.length,
-            .buckets = buckets
+            .buckets = buckets,
+            .max_hash = max_hash
         };
     }
 
@@ -113,21 +122,32 @@ struct HashTable {
     }
 
     static void Evaluate(const HashTable& hashtable, const Database& database, const std::string outfile) {
+        score_t* scores = smalloc<score_t>(hashtable.max_hash + 1);
+        #pragma omp parallel
+        {
+            #pragma omp for
+            for (uint32_t i = 0; i < hashtable.buckets->size(); i++) {
+                auto bucket = hashtable.buckets->begin();
+                std::advance(bucket, i);
+                const uint32_t length = bucket->second.size();
+                score_t sum = 0;
+                for (uint32_t i = 0; i < length; i ++) {
+                    for (uint32_t j = i + 1; j < length; j ++) {
+                        sum += 2 * distance(database.records[bucket->second.at(i)], database.records[bucket->second.at(j)]);
+                    }
+                }
+                sum /= (length * (length - 1));
+                scores[bucket->first] = sum;
+            }
+        }
+
         std::ofstream out(outfile);
         out << "ID,MD" << std::endl;
         for (auto it : *hashtable.buckets) {
-            const std::vector<uint32_t>& bucket = it.second;
-            const uint32_t length = it.second.size();
-            score_t sum = 0;
-            for (uint32_t i = 0; i < length; i ++) {
-                for (uint32_t j = i + 1; j < length; j ++) {
-                    sum += 2 * distance(database.records[bucket.at(i)], database.records[bucket.at(j)]);
-                }
-            }
-            sum /= (length * (length - 1));
-            out << it.first << "," << sum << std::endl;
+            out << it.first << "," << scores[it.first] << std::endl;
         }
         out.close();
+        free(scores);
     }
 
     static void LSHSearch(const HashTable* hashtables, const uint32_t N, const Database& database, const uint32_t target_index) {
