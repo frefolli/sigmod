@@ -26,7 +26,7 @@ void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const C
     #pragma omp parallel for
     for (uint8_t i = 0; i < dim_partition; i++){
         #pragma omp parallel for
-        for (uint8_t j = 0; j < K; j++) {
+        for (uint32_t j = 0; j < K; j++) {
             matr_dist[i][j]  = distance(cb.centroids.at(i).at(j), query, i * M, i * M + M - 1);
         }
     }
@@ -114,4 +114,25 @@ void Kmeans(
 
     }
     
+}
+
+void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query) {
+    Scoreboard gboard;
+    score_t matr_dist[M][K];
+
+    assert(query.query_type == NORMAL);
+
+    PreprocessingQuery(matr_dist, query.fields, cb);
+    for (uint32_t i = 0; i < database.length; i++) {
+        gboard.push(i, ADC(matr_dist, cb, i));
+    }
+
+    assert(gboard.full());
+    
+    uint32_t rank = gboard.size() - 1;
+    while(!gboard.empty()) {
+        result.data[rank] = gboard.top().index;
+        gboard.pop();
+        rank--;
+    }
 }

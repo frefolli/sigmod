@@ -2,8 +2,11 @@
 #define QUANTIZATION_HH
 
 #include <sigmod/database.hh>
-#include <vector>
 #include <sigmod/debug.hh>
+#include <sigmod/query.hh>
+#include <sigmod/solution.hh>
+#include <sigmod/scoreboard.hh>
+#include <vector>
 #include <cmath>
 #include <cassert>
 
@@ -77,25 +80,6 @@ inline score_t distance(const float32_t* centroid, const float32_t* vector, cons
 void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb);
 const score_t ADC(score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector);
 
-void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query) {
-    Scoreboard gboard;
-    score_t matr_dist[M][K];
-
-    assert(query.query_type == NORMAL);
-
-    PreprocessingQuery(matr_dist, query.fields, cb);
-    for (uint32_t i = 0; i < database.length; i++) {
-        gboard.push(i, ADC(matr_dist, cb, i));
-    }
-
-    assert(gboard.full());
-    
-    uint32_t rank = gboard.size() - 1;
-    while(!gboard.empty()) {
-        result.data[rank] = gboard.top().index;
-        gboard.pop();
-        rank--;
-    }
-}
+void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query);
 
 #endif
