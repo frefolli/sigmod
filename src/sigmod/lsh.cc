@@ -26,7 +26,7 @@ struct Chain {
         std::random_device random_device;  // a seed source for the random number engine
         std::mt19937 generator(random_device()); // mersenne_twister_engine seeded with rd()
         std::uniform_real_distribution<float32_t> uniform(0, width);
-        std::normal_distribution<float32_t> normal(0, 8);
+        std::normal_distribution<float32_t> normal(0, 25);
         
         for (uint32_t i = 0; i < k; i++) {
             for (uint32_t j = 0; j < actual_vector_size; j++) {
@@ -206,10 +206,12 @@ void ClusterizeDatabase(const Database& database) {
     }
     LogTime("Dumped HTs");
 
+    /*
     for (uint32_t i = 0; i < N; i++) {
         HashTable::Evaluate(hashtables[i], database, "mH" + std::to_string(i) + ".csv");
     }
     LogTime("Evaluated HTs");
+    */
 
     HashTable::LSHSearch(hashtables, N, database, 7017);
     LogTime("Searched with LSH");

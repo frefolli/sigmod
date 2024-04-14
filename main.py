@@ -15,6 +15,9 @@ def H(df):
 def C(df):
     return sorted(list(df.MD))
 
+def mean(Xs):
+    return sum(Xs)/len(Xs)
+
 def heatmap(data, row_labels, col_labels, ax=None,
             cbar_kw=None, cbarlabel="", **kwargs):
     """
@@ -137,7 +140,7 @@ def plot_hashtables():
     plt.figure(figsize=(30, 30))
     for i in range(100):
         df = pd.read_csv('H%s.csv' % i)
-        plt.plot(N(df), H(df), marker='o', label=('H%s ([%s, %s]), (min = %s), (max = %s)' % (i, min(df.ID), max(df.ID), min(df.Count), max(df.Count))))
+        plt.plot(N(df), H(df), marker='o', label=('H%s ([%s, %s]), (min = %s), (max = %s), (mean = %s)' % (i, min(df.ID), max(df.ID), min(df.Count), max(df.Count), mean(df.Count))))
     plt.xlabel('#')
     plt.ylabel('Count')
     plt.legend()
@@ -147,7 +150,7 @@ def plot_distribution():
     plt.figure(figsize=(30, 30))
     for i in range(100):
         df = pd.read_csv('H%s.csv' % i)
-        plt.plot(N(df), D(df), marker='o', label=('sH%s ([%s, %s]), (min = %s), (max = %s)' % (i, min(df.ID), max(df.ID), min(df.Count), max(df.Count))))
+        plt.plot(N(df), D(df), marker='o', label=('sH%s ([%s, %s]), (min = %s), (max = %s), (mean = %s)' % (i, min(df.ID), max(df.ID), min(df.Count), max(df.Count), mean(df.Count))))
     plt.xlabel('#')
     plt.ylabel('Count')
     plt.legend()
@@ -157,7 +160,7 @@ def plot_coesion():
     plt.figure(figsize=(30, 30))
     for i in range(100):
         df = pd.read_csv('mH%s.csv' % i)
-        plt.plot(N(df), C(df), marker='o', label=('sH%s ([%s, %s]), (min = %s), (max = %s)' % (i, min(df.ID), max(df.ID), min(df.MD), max(df.MD))))
+        plt.plot(N(df), C(df), marker='o', label=('sH%s ([%s, %s]), (min = %s), (max = %s), (mean = %s)' % (i, min(df.ID), max(df.ID), min(df.MD), max(df.MD), mean(df.MD))))
     plt.xlabel('#')
     plt.ylabel('Mean Distance')
     plt.legend()
@@ -175,5 +178,5 @@ def plot_similarity():
 
 plot_hashtables()
 plot_distribution()
-plot_coesion()
+#plot_coesion()
 # plot_similarity()
