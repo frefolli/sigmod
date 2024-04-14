@@ -313,6 +313,11 @@ void Workflow(const std::string database_path,
 
     /* Comparison */
     #ifdef ENABLE_EXAUSTIVE
+        #ifdef ENABLE_PRODUCT_QUANTIZATION
+            score_t product_quantization_score = CompareSolutions(database, query_set, exaustive_solution, product_quantization_solution);
+            Debug("Recall(Product Quantization) := " + std::to_string(product_quantization_score));
+            LogTime("Compared Product Quantization to Exaustive");
+        #endif
         #ifdef ENABLE_BALL_FOREST
             score_t ball_forest_score = CompareSolutions(database, query_set, exaustive_solution, ball_forest_solution);
             Debug("Recall(Ball Forest) := " + std::to_string(ball_forest_score));
@@ -343,6 +348,10 @@ void Workflow(const std::string database_path,
         #ifdef N_DIM_REDUCTION 
             suffix += "-red-" + std::to_string(N_DIM_REDUCTION) + "d";
         #endif
+        #endif
+        #ifdef ENABLE_PRODUCT_QUANTIZATION
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-pq");
+            WriteSolution(product_quantization_solution, out_path);
         #endif
         #ifdef ENABLE_EXAUSTIVE
             out_path = GenerateOutputPathFileName(output_path, "", suffix + "-exaustive");
