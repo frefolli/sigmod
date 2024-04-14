@@ -10,9 +10,6 @@
 #include <sigmod/dimensional_reduction.hh>
 #include <sigmod/lin_alg.hh>
 #include <sigmod/memory.hh>
-#include <cmath>
-#include <sigmod/scoreboard.hh>
-#include <omp.h>
 
 Database ReadDatabase(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -90,13 +87,6 @@ void IndexDatabase(Database& database) {
         }
     }
     database.C_map[cur_C] = {cur_start, cur_end};
-}
-
-void ClusterizeDatabase(const Database& database) {
-    const uint32_t width = std::sqrt(database.length);
-    std::random_device rd;  // a seed source for the random number engine
-    std::mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<> distrib(0, width);
 }
 
 void StatsDatabase(const Database& database) {

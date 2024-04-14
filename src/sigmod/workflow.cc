@@ -12,6 +12,7 @@
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/random_projection.hh>
+#include <sigmod/lsh.hh>
 #include <chrono>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
