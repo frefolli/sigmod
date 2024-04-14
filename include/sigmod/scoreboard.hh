@@ -123,6 +123,18 @@ struct Scoreboard {
               add(index, score);
           }
         }
+        inline void pushs(const uint32_t index, const score_t score) {
+          if (!has(index)) {
+              if (full()) {
+                  if (score < top().score) {
+                      pop();
+                      add(index, score);
+                  }
+              } else {
+                  add(index, score);
+              }
+          }
+        }
         void clear();
 };
 
