@@ -165,14 +165,15 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
     };
 
     for (uint32_t i = 0; i < query_set.length; i++) {
+        Debug("i := " + std::to_string(i) + ", inizio");
         #ifdef STOP_AFTER_TOT_ELEMENTS
         if (i >= TOT_ELEMENTS)
             break;
         #endif
-        
         #ifdef DISATTEND_CHECKS
         const uint32_t query_type = NORMAL;
         #else
+        Debug("i := " + std::to_string(i) + ", ric");
         const uint32_t query_type = (uint32_t) (query_set.queries[i].query_type);
         #endif
 
@@ -191,7 +192,9 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
+        Debug("i := " + std::to_string(i) + ", fine");
     }
+    return solution;
 }
 
 void Workflow(const std::string database_path,
@@ -372,6 +375,11 @@ void Workflow(const std::string database_path,
     #endif
     
     /* Free Solution */
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
+    FreeSolution(product_quantization_solution);
+    LogTime("Freed Product Quantization Solution");
+    #endif
+
     #ifdef ENABLE_BALL_FOREST
     FreeSolution(ball_forest_solution);
     LogTime("Freed Ball Forest Solution");
@@ -398,9 +406,16 @@ void Workflow(const std::string database_path,
     #endif
 
     /* Free Models */
-    #ifdef ENABLE_BALL_FOREST
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
     FreeBallForest(ball_forest);
     LogTime("Freed Ball Forest");
+    #endif
+
+    #ifdef ENABLE_BALL_FOREST
+    #ifndef ENABLE_PRODUCT_QUANTIZATION
+    FreeBallForest(ball_forest);
+    LogTime("Freed Ball Forest");
+    #endif
     #endif
 
     #ifdef ENABLE_KD_FOREST
