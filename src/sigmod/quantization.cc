@@ -1,7 +1,7 @@
 #include <sigmod/quantization.hh>
 #include <sigmod/memory.hh>
 #include <random>
-
+/*
 inline score_t distance(std::vector<float32_t>& centroid, const float32_t* record, const uint32_t start_index_field, const uint32_t end_partition_id) {
     #ifdef TRACK_DISTANCE_COMPUTATIONS
         SIGMOD_DISTANCE_COMPUTATIONS++;
@@ -20,28 +20,28 @@ inline score_t distance(std::vector<float32_t>& centroid, const float32_t* recor
             return quacke3_sqrt(sum);
         #endif
     #endif
-}
+}*/
 
-inline score_t distance(const float32_t* centroid, const float32_t* record, const uint32_t start_index_field, const uint32_t end_partition_id) {
-    #ifdef TRACK_DISTANCE_COMPUTATIONS
-        SIGMOD_DISTANCE_COMPUTATIONS++;
-    #endif
-    score_t sum = 0;
-    for (uint32_t i = 0; i <= end_partition_id - start_index_field + 1; i++) {
-        score_t m = centroid[i] - record[i + start_index_field];
-        sum += (m * m);
+void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb){
+    #pragma omp parallel for
+    for (uint8_t i = 0; i < dim_partition; i++){
+        #pragma omp parallel for
+        for (uint8_t j = 0; j < K; j++) {
+            matr_dist[i][j]  = distance(cb.centroids.at(i).at(j), query, i * M, i * M + M - 1);
+        }
     }
-    #ifdef FAST_DISTANCE
-        return sum;
-    #else
-        #ifndef FAST_SQRT
-            return std::sqrt(sum);
-        #else
-            return quacke3_sqrt(sum);
-        #endif
-    #endif
 }
 
+const score_t ADC(score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector){
+    score_t dist = 0;
+
+    #pragma omp parallel for
+    for (uint8_t i = 0; i < dim_partition; i++) {
+        dist += matr_dist[i][cb.vector_centroid.at(index_vector)[i]];
+    }
+
+    return (const score_t) dist;
+}
 
 /* [start_partition_id, end_partition_id] */
 
@@ -53,7 +53,6 @@ void Kmeans(
         const uint32_t end_partition_id) {
 
     uint8_t n_partition = start_partition_id / M;
-    const uint16_t dimension_vector = actual_vector_size / M;
     
     std::vector<uint32_t> dim_centroid(K);
     std::random_device rd;
@@ -63,7 +62,7 @@ void Kmeans(
     uint32_t ind_init_db = 0;
     for (uint32_t i = 0; i < K; i++) {
         ind_init_db = uni(rd);
-        for (uint32_t j = 0; j < dimension_vector; j++) {
+        for (uint32_t j = 0; j < dim_partition; j++) {
             cb.centroids[n_partition][i][j] = database.records[ind_init_db].fields[j + start_partition_id];
             dim_centroid[i] = 0;
         }
@@ -91,7 +90,7 @@ void Kmeans(
         }
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
-            for (uint32_t j = 0; j < dimension_vector; j++) {
+            for (uint32_t j = 0; j < dim_partition; j++) {
                 cb.centroids[n_partition][i][j] = 0;
             }
         }
@@ -99,13 +98,13 @@ void Kmeans(
         for (uint32_t i = 0; i < database.length; i++) {
             uint32_t centroid = cb.vector_centroid[i][n_partition];
             Record& record = database.records[i];
-            for (uint32_t j = 0; j < dimension_vector; j++) {
+            for (uint32_t j = 0; j < dim_partition; j++) {
                 cb.centroids[n_partition][i][j] += record.fields[j + start_partition_id];
             }
         }
         // compute mean of cumulated coordinates
         for (uint32_t i = 0; i < K; i++) {
-            for (uint32_t j = 0; j < dimension_vector; j++) {
+            for (uint32_t j = 0; j < dim_partition; j++) {
                 cb.centroids[n_partition][i][j] /= dim_centroid[i];
             }
         }

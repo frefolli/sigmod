@@ -5,11 +5,17 @@
 #include <vector>
 #include <sigmod/debug.hh>
 #include <cmath>
+#include <cassert>
+
+const uint8_t M = 10; // #partitions
+const uint32_t K = 256; // #clusters per partition
+const uint8_t dim_partition = actual_vector_size / M;
+
 
 struct CodeBook{
-    /* index[id_vector, ids_centroids_associated_foreach_partition] */
+    /* indeces := [id_vector, ids_centroids_associated_foreach_partition] */
     std::map<uint32_t, uint8_t[M]> vector_centroid;
-    /* index[id_partition, id_centroid, centroid_component] */
+    /* indeces := [id_partition, id_centroid, centroid_component] */
     std::map<uint8_t, std::map<uint8_t, float32_t[M]>> centroids;
 };
 
@@ -44,8 +50,52 @@ inline void compute_distributions(const std::vector<uint32_t>& dim_centroids) {
     Debug("std := " + std::to_string(sqrt(var)));
 }
 
-inline score_t MSE_distorsion(Database& dataset, std::vector<std::vector<float32_t>>* CodeBook) {
+inline score_t distance(const float32_t* centroid, const float32_t* vector, const uint32_t start_index_partition, const uint32_t end_index_partition) {
+    #ifdef TRACK_DISTANCE_COMPUTATIONS
+        SIGMOD_DISTANCE_COMPUTATIONS++;
+    #endif
+    score_t sum = 0;
+    for (uint32_t i = 0; i <= end_index_partition - start_index_partition + 1; i++) {
+        score_t m = centroid[i] - vector[i + start_index_partition];
+        sum += (m * m);
+    }
+    #ifdef FAST_DISTANCE
+        return sum;
+    #else
+        #ifndef FAST_SQRT
+            return std::sqrt(sum);
+        #else
+            return quacke3_sqrt(sum);
+        #endif
+    #endif
+}
 
+/* 
+* compute matrix of distances between query and all centroids of all partitions 
+* matr_dist := score_t[M][K]
+*/
+void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb);
+const score_t ADC(score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector);
+
+void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query) {
+    Scoreboard gboard;
+    score_t matr_dist[M][K];
+
+    assert(query.query_type == NORMAL);
+
+    PreprocessingQuery(matr_dist, query.fields, cb);
+    for (uint32_t i = 0; i < database.length; i++) {
+        gboard.push(i, ADC(matr_dist, cb, i));
+    }
+
+    assert(gboard.full());
+    
+    uint32_t rank = gboard.size() - 1;
+    while(!gboard.empty()) {
+        result.data[rank] = gboard.top().index;
+        gboard.pop();
+        rank--;
+    }
 }
 
 #endif
