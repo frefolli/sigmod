@@ -39,19 +39,16 @@ void Kmeans(
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
     
-    #pragma omp parallel
-    {
-        // Initializing centroids random on a point
-        uint32_t ind_init_db = 0;
-        #pragma omp parallel for private(ind_init_db)
-        for (uint32_t i = 0; i < K; i++) {
-            ind_init_db = uni(rd);
-            for (uint32_t j = 0; j < dim_partition; j++) {
-                #pragma omp critical
-                {
-                    cb.centroids[n_partition][i][j] = database.records[ind_init_db].fields[j + start_partition_id];
-                    dim_centroid[i] = 0;
-                }
+    // Initializing centroids random on a point
+    uint32_t ind_init_db = 0;
+    #pragma omp parallel for private(ind_init_db)
+    for (uint32_t i = 0; i < K; i++) {
+        ind_init_db = uni(rd);
+        for (uint32_t j = 0; j < dim_partition; j++) {
+            #pragma omp critical
+            {
+                cb.centroids[n_partition][i][j] = database.records[ind_init_db].fields[j + start_partition_id];
+                dim_centroid[i] = 0;
             }
         }
     }
