@@ -1,6 +1,7 @@
 #include <sigmod/quantization.hh>
 #include <sigmod/memory.hh>
 #include <random>
+#include <cmath>
 #include <chrono>
 
 void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb){
@@ -38,8 +39,9 @@ void Kmeans(
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
+    Debug("coso");
 
-    std::map<uint8_t, float32_t[M]> centroids = cb.centroids[n_partition];
+    std::map<uint8_t, float32_t[M]> &centroids = cb.centroids[n_partition];
     
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
@@ -74,6 +76,9 @@ void Kmeans(
                 }
             }
         }
+        Debug("bene");
+
+        std::map<uint8_t, float32_t [10]> old_centroids = centroids;
 
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
@@ -94,13 +99,26 @@ void Kmeans(
         // compute mean of cumulated coordinates
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
-                centroids[i][j] /= dim_centroid[i];
+                if (dim_centroid[i] != 0){
+                    centroids[i][j] /= dim_centroid[i];
+                } 
             }
         }
 
-
         Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
-        compute_distributions(dim_centroid);
+        score_t cerr = 0;
+        score_t err;
+        for (uint32_t i = 0; i < K; i++) {
+            err = 0;
+            for (uint32_t j = 0; j < dim_partition; j++) {
+                err += pow(centroids[i][j] - old_centroids[i][j], 2);
+            }
+            err = sqrt(err);
+            cerr += err;    
+            //Debug(" Centroid " + std::to_string(i) + " error := " + std::to_string(err));
+        }
+        Debug(" Cumulative centroid error := " + std::to_string(cerr));
+        //compute_distributions(dim_centroid);
 
     }
     

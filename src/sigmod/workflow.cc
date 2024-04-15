@@ -40,6 +40,7 @@ Solution SolveForQueriesWithExaustive(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -70,6 +71,7 @@ Solution SolveForQueriesWithKDForest(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -101,6 +103,7 @@ Solution SolveForQueriesWithBallForest(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -132,6 +135,7 @@ Solution SolveForQueriesWithVPForest(const Database& database,
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
     
+        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -165,7 +169,6 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
     };
 
     for (uint32_t i = 0; i < query_set.length; i++) {
-        Debug("i := " + std::to_string(i) + ", inizio");
         #ifdef STOP_AFTER_TOT_ELEMENTS
         if (i >= TOT_ELEMENTS)
             break;
@@ -173,7 +176,6 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         #ifdef DISATTEND_CHECKS
         const uint32_t query_type = NORMAL;
         #else
-        Debug("i := " + std::to_string(i) + ", ric");
         const uint32_t query_type = (uint32_t) (query_set.queries[i].query_type);
         #endif
 
@@ -192,7 +194,7 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
-        solution.time_score_queries[query_type].first + 1;
+        solution.time_score_queries[query_type].first++;
     }
     return solution;
 }
@@ -227,9 +229,10 @@ void Workflow(const std::string database_path,
     LogTime("Built Ball Forest");
     
     CodeBook codebook;
+    Debug("coso");
     #pragma omp parallel for
-        for (uint32_t i = 0; i < 10; i++) {
-            Kmeans(codebook, database, 300, i * M, i * M + M - 1);
+        for (uint32_t i = 0; i < M; i++) {
+            Kmeans(codebook, database, 30, i * M, (i + 1) * M - 1);
         }
     LogTime("Built CodeBook");
     #endif
@@ -317,7 +320,11 @@ void Workflow(const std::string database_path,
     /* Comparison */
     #ifdef ENABLE_EXAUSTIVE
         #ifdef ENABLE_PRODUCT_QUANTIZATION
+            #ifdef ACCURATE_RECALL
+            score_t product_quantization_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, product_quantization_solution);
+            #else
             score_t product_quantization_score = CompareSolutions(database, query_set, exaustive_solution, product_quantization_solution);
+            #endif
             Debug("Recall(Product Quantization) := " + std::to_string(product_quantization_score));
             LogTime("Compared Product Quantization to Exaustive");
         #endif
