@@ -232,7 +232,7 @@ void Workflow(const std::string database_path,
             Kmeans(codebook, database, 1, i * M, i * M + M - 1);
         }
     LogTime("Built CodeBook");
-    return 0;
+    return;
     #endif
 
     #ifdef ENABLE_BALL_FOREST
