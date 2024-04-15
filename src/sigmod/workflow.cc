@@ -182,7 +182,7 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         if (query_type == NORMAL) {
             SearchExaustivePQ(cb, database, solution.results[i], query_set.queries[i]);
         } else {
-            //SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
+            SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
         }
 
         auto end_query_timer = std::chrono::high_resolution_clock::now();
@@ -222,9 +222,8 @@ void Workflow(const std::string database_path,
 
     /* Initialization */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
-    BallForest ball_forest;
-    //BallForest ball_forest = BuildBallForest(database);
-    //LogTime("Built Ball Forest");
+    BallForest ball_forest = BuildBallForest(database);
+    LogTime("Built Ball Forest");
     
     CodeBook codebook;
     #pragma omp parallel for
