@@ -38,15 +38,16 @@ void Kmeans(
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
+
+    std::map<uint8_t, float32_t[M]> centroids = cb.centroids[n_partition];
     
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
     for (uint32_t i = 0; i < K; i++) {
         ind_init_db = uni(rd);
         for (uint32_t j = 0; j < dim_partition; j++) {
-            cb.centroids[n_partition][i][j] = database.records[ind_init_db].fields[j + start_partition_id];
+            centroids[i][j] = database.records[ind_init_db].fields[j + start_partition_id];
         }
-        dim_centroid[i] = 0;
     }
 
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
@@ -58,12 +59,12 @@ void Kmeans(
         // computing the nearest centroid
         for (uint32_t i = 0; i < database.length; i++) {
             Record& record = database.records[i];
-            score_t min_dist = distance(cb.centroids[n_partition][0], record.fields, start_partition_id, end_partition_id);
+            score_t min_dist = distance(centroids[0], record.fields, start_partition_id, end_partition_id);
             cb.vector_centroid[i][n_partition] = 0;
             dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
             for (uint32_t j = 1; j < K; j++) {
-                score_t dist = distance(cb.centroids[n_partition][j], record.fields, start_partition_id, end_partition_id);
+                score_t dist = distance(centroids[j], record.fields, start_partition_id, end_partition_id);
                 if (dist < min_dist) {
                     min_dist = dist; 
                     dim_centroid[anchored_centroid]--;
@@ -77,7 +78,7 @@ void Kmeans(
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
-                cb.centroids[n_partition][i][j] = 0;
+                centroids[i][j] = 0;
             }
         }
 
@@ -86,14 +87,14 @@ void Kmeans(
             uint32_t centroid = cb.vector_centroid[i][n_partition];
             Record& record = database.records[i];
             for (uint32_t j = 0; j < dim_partition; j++) {
-                cb.centroids[n_partition][centroid][j] += record.fields[j + start_partition_id];
+                centroids[centroid][j] += record.fields[j + start_partition_id];
             }
         }
         
         // compute mean of cumulated coordinates
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
-                cb.centroids[n_partition][i][j] /= dim_centroid[i];
+                centroids[i][j] /= dim_centroid[i];
             }
         }
 

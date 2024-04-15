@@ -58,7 +58,7 @@ inline score_t distance(const float32_t* centroid, const float32_t* vector, cons
         SIGMOD_DISTANCE_COMPUTATIONS++;
     #endif
     score_t sum = 0;
-    for (uint32_t i = 0; i <= end_index_partition - start_index_partition + 1; i++) {
+    for (uint32_t i = 0; i < end_index_partition - start_index_partition + 1; i++) {
         score_t m = centroid[i] - vector[i + start_index_partition];
         sum += (m * m);
     }
