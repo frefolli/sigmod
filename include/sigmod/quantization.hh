@@ -78,7 +78,7 @@ inline score_t distance(const float32_t* centroid, const float32_t* vector, cons
 * matr_dist := score_t[M][K]
 */
 void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb);
-const score_t ADC(score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector);
+const score_t ADC(const score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector);
 
 void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query);
 

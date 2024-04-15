@@ -4,19 +4,19 @@
 #include <chrono>
 
 void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb){
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
     for (uint8_t i = 0; i < M; i++){
-        #pragma omp parallel for
+        // #pragma omp parallel for
         for (uint32_t j = 0; j < K; j++) {
             matr_dist[i][j]  = distance(cb.centroids.at(i).at(j), query, i * M, i * M + M - 1);
         }
     }
 }
 
-const score_t ADC(score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector){
+const score_t ADC(const score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector){
     score_t dist = 0;
 
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for (uint8_t i = 0; i < M; i++) {
         dist += matr_dist[i][cb.vector_centroid.at(index_vector)[i]];
     }
