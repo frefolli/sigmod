@@ -31,7 +31,7 @@
 // #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
 
 /* Build a Ball Forest and uses it to craft a solution */
-// #define ENABLE_BALL_FOREST
+#define ENABLE_BALL_FOREST
 
 /* Build a VP Forest and uses it to craft a solution */
 // #define ENABLE_VP_FOREST
@@ -65,5 +65,8 @@
 
 /* Tracks num of distance() calls */
 // #define TRACK_DISTANCE_COMPUTATIONS
+
+/* Use the actual Recall function of the Task */
+#define ACCURATE_RECALL
 
 #endif

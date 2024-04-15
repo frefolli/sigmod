@@ -323,22 +323,38 @@ void Workflow(const std::string database_path,
             LogTime("Compared Product Quantization to Exaustive");
         #endif
         #ifdef ENABLE_BALL_FOREST
+            #ifdef ACCURATE_RECALL
+            score_t ball_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, ball_forest_solution);
+            #else
             score_t ball_forest_score = CompareSolutions(database, query_set, exaustive_solution, ball_forest_solution);
+            #endif
             Debug("Recall(Ball Forest) := " + std::to_string(ball_forest_score));
             LogTime("Compared Ball Forest to Exaustive");
         #endif
         #ifdef ENABLE_KD_FOREST
+            #ifdef ACCURATE_RECALL
+            score_t kd_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, kd_forest_solution);
+            #else
             score_t kd_forest_score = CompareSolutions(database, query_set, exaustive_solution, kd_forest_solution);
+            #endif
             Debug("Recall(KD Forest) := " + std::to_string(kd_forest_score));
             LogTime("Compared KD Forest to Exaustive");
         #endif
         #ifdef ENABLE_VP_FOREST
+            #ifdef ACCURATE_RECALL
+            score_t vp_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, vp_forest_solution);
+            #else
             score_t vp_forest_score = CompareSolutions(database, query_set, exaustive_solution, vp_forest_solution);
+            #endif
             Debug("Recall(VP Forest) := " + std::to_string(vp_forest_score));
             LogTime("Compared VP Forest to Exaustive");
         #endif
         #ifdef ENABLE_MVP_FOREST
+            #ifdef ACCURATE_RECALL
+            score_t mvp_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, mvp_forest_solution);
+            #else
             score_t mvp_forest_score = CompareSolutions(database, query_set, exaustive_solution, mvp_forest_solution);
+            #endif
             Debug("Recall(MVP Forest) := " + std::to_string(mvp_forest_score));
             LogTime("Compared MVP Forest to Exaustive");
         #endif
