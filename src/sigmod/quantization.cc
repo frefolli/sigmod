@@ -86,7 +86,7 @@ void Kmeans(
             uint32_t centroid = cb.vector_centroid[i][n_partition];
             Record& record = database.records[i];
             for (uint32_t j = 0; j < dim_partition; j++) {
-                cb.centroids[n_partition][i][j] += record.fields[j + start_partition_id];
+                cb.centroids[n_partition][centroid][j] += record.fields[j + start_partition_id];
             }
         }
         
