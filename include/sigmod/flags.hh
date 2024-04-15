@@ -5,13 +5,13 @@
 // #define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
 
 /* Query.query_type is ignored as if it was NORMAL */
-// #define DISATTEND_CHECKS
+#define DISATTEND_CHECKS
 
 /* Compare 2 solutions saved on files */
 // #define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 1000
+#define TOT_ELEMENTS 4
 #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
