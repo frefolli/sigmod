@@ -229,7 +229,7 @@ void Workflow(const std::string database_path,
     CodeBook codebook;
     #pragma omp parallel for
         for (uint32_t i = 0; i < 10; i++) {
-            Kmeans(codebook, database, 100, i * M, i * M + M - 1);
+            Kmeans(codebook, database, 1, i * M, i * M + M - 1);
         }
     LogTime("Built CodeBook");
     #endif
