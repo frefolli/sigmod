@@ -109,7 +109,7 @@ void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& res
     Scoreboard gboard;
     score_t matr_dist[M][K];
 
-    assert(query.query_type == NORMAL);
+    //assert(query.query_type == NORMAL);
     
     auto start_query_timer = std::chrono::high_resolution_clock::now();
     PreprocessingQuery(matr_dist, query.fields, cb);
