@@ -41,22 +41,18 @@ void Kmeans(
     
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
-    #pragma omp parallel for private(ind_init_db)
     for (uint32_t i = 0; i < K; i++) {
         ind_init_db = uni(rd);
         for (uint32_t j = 0; j < dim_partition; j++) {
-            #pragma omp critical
-            {
-                cb.centroids[n_partition][i][j] = database.records[ind_init_db].fields[j + start_partition_id];
-                dim_centroid[i] = 0;
-            }
+            cb.centroids[n_partition][i][j] = database.records[ind_init_db].fields[j + start_partition_id];
+            dim_centroid[i] = 0;
         }
     }
 
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
         // FULL ITERATION
         // computing the nearest centroid
-        #pragma omp parallel for
+        #pragma omp parallel for 
         for (uint32_t i = 0; i < database.length; i++) {
             Record& record = database.records[i];
             score_t min_dist = distance(cb.centroids[n_partition][0], record.fields, start_partition_id, end_partition_id);
@@ -65,7 +61,6 @@ void Kmeans(
                 cb.vector_centroid[i][n_partition] = 0;
                 dim_centroid[0]++;
             }
-
             uint32_t anchored_centroid = 0;
             for (uint32_t j = 1; j < K; j++) {
                 score_t dist = distance(cb.centroids[n_partition][j], record.fields, start_partition_id, end_partition_id);
@@ -82,7 +77,6 @@ void Kmeans(
             }
         }
 
-        #pragma omp parallel for
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
@@ -90,30 +84,22 @@ void Kmeans(
             }
         }
 
-        #pragma omp parallel for
         // refill centroid data
         for (uint32_t i = 0; i < database.length; i++) {
             uint32_t centroid = cb.vector_centroid[i][n_partition];
             Record& record = database.records[i];
             for (uint32_t j = 0; j < dim_partition; j++) {
-                #pragma omp critical
-                {
-                    cb.centroids[n_partition][i][j] += record.fields[j + start_partition_id];
-                }
+                cb.centroids[n_partition][i][j] += record.fields[j + start_partition_id];
             }
         }
         
-        #pragma omp parallel for
         // compute mean of cumulated coordinates
         for (uint32_t i = 0; i < K; i++) {
-            #pragma omp parallel for
             for (uint32_t j = 0; j < dim_partition; j++) {
-                #pragma omp critical
-                {
-                    cb.centroids[n_partition][i][j] /= dim_centroid[i];
-                }
+                cb.centroids[n_partition][i][j] /= dim_centroid[i];
             }
         }
+        
         Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
         compute_distributions(dim_centroid);
 
