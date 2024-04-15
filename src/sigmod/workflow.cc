@@ -222,10 +222,10 @@ void Workflow(const std::string database_path,
 
     /* Initialization */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
-    /*
-    BallForest ball_forest = BuildBallForest(database);
-    LogTime("Built Ball Forest");
-    */
+    BallForest ball_forest;
+    //BallForest ball_forest = BuildBallForest(database);
+    //LogTime("Built Ball Forest");
+    
     CodeBook codebook;
     #pragma omp parallel for
         for (uint32_t i = 0; i < 10; i++) {
