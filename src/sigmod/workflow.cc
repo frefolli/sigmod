@@ -222,15 +222,17 @@ void Workflow(const std::string database_path,
 
     /* Initialization */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
+    /*
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
-
+    */
     CodeBook codebook;
-    #pragma omp parallel for num_threads(10)
+    #pragma omp parallel for
         for (uint32_t i = 0; i < 10; i++) {
             Kmeans(codebook, database, 1, i * M, i * M + M - 1);
         }
     LogTime("Built CodeBook");
+    return 0;
     #endif
 
     #ifdef ENABLE_BALL_FOREST

@@ -43,6 +43,7 @@ void Kmeans(
     {
         // Initializing centroids random on a point
         uint32_t ind_init_db = 0;
+        #pragma omp parallel for private(ind_init_db)
         for (uint32_t i = 0; i < K; i++) {
             ind_init_db = uni(rd);
             for (uint32_t j = 0; j < dim_partition; j++) {
