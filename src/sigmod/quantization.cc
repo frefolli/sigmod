@@ -1,6 +1,7 @@
 #include <sigmod/quantization.hh>
 #include <sigmod/memory.hh>
 #include <random>
+#include <chrono>
 /*
 inline score_t distance(std::vector<float32_t>& centroid, const float32_t* record, const uint32_t start_index_field, const uint32_t end_partition_id) {
     #ifdef TRACK_DISTANCE_COMPUTATIONS
@@ -24,7 +25,7 @@ inline score_t distance(std::vector<float32_t>& centroid, const float32_t* recor
 
 void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb){
     #pragma omp parallel for
-    for (uint8_t i = 0; i < dim_partition; i++){
+    for (uint8_t i = 0; i < M; i++){
         #pragma omp parallel for
         for (uint32_t j = 0; j < K; j++) {
             matr_dist[i][j]  = distance(cb.centroids.at(i).at(j), query, i * M, i * M + M - 1);
@@ -36,7 +37,7 @@ const score_t ADC(score_t matr_dist[M][K], const CodeBook& cb, const uint32_t in
     score_t dist = 0;
 
     #pragma omp parallel for
-    for (uint8_t i = 0; i < dim_partition; i++) {
+    for (uint8_t i = 0; i < M; i++) {
         dist += matr_dist[i][cb.vector_centroid.at(index_vector)[i]];
     }
 
@@ -121,11 +122,22 @@ void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& res
     score_t matr_dist[M][K];
 
     assert(query.query_type == NORMAL);
-
+    
+    auto start_query_timer = std::chrono::high_resolution_clock::now();
     PreprocessingQuery(matr_dist, query.fields, cb);
+    auto end_query_timer = std::chrono::high_resolution_clock::now();
+        
+    long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
+    Debug("TIME preprocessing (ms) := " + std::to_string(sample));
+
+    start_query_timer = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < database.length; i++) {
         gboard.push(i, ADC(matr_dist, cb, i));
     }
+    end_query_timer = std::chrono::high_resolution_clock::now();
+        
+    sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
+    Debug("TIME searching ADC (ms) := " + std::to_string(sample));
 
     assert(gboard.full());
     

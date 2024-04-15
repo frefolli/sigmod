@@ -192,7 +192,6 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
-        Debug("i := " + std::to_string(i) + ", fine");
     }
     return solution;
 }
