@@ -202,6 +202,7 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
 void Workflow(const std::string database_path,
               const std::string query_set_path,
               const std::string output_path) {
+    Debug(std::to_string(sizeof(std::map<uint32_t, uint8_t[M]>)));
     Database database = ReadDatabase(database_path);
     LogTime("Read database, length = " + std::to_string(database.length));
     QuerySet query_set = ReadQuerySet(query_set_path);
@@ -228,7 +229,9 @@ void Workflow(const std::string database_path,
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
     
-    CodeBook codebook;
+    CodeBook codebook = {
+        .vector_centroid = MallocVectorCentroid(database.length, M)
+    };
     Debug("coso");
     #pragma omp parallel for
         for (uint32_t i = 0; i < M; i++) {
@@ -436,6 +439,7 @@ void Workflow(const std::string database_path,
 
     #ifdef ENABLE_BALL_FOREST
     #ifndef ENABLE_PRODUCT_QUANTIZATION
+    FreeCodeBook(cb);
     FreeBallForest(ball_forest);
     LogTime("Freed Ball Forest");
     #endif

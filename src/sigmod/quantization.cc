@@ -19,10 +19,28 @@ const score_t ADC(const score_t matr_dist[M][K], const CodeBook& cb, const uint3
 
     // #pragma omp parallel for
     for (uint8_t i = 0; i < M; i++) {
-        dist += matr_dist[i][cb.vector_centroid.at(index_vector)[i]];
+        dist += matr_dist[i][cb.vector_centroid[index_vector][i]];
     }
 
     return (const score_t) dist;
+}
+
+uint8_t** MallocVectorCentroid(const uint32_t db_length, const uint8_t n_partitions){
+    uint8_t** vector_centroid = smalloc<uint8_t*>(db_length);
+    for (uint32_t i = 0; i < db_length; i++) {
+        vector_centroid[i] = smalloc<uint8_t>(n_partitions);
+        for (uint8_t j = 0; j < n_partitions; j++) {
+            vector_centroid[i][j] = 0;
+        }
+    }
+    return vector_centroid;
+}
+
+void FreeVectorCentroid(CodeBook& cb) {
+    if (cb.vector_centroid != nullptr) {    
+        free(cb.vector_centroid);
+    }
+    cb.vector_centroid = nullptr;
 }
 
 /* [start_partition_id, end_partition_id] */
@@ -65,6 +83,12 @@ void Kmeans(
             cb.vector_centroid[i][n_partition] = 0;
             dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
+            if (i % 10000 == 0)
+            {
+                Debug("i := " + std::to_string(i));
+                /* code */
+            }
+            
             for (uint32_t j = 1; j < K; j++) {
                 score_t dist = distance(centroids[j], record.fields, start_partition_id, end_partition_id);
                 if (dist < min_dist) {
