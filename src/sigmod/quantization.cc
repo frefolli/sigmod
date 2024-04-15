@@ -52,26 +52,19 @@ void Kmeans(
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
         // FULL ITERATION
         // computing the nearest centroid
-        #pragma omp parallel for 
         for (uint32_t i = 0; i < database.length; i++) {
             Record& record = database.records[i];
             score_t min_dist = distance(cb.centroids[n_partition][0], record.fields, start_partition_id, end_partition_id);
-            #pragma omp critical
-            {
-                cb.vector_centroid[i][n_partition] = 0;
-                dim_centroid[0]++;
-            }
+            cb.vector_centroid[i][n_partition] = 0;
+            dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
             for (uint32_t j = 1; j < K; j++) {
                 score_t dist = distance(cb.centroids[n_partition][j], record.fields, start_partition_id, end_partition_id);
                 if (dist < min_dist) {
                     min_dist = dist; 
-                    #pragma omp critical
-                    {
-                        dim_centroid[anchored_centroid]--;
-                        dim_centroid[j]++;
-                        cb.vector_centroid[i][n_partition] = j;
-                    }
+                    dim_centroid[anchored_centroid]--;
+                    dim_centroid[j]++;
+                    cb.vector_centroid[i][n_partition] = j;
                     anchored_centroid = j;
                 }
             }
@@ -99,7 +92,7 @@ void Kmeans(
                 cb.centroids[n_partition][i][j] /= dim_centroid[i];
             }
         }
-        
+
         Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
         compute_distributions(dim_centroid);
 
