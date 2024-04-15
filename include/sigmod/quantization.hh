@@ -17,9 +17,9 @@ const uint8_t dim_partition = actual_vector_size / M;
 struct CodeBook{
     /* indeces := [id_vector, ids_centroids_associated_foreach_partition] */
     //std::map<uint32_t, uint8_t[M]> vector_centroid;
-    uint8_t** vector_centroid;
+    uint16_t** vector_centroid;
     /* indeces := [id_partition, id_centroid, centroid_component] */
-    std::map<uint8_t, std::map<uint8_t, float32_t[M]>> centroids;
+    std::map<uint8_t, std::map<uint16_t, float32_t[M]>> centroids;
 };
 
 void Kmeans(
@@ -29,7 +29,7 @@ void Kmeans(
     const uint32_t start_partition_id, 
     const uint32_t end_partition_id);
 
-uint8_t** MallocVectorCentroid(const uint32_t db_length, const uint8_t n_partitions);
+uint16_t** MallocVectorCentroid(const uint32_t db_length, const uint8_t n_partitions);
 void FreeCodeBook(CodeBook cb);
 
 inline void compute_distributions(const std::vector<uint32_t>& dim_centroids) {

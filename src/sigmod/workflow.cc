@@ -204,6 +204,36 @@ void Workflow(const std::string database_path,
               const std::string output_path) {
     Debug(std::to_string(sizeof(std::map<uint32_t, uint8_t[M]>)));
     Database database = ReadDatabase(database_path);
+
+
+    CodeBook codebook = {
+        .vector_centroid = MallocVectorCentroid(database.length, M)
+    };
+
+    Kmeans(codebook, database, 10, 0, 9);
+
+    for (uint32_t i = 0; i < K; i++)
+    {
+        Debug("i := " + std::to_string(i) + "-esimo centroide");
+        for (uint32_t j = 0; j < M; j++) {
+            std::cout << codebook.centroids.at(0).at(i)[j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    
+    return;
+
+
+
+
+
+
+
+
+
+
+
+
     LogTime("Read database, length = " + std::to_string(database.length));
     QuerySet query_set = ReadQuerySet(query_set_path);
     
@@ -229,7 +259,7 @@ void Workflow(const std::string database_path,
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
     
-    CodeBook codebook = {
+    /*CodeBook*/ codebook = {
         .vector_centroid = MallocVectorCentroid(database.length, M)
     };
     Debug("coso");

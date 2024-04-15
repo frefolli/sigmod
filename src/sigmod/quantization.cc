@@ -25,10 +25,10 @@ const score_t ADC(const score_t matr_dist[M][K], const CodeBook& cb, const uint3
     return (const score_t) dist;
 }
 
-uint8_t** MallocVectorCentroid(const uint32_t db_length, const uint8_t n_partitions){
-    uint8_t** vector_centroid = smalloc<uint8_t*>(db_length);
+uint16_t** MallocVectorCentroid(const uint32_t db_length, const uint8_t n_partitions){
+    uint16_t** vector_centroid = smalloc<uint16_t*>(db_length);
     for (uint32_t i = 0; i < db_length; i++) {
-        vector_centroid[i] = smalloc<uint8_t>(n_partitions);
+        vector_centroid[i] = smalloc<uint16_t>(n_partitions);
         for (uint8_t j = 0; j < n_partitions; j++) {
             vector_centroid[i][j] = 0;
         }
@@ -59,7 +59,7 @@ void Kmeans(
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
     Debug("coso");
 
-    std::map<uint8_t, float32_t[M]> &centroids = cb.centroids[n_partition];
+    std::map<uint16_t, float32_t[M]> &centroids = cb.centroids[n_partition];
     
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
@@ -102,7 +102,7 @@ void Kmeans(
         }
         Debug("bene");
 
-        std::map<uint8_t, float32_t [10]> old_centroids = centroids;
+        std::map<uint16_t, float32_t [10]> old_centroids = centroids;
 
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
