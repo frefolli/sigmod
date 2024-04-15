@@ -50,12 +50,15 @@ void Kmeans(
     }
 
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
+        for (uint32_t i = 0; i < K; i++) {
+            dim_centroid[i] = 0;
+        }
+
         // FULL ITERATION
         // computing the nearest centroid
         for (uint32_t i = 0; i < database.length; i++) {
             Record& record = database.records[i];
             score_t min_dist = distance(cb.centroids[n_partition][0], record.fields, start_partition_id, end_partition_id);
-            dim_centroid[cb.vector_centroid[i][n_partition]]--;
             cb.vector_centroid[i][n_partition] = 0;
             dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
