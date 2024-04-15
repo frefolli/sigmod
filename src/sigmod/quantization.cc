@@ -45,8 +45,8 @@ void Kmeans(
         ind_init_db = uni(rd);
         for (uint32_t j = 0; j < dim_partition; j++) {
             cb.centroids[n_partition][i][j] = database.records[ind_init_db].fields[j + start_partition_id];
-            dim_centroid[i] = 0;
         }
+        dim_centroid[i] = 0;
     }
 
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
@@ -91,7 +91,9 @@ void Kmeans(
             for (uint32_t j = 0; j < dim_partition; j++) {
                 cb.centroids[n_partition][i][j] /= dim_centroid[i];
             }
+            dim_centroid[i] = 0;
         }
+
 
         Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
         compute_distributions(dim_centroid);
