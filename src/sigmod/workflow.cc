@@ -223,6 +223,10 @@ void Workflow(const std::string database_path,
     IndexDatabase(database);
     LogTime("Indexes Database");
 
+    #ifdef ENABLE_LSH_FOREST
+    ClusterizeDatabase(database);
+    #endif
+
     /* Initialization */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
     BallForest ball_forest = BuildBallForest(database);
@@ -271,17 +275,6 @@ void Workflow(const std::string database_path,
         Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
         std::to_string(time_score_query.second) + " ms/q");
     }
-    /*
-    ConvertIndexSolution(product_quantization_solution, database);
-
-    std::string s = "[";
-    for (uint8_t k = 0; k < 100; k++){
-        s += std::to_string(product_quantization_solution.results[0].data[k]) + ",";
-    }
-    s += "]";
-    Debug(s);
-    return;
-    */
     #endif
 
     #ifdef ENABLE_BALL_FOREST
@@ -344,7 +337,7 @@ void Workflow(const std::string database_path,
         #endif
         #ifdef ENABLE_BALL_FOREST
             #ifdef ACCURATE_RECALL
-            score_t ball_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, ball_forest_solution);
+            score_t ball_forest_score = CompareAndComputeRecallOfSolutionsByIndex(database, query_set, exaustive_solution, ball_forest_solution);
             #else
             score_t ball_forest_score = CompareSolutions(database, query_set, exaustive_solution, ball_forest_solution);
             #endif
@@ -353,7 +346,7 @@ void Workflow(const std::string database_path,
         #endif
         #ifdef ENABLE_KD_FOREST
             #ifdef ACCURATE_RECALL
-            score_t kd_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, kd_forest_solution);
+            score_t kd_forest_score = CompareAndComputeRecallOfSolutionsByIndex(database, query_set, exaustive_solution, kd_forest_solution);
             #else
             score_t kd_forest_score = CompareSolutions(database, query_set, exaustive_solution, kd_forest_solution);
             #endif
@@ -362,7 +355,7 @@ void Workflow(const std::string database_path,
         #endif
         #ifdef ENABLE_VP_FOREST
             #ifdef ACCURATE_RECALL
-            score_t vp_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, vp_forest_solution);
+            score_t vp_forest_score = CompareAndComputeRecallOfSolutionsByIndex(database, query_set, exaustive_solution, vp_forest_solution);
             #else
             score_t vp_forest_score = CompareSolutions(database, query_set, exaustive_solution, vp_forest_solution);
             #endif
@@ -371,7 +364,7 @@ void Workflow(const std::string database_path,
         #endif
         #ifdef ENABLE_MVP_FOREST
             #ifdef ACCURATE_RECALL
-            score_t mvp_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, mvp_forest_solution);
+            score_t mvp_forest_score = CompareAndComputeRecallOfSolutionsByIndex(database, query_set, exaustive_solution, mvp_forest_solution);
             #else
             score_t mvp_forest_score = CompareSolutions(database, query_set, exaustive_solution, mvp_forest_solution);
             #endif
