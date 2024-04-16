@@ -10,12 +10,13 @@
 #include <sigmod/dimensional_reduction.hh>
 #include <sigmod/lin_alg.hh>
 #include <sigmod/memory.hh>
+#include <cassert>
 
 Database ReadDatabase(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
     
     uint32_t db_length;
-    fread(&db_length, sizeof(uint32_t), 1, dbfile);
+    assert(1 == fread(&db_length, sizeof(uint32_t), 1, dbfile));
 
     Record* records = (Record*) std::malloc(sizeof(Record) * db_length);
     RawRecord* records_entry_point = (RawRecord*) records;
@@ -25,7 +26,7 @@ Database ReadDatabase(const std::string input_path) {
         if (this_batch > records_to_read) {
             this_batch = records_to_read;
         }
-        fread(records_entry_point, sizeof(RawRecord), this_batch, dbfile);
+        assert(this_batch == fread(records_entry_point, sizeof(RawRecord), this_batch, dbfile));
         records_to_read -= this_batch;
         records_entry_point += this_batch;
     }

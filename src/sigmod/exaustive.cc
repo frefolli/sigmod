@@ -3,6 +3,7 @@
 #include <sigmod/seek.hh>
 #include <sigmod/debug.hh>
 #include <cassert>
+#include <fstream>
 
 void FilterIndexesByT(const Database& database, uint32_t& start_index, uint32_t& end_index, const float32_t l, const float32_t r) {
     // it's guaranteed that the database is ordered by C, T, fields

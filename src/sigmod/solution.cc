@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <sigmod/tweaks.hh>
+#include <cassert>
 
 void WriteSolution(const Solution& solution, const std::string output_path) {
     FILE* output = fopen(output_path.c_str(), "wb");
@@ -40,7 +41,7 @@ Solution ReadSolution(const std::string input_path, const uint32_t length) {
         if (this_batch > results_to_read) {
             this_batch = results_to_read;
         }
-        fread(results_entry_point, sizeof(Result), this_batch, input);
+        assert(this_batch == fread(results_entry_point, sizeof(Result), this_batch, input));
         results_to_read -= this_batch;
         results_entry_point += this_batch;
     }

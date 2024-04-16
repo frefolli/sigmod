@@ -2,6 +2,9 @@
 #define LSH_HH
 
 #include <sigmod/database.hh>
+#include <sigmod/scoreboard.hh>
+#include <sigmod/query.hh>
+#include <sigmod/solution.hh>
 #include <vector>
 
 typedef uint64_t hash_t;
@@ -16,7 +19,8 @@ struct Chain {
     uint32_t k;
     Atom* chain;
 
-    hash_t hash(Record& record) const;
+    hash_t hash(const Record& record) const;
+    hash_t hash(const Query& query) const;
     void build(uint32_t database_length);
     static void Free(Chain& chain);
 };
@@ -41,11 +45,9 @@ struct LSH {
     uint32_t start;
     uint32_t end;
 
+    void search(const Database& database, const Query& query, Scoreboard& board, const uint32_t query_type) const;
     void build(const Database& database, const uint32_t start, const uint32_t end);
     static void Free(LSH& lsh);
-
-    void lshSearch(const Database& database, const uint32_t target_index) const;
-    void eSearch(const Database& database, const uint32_t target_index) const;
 };
 
 struct LSHForest {
@@ -53,10 +55,9 @@ struct LSHForest {
     LSH* mapped;
     uint32_t length_mapped;
 
+    void search(const Database& database, Result& result, const Query& query) const;
     void build(const Database& database);
     static void Free(LSHForest& forest);
 };
-
-void ClusterizeDatabase(const Database& database);
 
 #endif

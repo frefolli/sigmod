@@ -5,12 +5,13 @@
 #include <sigmod/tweaks.hh>
 #include <sigmod/lin_alg.hh>
 #include <sigmod/random_projection.hh>
+#include <cassert>
 
 QuerySet ReadQuerySet(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
     
     uint32_t db_length;
-    fread(&db_length, sizeof(uint32_t), 1, dbfile);
+    assert(1 == fread(&db_length, sizeof(uint32_t), 1, dbfile));
 
     Query* queries = (Query*) std::malloc(sizeof(Query) * db_length);
     Query* queries_entry_point = queries;
@@ -20,7 +21,7 @@ QuerySet ReadQuerySet(const std::string input_path) {
         if (this_batch > queries_to_read) {
             this_batch = queries_to_read;
         }
-        fread(queries_entry_point, sizeof(Query), this_batch, dbfile);
+        assert(this_batch == fread(queries_entry_point, sizeof(Query), this_batch, dbfile));
         queries_to_read -= this_batch;
         queries_entry_point += this_batch;
     }
