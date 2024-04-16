@@ -14,6 +14,7 @@
 #include <sigmod/random_projection.hh>
 #include <sigmod/lsh.hh>
 #include <chrono>
+#include <sigmod/quantization.hh>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
                                       const QuerySet& query_set) {
@@ -40,6 +41,7 @@ Solution SolveForQueriesWithExaustive(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -70,6 +72,7 @@ Solution SolveForQueriesWithKDForest(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -101,6 +104,7 @@ Solution SolveForQueriesWithBallForest(const Database& database,
         solution.time_score_queries[query_type].second = 
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -132,6 +136,7 @@ Solution SolveForQueriesWithVPForest(const Database& database,
             solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
             + sample / (solution.time_score_queries[query_type].first + 1);
     
+        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -155,13 +160,52 @@ Solution SolveForQueriesWithMVPForest(const Database& database,
     return solution;
 }
 
+Solution SolveForQueriesWithPQAndBallForest(const Database& database,
+        const CodeBook& cb,
+        const QuerySet& query_set,
+        const BallForest& forest) {
+    Solution solution = {
+        .length = query_set.length,
+        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+    };
+
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        #ifdef DISATTEND_CHECKS
+        const uint32_t query_type = NORMAL;
+        #else
+        const uint32_t query_type = (uint32_t) (query_set.queries[i].query_type);
+        #endif
+
+        
+        auto start_query_timer = std::chrono::high_resolution_clock::now();
+        if (query_type == NORMAL) {
+            SearchExaustivePQ(cb, database, solution.results[i], query_set.queries[i]);
+        } else {
+            SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
+        }
+
+        auto end_query_timer = std::chrono::high_resolution_clock::now();
+        
+        long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
+
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].first++;
+    }
+    return solution;
+}
+
 void Workflow(const std::string database_path,
               const std::string query_set_path,
               const std::string output_path) {
     Database database = ReadDatabase(database_path);
     LogTime("Read database, length = " + std::to_string(database.length));
     QuerySet query_set = ReadQuerySet(query_set_path);
-    
     LogTime("Read query_set, length = " + std::to_string(query_set.length));
 
     #ifdef ENABLE_DIM_REDUCTION
@@ -179,15 +223,27 @@ void Workflow(const std::string database_path,
     IndexDatabase(database);
     LogTime("Indexes Database");
 
-    #ifdef KMC_EOTI_FS
-    ClusterizeDatabase(database);
-    LogTime("Clusterized Database");
-    #endif
-
     /* Initialization */
-    #ifdef ENABLE_BALL_FOREST
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
+    
+    CodeBook codebook = {
+        .vector_centroid = MallocVectorCentroid(database.length, M)
+    };
+    Debug("coso");
+    #pragma omp parallel for
+        for (uint32_t i = 0; i < M; i++) {
+            Kmeans(codebook, database, 30, i * M, (i + 1) * M - 1);
+        }
+    LogTime("Built CodeBook");
+    #endif
+
+    #ifdef ENABLE_BALL_FOREST
+    #ifndef ENABLE_PRODUCT_QUANTIZATION
+    BallForest ball_forest = BuildBallForest(database);
+    LogTime("Built Ball Forest");
+    #endif
     #endif
 
     #ifdef ENABLE_KD_FOREST
@@ -206,6 +262,28 @@ void Workflow(const std::string database_path,
     #endif
 
     /* Usage */
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
+    Solution product_quantization_solution = 
+        SolveForQueriesWithPQAndBallForest(database, codebook, query_set, ball_forest);
+    LogTime("Used Product Quantization");
+    for(uint8_t k = 0; k < 4; k++){
+        std::pair<uint32_t, uint64_t> time_score_query = product_quantization_solution.time_score_queries[k];
+        Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
+        std::to_string(time_score_query.second) + " ms/q");
+    }
+    /*
+    ConvertIndexSolution(product_quantization_solution, database);
+
+    std::string s = "[";
+    for (uint8_t k = 0; k < 100; k++){
+        s += std::to_string(product_quantization_solution.results[0].data[k]) + ",";
+    }
+    s += "]";
+    Debug(s);
+    return;
+    */
+    #endif
+
     #ifdef ENABLE_BALL_FOREST
     Solution ball_forest_solution = SolveForQueriesWithBallForest(database, ball_forest, query_set);
     LogTime("Used Ball Forest");
@@ -254,6 +332,16 @@ void Workflow(const std::string database_path,
 
     /* Comparison */
     #ifdef ENABLE_EXAUSTIVE
+        #ifdef ENABLE_PRODUCT_QUANTIZATION
+            #ifdef ACCURATE_RECALL
+            //score_t product_quantization_score = CompareAndComputeRecallOfSolutionsByDistance(database, query_set, exaustive_solution, product_quantization_solution);
+            score_t product_quantization_score = CompareAndComputeRecallOfSolutionsByIndex(database, exaustive_solution, product_quantization_solution);
+            #else
+            score_t product_quantization_score = CompareSolutions(database, query_set, exaustive_solution, product_quantization_solution);
+            #endif
+            Debug("Recall(Product Quantization) := " + std::to_string(product_quantization_score));
+            LogTime("Compared Product Quantization to Exaustive");
+        #endif
         #ifdef ENABLE_BALL_FOREST
             #ifdef ACCURATE_RECALL
             score_t ball_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, ball_forest_solution);
@@ -301,6 +389,10 @@ void Workflow(const std::string database_path,
             suffix += "-red-" + std::to_string(N_DIM_REDUCTION) + "d";
         #endif
         #endif
+        #ifdef ENABLE_PRODUCT_QUANTIZATION
+            out_path = GenerateOutputPathFileName(output_path, "", suffix + "-pq");
+            WriteSolution(product_quantization_solution, out_path);
+        #endif
         #ifdef ENABLE_EXAUSTIVE
             out_path = GenerateOutputPathFileName(output_path, "", suffix + "-exaustive");
             WriteSolution(exaustive_solution, out_path);
@@ -320,6 +412,11 @@ void Workflow(const std::string database_path,
     #endif
     
     /* Free Solution */
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
+    FreeSolution(product_quantization_solution);
+    LogTime("Freed Product Quantization Solution");
+    #endif
+
     #ifdef ENABLE_BALL_FOREST
     FreeSolution(ball_forest_solution);
     LogTime("Freed Ball Forest Solution");
@@ -346,9 +443,17 @@ void Workflow(const std::string database_path,
     #endif
 
     /* Free Models */
-    #ifdef ENABLE_BALL_FOREST
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
     FreeBallForest(ball_forest);
     LogTime("Freed Ball Forest");
+    #endif
+
+    #ifdef ENABLE_BALL_FOREST
+    #ifndef ENABLE_PRODUCT_QUANTIZATION
+    FreeCodeBook(cb);
+    FreeBallForest(ball_forest);
+    LogTime("Freed Ball Forest");
+    #endif
     #endif
 
     #ifdef ENABLE_KD_FOREST
@@ -367,6 +472,7 @@ void Workflow(const std::string database_path,
     #endif
 
     Debug("Remember that solution must be converted in the end by taking `i := database.records[i].index`");
+
 
     FreeDatabase(database);
     FreeQuerySet(query_set);

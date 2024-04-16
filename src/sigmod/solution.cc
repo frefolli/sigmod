@@ -130,7 +130,7 @@ score_t CompareSolutions(const Database& database, const QuerySet& query_set, co
     return recall;
 }
 
-score_t CompareAndComputeRecallOfSolutions(const Database& database,
+score_t CompareAndComputeRecallOfSolutionsByDistance(const Database& database,
 		                           const QuerySet& query_set,
 					   const Solution& expected,
 					   const Solution& got) {
@@ -164,6 +164,32 @@ score_t CompareAndComputeRecallOfSolutions(const Database& database,
               dj = distance(query, database.records[got.results[i].data[j]]);
             }
           }
+        }
+    }
+
+    #ifdef STOP_AFTER_TOT_ELEMENTS
+        recall /= (std::min((uint32_t) TOT_ELEMENTS, length) * k_nearest_neighbors);
+    #else
+        recall /= (length * k_nearest_neighbors);
+    #endif
+
+    return recall;
+}
+
+score_t CompareAndComputeRecallOfSolutionsByIndex(const Database& database,
+					   const Solution& expected,
+					   const Solution& got) {
+    uint32_t length = std::min(expected.length, got.length);
+    score_t recall = 0;
+    for (uint32_t i = 0; i < length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        for (uint32_t j = 0; j < k_nearest_neighbors; j++) {
+            if (FindIndexInResult(expected.results[i], got.results[i].data[j])){
+                recall++;
+            }
         }
     }
 

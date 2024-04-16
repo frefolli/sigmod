@@ -34,7 +34,7 @@ int main(int argc, char** args) {
     assert_file_exists(query_set_path, "query_set_path");
     
     #ifdef COMPARE_SOLUTIONS
-
+    /*
     std::string first_solutions[] = {
         "./output/output-exaustive.bin",
         "./output/output-ball-forest.bin",
@@ -58,7 +58,11 @@ int main(int argc, char** args) {
             << CompareSolutionsFromFiles(first_solutions[i], second_solutions[i], 1000)
             << std::endl;
     }
-
+*/  
+    std::cout << "Recall between " << "output-exaustive.bin" << " - " 
+            << "sol.bin" << " := " 
+            << CompareSolutionsFromFiles("./output/output-exaustive.bin", "./sol.bin", 1000)
+            << std::endl;
     #else
 
     std::cout << "max_threads := " << omp_get_max_threads() << std::endl;
