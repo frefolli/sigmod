@@ -194,7 +194,10 @@ void LSHForest::Free(LSHForest& forest) {
 void ClusterizeDatabase(const Database& database) {
   LSHForest forest;
   forest.build(database);
+  LogTime("Built LSH Forest");
+
   LSHForest::Free(forest);
+  LogTime("Freed LSH Forest");
   /*
   for (uint32_t i = 0; i < lsh.N; i++) {
       lsh.hashtables[i].dump("H" + std::to_string(i) + ".csv");
@@ -207,6 +210,5 @@ void ClusterizeDatabase(const Database& database) {
   lsh.eSearch(database, 7017);
   LogTime("Searched with Exaustive");
   
-  LogTime("Freed HTs");
   */
 }
