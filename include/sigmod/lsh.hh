@@ -32,8 +32,7 @@ struct HashTable {
 
     void build(const Database& database, const uint32_t start, const uint32_t end);
     static void Free(HashTable& hashtable);
-    void dump(const std::string outfile);
-    void evaluate(const Database& database, const std::string outfile);
+    void dump(const std::string outfile) const;
 };
 
 struct LSH {
@@ -45,8 +44,8 @@ struct LSH {
     void build(const Database& database, const uint32_t start, const uint32_t end);
     static void Free(LSH& lsh);
 
-    void lshSearch(const Database& database, const uint32_t target_index);
-    void eSearch(const Database& database, const uint32_t target_index);
+    void lshSearch(const Database& database, const uint32_t target_index) const;
+    void eSearch(const Database& database, const uint32_t target_index) const;
 };
 
 struct LSHForest {

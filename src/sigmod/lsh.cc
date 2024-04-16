@@ -9,7 +9,8 @@
 
 #define LSH_SPREAD 25
 #define LSH_DEPTH 1
-#define LSH_TABLES 100
+#define LSH_TABLES k_nearest_neighbors
+#define LSH_FOREST_TRESHOLD k_nearest_neighbors
 #define LSH_WIDTH(length) std::sqrt(length) * std::log10(length) / 2
 
 void Chain::build(uint32_t database_length) {
@@ -82,7 +83,7 @@ void HashTable::Free(HashTable& hashtable) {
     }
 }
 
-void HashTable::dump(const std::string outfile) {
+void HashTable::dump(const std::string outfile) const {
     std::ofstream out(outfile);
     out << "ID,Count" << std::endl;
     for (auto it = this->buckets->begin(); it != this->buckets->end(); it++) {
@@ -91,7 +92,7 @@ void HashTable::dump(const std::string outfile) {
     out.close();
 }
 
-void LSH::lshSearch(const Database& database, const uint32_t target_index) {
+void LSH::lshSearch(const Database& database, const uint32_t target_index) const {
     Record& target = database.records[target_index];
     Scoreboard board;
     for (uint32_t i = 0; i < N; i++) {
@@ -113,7 +114,7 @@ void LSH::lshSearch(const Database& database, const uint32_t target_index) {
     out.close();
 }
 
-void LSH::eSearch(const Database& database, const uint32_t target_index) {
+void LSH::eSearch(const Database& database, const uint32_t target_index) const {
     Record& target = database.records[target_index];
     Scoreboard board;
     for (uint32_t index = 0; index < database.length; index++) {
@@ -169,8 +170,14 @@ void LSHForest::build(const Database& database) {
   for (uint32_t i = 0; i < this->length_mapped; i++) {
     if (database.C_map.find(i) != database.C_map.end()) {
       auto range = database.C_map.at(i);
-      this->mapped[i].build(database, range.first, range.second + 1);
-      LogTime("Built Map for C = " + std::to_string(i));
+      const uint32_t length = range.second + 1 - range.first;
+      if (length >= LSH_FOREST_TRESHOLD) {
+          this->mapped[i].build(database, range.first, range.second + 1);
+          LogTime("Built Map for C = " + std::to_string(i) + ", len = " + LengthToString(length));
+      } else {
+        this->mapped[i].hashtables = nullptr;
+        this->mapped[i].N = 0;
+      }
     } else {
       this->mapped[i].hashtables = nullptr;
       this->mapped[i].N = 0;
