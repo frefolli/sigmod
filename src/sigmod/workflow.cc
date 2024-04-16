@@ -12,6 +12,7 @@
 #include <sigmod/scoreboard.hh>
 #include <sigmod/debug.hh>
 #include <sigmod/random_projection.hh>
+#include <sigmod/lsh.hh>
 #include <chrono>
 
 Solution SolveForQueriesWithExaustive(const Database& database,
@@ -177,6 +178,11 @@ void Workflow(const std::string database_path,
 
     IndexDatabase(database);
     LogTime("Indexes Database");
+
+    #ifdef KMC_EOTI_FS
+    ClusterizeDatabase(database);
+    LogTime("Clusterized Database");
+    #endif
 
     /* Initialization */
     #ifdef ENABLE_BALL_FOREST

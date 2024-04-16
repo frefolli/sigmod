@@ -3,6 +3,7 @@
 #include <sigmod.hh>
 #include <iostream>
 #include <stdexcept>
+#include <omp.h>
 
 void assert_file_exists(std::string path, std::string what) {
   if (!std::filesystem::exists(path)) {
@@ -59,6 +60,10 @@ int main(int argc, char** args) {
     }
 
     #else
+
+    std::cout << "max_threads := " << omp_get_max_threads() << std::endl;
+    omp_set_num_threads(omp_get_max_threads());
+    std::cout << "thread_num := " << omp_get_num_threads() << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
 

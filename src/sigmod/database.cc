@@ -10,7 +10,6 @@
 #include <sigmod/dimensional_reduction.hh>
 #include <sigmod/lin_alg.hh>
 #include <sigmod/memory.hh>
-#include <cmath>
 
 Database ReadDatabase(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -90,22 +89,6 @@ void IndexDatabase(Database& database) {
     database.C_map[cur_C] = {cur_start, cur_end};
 }
 
-void ClusterizeDatabase(const Database& database) {
-    for (auto it : database.C_map) {
-        const uint32_t start = it.second.first;
-        const uint32_t end = it.second.second + 1;
-        const uint32_t length = end - start;
-        if (length > 25) {
-            const uint32_t n_of_clusters = std::sqrt(length);
-            uint32_t* beholds = smalloc<uint32_t>(length);
-            Record* centroids = smalloc<Record>(n_of_clusters);
-
-            free(centroids);
-            free(beholds);
-        }
-    }
-}
-
 void StatsDatabase(const Database& database) {
     std::cout << CategoricalEntry::forArrayCellField(
         [&database](uint32_t i) { return database.at(i).C; },
@@ -117,12 +100,14 @@ void StatsDatabase(const Database& database) {
         database.length, "record.T"
     ) << std::endl;
 
+    /*
     for (uint32_t j = 0; j < actual_vector_size; j++) {
         std::cout << ScalarEntry::forArrayCellField(
             [&database, &j](uint32_t i) { return database.at(i).fields[j]; },
             database.length, "record.field#" + std::to_string(j)
         ) << std::endl;
     }
+    */
 }
 
 float32_t** GetFields(
