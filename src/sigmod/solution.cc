@@ -176,7 +176,6 @@ score_t CompareAndComputeRecallOfSolutionsByDistance(const Database& database,
     return recall;
 }
 
-
 score_t CompareAndComputeRecallOfSolutionsByIndex(const Database& database,
 					   const Solution& expected,
 					   const Solution& got) {

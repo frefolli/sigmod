@@ -19,7 +19,7 @@ struct ThreadPool {
 
     uint32_t id_counter = 0;
 
-    ThreadPool(uint32_t n_of_workers = CORES);
+    ThreadPool(uint32_t n_of_workers = 5);
 
     void release(uint32_t ID);
     void erase();

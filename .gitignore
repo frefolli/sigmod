@@ -9,3 +9,4 @@ __pycache__
 builddir
 .vscode
 .venv
+.archive

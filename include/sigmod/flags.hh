@@ -51,8 +51,9 @@
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
 
-/* Enables thread pools */
+/* Enables OpenMP */
 // #define CONCURRENCY
+// #define MAX_CONCURRENCY 2
 
 /* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
 // #define FAST_DISTANCE
@@ -68,5 +69,8 @@
 
 /* Use the actual Recall function of the Task */
 #define ACCURATE_RECALL
+
+// Enable KMC and Clusterization
+#define KMC_EOTI_FS
 
 #endif

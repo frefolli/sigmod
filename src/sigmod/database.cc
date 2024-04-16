@@ -10,9 +10,6 @@
 #include <sigmod/dimensional_reduction.hh>
 #include <sigmod/lin_alg.hh>
 #include <sigmod/memory.hh>
-#include <cmath>
-#include <sigmod/scoreboard.hh>
-#include <omp.h>
 
 Database ReadDatabase(const std::string input_path) {
     FILE* dbfile = fopen(input_path.c_str(), "rb");
@@ -92,131 +89,6 @@ void IndexDatabase(Database& database) {
     database.C_map[cur_C] = {cur_start, cur_end};
 }
 
-void ClusterizeDatabase(const Database& database) {
-    const uint32_t ITERATIONS = 1;
-    actual_vector_size = 10;
-    for (auto it : database.C_map) {
-        std::cout << "Clusterization of Category "
-                  << it.first << std::endl;
-        const uint32_t start = it.second.first;
-        const uint32_t end = it.second.second + 1;
-        const uint32_t length = end - start;
-        if (length > 25) {
-            const uint32_t n_of_clusters = std::sqrt(length);
-            uint32_t* beholds = smalloc<uint32_t>(length);
-            Record* centroids = smalloc<Record>(n_of_clusters);
-
-            #pragma omp parallel
-            {
-                #pragma omp for
-                for (uint32_t i = 0; i < n_of_clusters; i++) {
-                    for (uint32_t j = 0; j < actual_vector_size; j++) {
-                        centroids[i].fields[j] = 0;
-                    }
-                    // C is used to count points
-                    // which are anchored to a centroid
-                    centroids[i].C = 0;
-                }
-
-                #pragma omp barrier
-
-                // DUMMY ITERATION
-                // initialization of centroids: even spread over modulo
-                #pragma omp for
-                for (uint32_t i = 0; i < length; i++) {
-                    uint32_t centroid = i % n_of_clusters;
-                    beholds[i] = centroid;
-                    Record& record = database.records[start + i];
-                    #pragma omp critical
-                    {
-                        for (uint32_t j = 0; j < actual_vector_size; j++) {
-                            centroids[centroid].fields[j] += record.fields[j];
-                        }
-                        centroids[centroid].C += 1;
-                    }
-                }
-
-                #pragma omp barrier
-
-                // compute mean of cumulated coordinates
-                #pragma omp for
-                for (uint32_t i = 0; i < n_of_clusters; i++) {
-                    for (uint32_t j = 0; j < actual_vector_size; j++) {
-                        centroids[i].fields[j] /= centroids[i].C;
-                    }
-                }
-
-                #pragma omp barrier
-
-                for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
-                    // FULL ITERATION
-                    // computing the nearest centroid
-                    #pragma omp for
-                    for (uint32_t i = 0; i < length; i++) {
-                        Record& record = database.records[start + i];
-                        score_t min_dist = distance(centroids[0], record);
-                        beholds[i] = 0;
-                        for (uint32_t j = 1; j < n_of_clusters; j++) {
-                            score_t dist = distance(centroids[j], record);
-                            if (dist < min_dist) {
-                                min_dist = dist;
-                                beholds[i] = j;
-                            }
-                        }
-                    }
-
-                    #pragma omp barrier
-
-                    // reset centroid
-                    #pragma omp for
-                    for (uint32_t i = 0; i < n_of_clusters; i++) {
-                        for (uint32_t j = 0; j < actual_vector_size; j++) {
-                            centroids[i].fields[j] = 0;
-                        }
-                        centroids[i].C = 0;
-                    }
-
-                    #pragma omp barrier
-
-                    // refill centroid data
-                    #pragma omp for
-                    for (uint32_t i = 0; i < length; i++) {
-                        uint32_t centroid = beholds[i];
-                        Record& record = database.records[start + i];
-                        #pragma omp critical
-                        {
-                            for (uint32_t j = 0; j < actual_vector_size; j++) {
-                                centroids[centroid].fields[j] += record.fields[j];
-                            }
-                            centroids[beholds[i]].C += 1;
-                        }
-                    }
-
-                    #pragma omp barrier
-
-                    // compute mean of cumulated coordinates
-                    #pragma omp for
-                    for (uint32_t i = 0; i < n_of_clusters; i++) {
-                        for (uint32_t j = 0; j < actual_vector_size; j++) {
-                            centroids[i].fields[j] /= centroids[i].C;
-                        }
-                    }
-                }
-            }
-
-            // print counts
-            for (uint32_t i = 0; i < n_of_clusters; i++) {
-                std::cout << "len(centroids["
-                          << i << "]) = "
-                          << centroids[i].C << std::endl;
-            }
-
-            free(centroids);
-            free(beholds);
-        }
-    }
-}
-
 void StatsDatabase(const Database& database) {
     std::cout << CategoricalEntry::forArrayCellField(
         [&database](uint32_t i) { return database.at(i).C; },
@@ -228,12 +100,14 @@ void StatsDatabase(const Database& database) {
         database.length, "record.T"
     ) << std::endl;
 
+    /*
     for (uint32_t j = 0; j < actual_vector_size; j++) {
         std::cout << ScalarEntry::forArrayCellField(
             [&database, &j](uint32_t i) { return database.at(i).fields[j]; },
             database.length, "record.field#" + std::to_string(j)
         ) << std::endl;
     }
+    */
 }
 
 float32_t** GetFields(
