@@ -12,14 +12,14 @@
 
 const uint8_t M = 10; // #partitions
 const uint32_t K = 256; // #clusters per partition
-const uint8_t dim_partition = actual_vector_size / M;
+const uint8_t dim_partition = 100 / M;
 
 struct CodeBook{
     /* indeces := [id_vector, ids_centroids_associated_foreach_partition] */
     //std::map<uint32_t, uint8_t[M]> vector_centroid;
     uint16_t** vector_centroid;
     /* indeces := [id_partition, id_centroid, centroid_component] */
-    std::map<uint8_t, std::map<uint16_t, float32_t[M]>> centroids;
+    std::map<uint8_t, std::map<uint16_t, float32_t[dim_partition]>> centroids;
 };
 
 void Kmeans(

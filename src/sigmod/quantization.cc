@@ -22,7 +22,7 @@ const score_t ADC(const score_t matr_dist[M][K], const CodeBook& cb, const uint3
         dist += matr_dist[i][cb.vector_centroid[index_vector][i]];
     }
 
-    return (const score_t) dist;
+    return (const score_t) sqrt(dist);
 }
 
 uint16_t** MallocVectorCentroid(const uint32_t db_length, const uint8_t n_partitions){
@@ -57,9 +57,8 @@ void Kmeans(
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
-    Debug("coso");
 
-    std::map<uint16_t, float32_t[M]> &centroids = cb.centroids[n_partition];
+    std::map<uint16_t, float32_t[dim_partition]> &centroids = cb.centroids[n_partition];
     
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
@@ -83,11 +82,6 @@ void Kmeans(
             cb.vector_centroid[i][n_partition] = 0;
             dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
-            if (i % 10000 == 0)
-            {
-                Debug("i := " + std::to_string(i));
-                /* code */
-            }
             
             for (uint32_t j = 1; j < K; j++) {
                 score_t dist = distance(centroids[j], record.fields, start_partition_id, end_partition_id);
@@ -100,9 +94,8 @@ void Kmeans(
                 }
             }
         }
-        Debug("bene");
 
-        std::map<uint16_t, float32_t [10]> old_centroids = centroids;
+        std::map<uint16_t, float32_t[dim_partition]> old_centroids = centroids;
 
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {
@@ -153,7 +146,7 @@ void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& res
     score_t matr_dist[M][K];
 
     //assert(query.query_type == NORMAL);
-    
+
     auto start_query_timer = std::chrono::high_resolution_clock::now();
     PreprocessingQuery(matr_dist, query.fields, cb);
     auto end_query_timer = std::chrono::high_resolution_clock::now();

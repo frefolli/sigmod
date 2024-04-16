@@ -202,41 +202,9 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
 void Workflow(const std::string database_path,
               const std::string query_set_path,
               const std::string output_path) {
-    Debug(std::to_string(sizeof(std::map<uint32_t, uint8_t[M]>)));
     Database database = ReadDatabase(database_path);
-
-
-    CodeBook codebook = {
-        .vector_centroid = MallocVectorCentroid(database.length, M)
-    };
-
-    Kmeans(codebook, database, 10, 0, 9);
-
-    for (uint32_t i = 0; i < K; i++)
-    {
-        Debug("i := " + std::to_string(i) + "-esimo centroide");
-        for (uint32_t j = 0; j < M; j++) {
-            std::cout << codebook.centroids.at(0).at(i)[j] << " ";
-        }
-        std::cout << std::endl;
-    }
-    
-    return;
-
-
-
-
-
-
-
-
-
-
-
-
     LogTime("Read database, length = " + std::to_string(database.length));
     QuerySet query_set = ReadQuerySet(query_set_path);
-    
     LogTime("Read query_set, length = " + std::to_string(query_set.length));
 
     #ifdef ENABLE_DIM_REDUCTION
@@ -259,7 +227,7 @@ void Workflow(const std::string database_path,
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
     
-    /*CodeBook*/ codebook = {
+    CodeBook codebook = {
         .vector_centroid = MallocVectorCentroid(database.length, M)
     };
     Debug("coso");
@@ -302,6 +270,17 @@ void Workflow(const std::string database_path,
         Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
         std::to_string(time_score_query.second) + " ms/q");
     }
+    /*
+    ConvertIndexSolution(product_quantization_solution, database);
+
+    std::string s = "[";
+    for (uint8_t k = 0; k < 100; k++){
+        s += std::to_string(product_quantization_solution.results[0].data[k]) + ",";
+    }
+    s += "]";
+    Debug(s);
+    return;
+    */
     #endif
 
     #ifdef ENABLE_BALL_FOREST
@@ -354,7 +333,8 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_EXAUSTIVE
         #ifdef ENABLE_PRODUCT_QUANTIZATION
             #ifdef ACCURATE_RECALL
-            score_t product_quantization_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, product_quantization_solution);
+            //score_t product_quantization_score = CompareAndComputeRecallOfSolutionsByDistance(database, query_set, exaustive_solution, product_quantization_solution);
+            score_t product_quantization_score = CompareAndComputeRecallOfSolutionsByIndex(database, exaustive_solution, product_quantization_solution);
             #else
             score_t product_quantization_score = CompareSolutions(database, query_set, exaustive_solution, product_quantization_solution);
             #endif
@@ -491,6 +471,7 @@ void Workflow(const std::string database_path,
     #endif
 
     Debug("Remember that solution must be converted in the end by taking `i := database.records[i].index`");
+
 
     FreeDatabase(database);
     FreeQuerySet(query_set);

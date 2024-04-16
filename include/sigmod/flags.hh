@@ -8,7 +8,7 @@
 #define DISATTEND_CHECKS
 
 /* Compare 2 solutions saved on files */
-// #define COMPARE_SOLUTIONS
+//#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
 #define TOT_ELEMENTS 1000
