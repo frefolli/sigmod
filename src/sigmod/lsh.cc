@@ -1,11 +1,16 @@
+#include <algorithm>
+#include <iterator>
+#include <ostream>
 #include <sigmod/lsh.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/memory.hh>
+#include <sigmod/seek.hh>
 #include <cmath>
 #include <random>
 #include <fstream>
 #include <omp.h>
 #include <string>
+#include <cassert>
 
 #define LSH_SPREAD 25
 #define LSH_DEPTH 1
@@ -67,22 +72,37 @@ void Chain::Free(Chain& chain) {
 }
 
 void HashTable::build(const Database& database, const uint32_t start, const uint32_t end) {
-    this->length = end - start;
-    this->chain.build(database.length);
+  this->length = end - start;
+  this->chain.build(database.length);
 
-    this->hashes = smalloc<hash_t>(this->length);
-    #pragma omp parallel for
-    for (uint32_t i = 0; i < this->length; i++) {
-        this->hashes[i] = chain.hash(database.records[start + i]);
-    }
+  this->hashes = smalloc<hash_t>(this->length);
+  #pragma omp parallel for
+  for (uint32_t i = 0; i < this->length; i++) {
+      this->hashes[i] = chain.hash(database.records[start + i]);
+  }
 
-    this->buckets = new std::map<hash_t, std::vector<uint32_t>>();
-    this->max_hash = 0;
-    for (uint32_t i = 0; i < this->length; i++) {
-        this->buckets->operator[](this->hashes[i]).push_back(start + i);
-        if (this->hashes[i] > this->max_hash)
-            this->max_hash = this->hashes[i];
-    }
+  this->buckets = new std::map<hash_t, std::vector<uint32_t>>();
+  this->max_hash = 0;
+  for (uint32_t i = 0; i < this->length; i++) {
+      this->buckets->operator[](this->hashes[i]).push_back(start + i);
+      if (this->hashes[i] > this->max_hash)
+          this->max_hash = this->hashes[i];
+  }
+
+  #pragma omp parallel for
+  for (uint32_t i = 0; i < this->buckets->size(); i++) {
+    auto it = this->buckets->begin();
+    std::advance(it, i);
+    std::sort(it->second.begin(), it->second.end(), [&database](uint32_t a, uint32_t b) {
+      if (database.records[a].T != database.records[b].T)
+          return (database.records[a].T < database.records[b].T);
+      for (uint32_t i = 0; i < actual_vector_size; i++) {
+          if (database.records[a].fields[i] != database.records[b].fields[i])
+              return (database.records[a].fields[i] < database.records[b].fields[i]);
+      }
+      return true;
+    });
+  }
 }
 
 void HashTable::Free(HashTable& hashtable) {
@@ -112,11 +132,39 @@ void LSH::search(const Database& database, const Query& query,
         case BY_C_AND_T:
             for (uint32_t i = 0; i < this->N; i++) {
                 hash_t hash = this->hashtables[i].chain.hash(query);
-                for (uint64_t index : this->hashtables[i].buckets->at(hash)) {
+                std::vector<uint32_t>& vec = this->hashtables[i].buckets->at(hash);
+                uint32_t start = 0;
+                uint32_t end = vec.size();
+        
+                std::cout << "INP := " << start << " -> " << end << std::endl;
+                start = SeekHigh(
+                    [&database, &vec](uint32_t i) {
+                      assert(i >= 0);
+                      assert(i < vec.size());
+                      assert(vec[i] >= 0);
+                      assert(vec[i] < database.length);
+                      return database.at(vec[i]).T;
+                    },
+                    start, end, query.l
+                );
+                end = SeekLow(
+                    [&database, &vec](uint32_t i) {
+                      assert(i >= 0);
+                      assert(i < vec.size());
+                      assert(vec[i] >= 0);
+                      assert(vec[i] < database.length);
+                      return database.at(vec[i]).T;
+                    },
+                    start, end, query.r
+                ) + 1;
+
+                for (uint32_t j = start; j < end; j++) {
+                    const uint32_t index = vec[j];
                     score_t score = distance(query, database.records[index]);
                     if (elegible_by_T(query, database.records[index]))
                         board.pushs(index, score);
                 }
+                std::cout << "OUT := " << start << " -> " << end << std::endl;
             }
             break;
         default:

@@ -2,6 +2,8 @@
 #define SEEK_HH
 
 #include <sigmod/record.hh>
+#include <cassert>
+#include <iostream>
 
 /* Seek(accessor, start, end, value) {
  *  - accessor is a callable Index -> Value such that accessor(i) is the i-th element of a collection
@@ -53,6 +55,7 @@ uint32_t SeekHigh(const Accessor accessor,
     uint32_t m = (l + r) / 2;
 
     while(l <= r) {
+        std::cout << l << " <= " << m << " <= " << r << std::endl;
         const float32_t center = accessor(m);
         if (center > value) {
             r = m - 1;
