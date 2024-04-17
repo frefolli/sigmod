@@ -1,4 +1,3 @@
-make clean
-make -j32
-# ./test
-./builddir/main.exe
+#!/bin/bash
+
+make contest-10m > output-10m.txt

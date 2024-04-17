@@ -32,7 +32,7 @@ Solution SolveForQueriesWithExaustive(const Database& database,
     #ifdef CONCURRENCY
     #pragma omp parallel for
     #endif
-    for (uint32_t i = 0; i < query_set.length; i++) {
+    for (uint32_t i = 0; i < n_of_queries; i++) {
         SearchExaustive(database, solution.results[i], query_set.queries[i]);
     }
 
@@ -169,7 +169,7 @@ Solution SolveForQueriesWithLSHForest(const Database& database,
     #ifdef CONCURRENCY
     #pragma omp parallel for
     #endif
-    for (uint32_t i = 0; i < query_set.length; i++) {
+    for (uint32_t i = 0; i < n_of_queries; i++) {
         forest.search(database, solution.results[i], query_set.queries[i]);
     }
     return solution;
