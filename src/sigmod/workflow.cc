@@ -23,25 +23,17 @@ Solution SolveForQueriesWithExaustive(const Database& database,
         .results = (Result*) malloc(sizeof(Result) * query_set.length),
     };
 
+    #ifdef STOP_AFTER_TOT_ELEMENTS
+    const uint32_t n_of_queries = std::min(query_set.length, (uint32_t) TOT_ELEMENTS);
+    #else
+    const uint32_t n_of_queries = query_set.length;
+    #endif
+
+    #ifdef CONCURRENCY
+    #pragma omp parallel for
+    #endif
     for (uint32_t i = 0; i < query_set.length; i++) {
-        #ifdef STOP_AFTER_TOT_ELEMENTS
-        if (i >= TOT_ELEMENTS)
-            break;
-        #endif
-        uint8_t query_type = (uint8_t) query_set.queries[i].query_type;
-
-        auto start_query_timer = std::chrono::high_resolution_clock::now();
-        
         SearchExaustive(database, solution.results[i], query_set.queries[i]);
-        
-        auto end_query_timer = std::chrono::high_resolution_clock::now();
-        
-        long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
-
-        solution.time_score_queries[query_type].second = 
-            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
-            + sample / (solution.time_score_queries[query_type].first + 1);
-        solution.time_score_queries[query_type].first++;
     }
 
     return solution;
@@ -167,11 +159,17 @@ Solution SolveForQueriesWithLSHForest(const Database& database,
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
     };
+
+    #ifdef STOP_AFTER_TOT_ELEMENTS
+    const uint32_t n_of_queries = std::min(query_set.length, (uint32_t) TOT_ELEMENTS);
+    #else
+    const uint32_t n_of_queries = query_set.length;
+    #endif
+
+    #ifdef CONCURRENCY
+    #pragma omp parallel for
+    #endif
     for (uint32_t i = 0; i < query_set.length; i++) {
-        #ifdef STOP_AFTER_TOT_ELEMENTS
-        if (i >= TOT_ELEMENTS)
-            break;
-        #endif
         forest.search(database, solution.results[i], query_set.queries[i]);
     }
     return solution;
@@ -276,9 +274,10 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_LSH_FOREST
     LSHForest lsh_forest;
     lsh_forest.build(database);
+    // #ifdef LSH_TRACKING
     lsh_forest.dump();
+    // #endif
     LogTime("Built LSH Forest");
-    exit(0);
     #endif
 
     /* Usage */

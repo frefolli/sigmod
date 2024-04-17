@@ -11,27 +11,20 @@
 #include <omp.h>
 #include <string>
 #include <cassert>
-
-#define LSH_SPREAD 1
-#define LSH_TABLES k_nearest_neighbors
-#define LSH_FOREST_TRESHOLD k_nearest_neighbors
-#define LSH_WIDTH(length) std::sqrt(length) * std::log10(length) / 2
+#include <filesystem>
+#include <cfloat>
 
 void Chain::build(uint32_t database_length) {
     this->width = LSH_WIDTH(database_length);
-    /*
-    this->shift = std::ceil(std::log2(this->width));
-    this->k = std::floor(8 * sizeof(hash_t) / this->shift);
-    */
-    this->shift = 1;
-    this->k = 1;
+    this->k = LSH_K(this->width);
+    this->shift = LSH_SHIFT;
 
     this->chain = smalloc<Atom>(k);
 
     std::random_device random_device;
     std::mt19937 generator(random_device());
     std::uniform_real_distribution<float32_t> uniform(0, width);
-    std::normal_distribution<float32_t> normal(0, LSH_SPREAD);
+    std::normal_distribution<float32_t> normal(0, 1);
     
     for (uint32_t i = 0; i < this->k; i++) {
         for (uint32_t j = 0; j < actual_vector_size; j++) {
@@ -39,6 +32,13 @@ void Chain::build(uint32_t database_length) {
         }
         this->chain[i].b = uniform(generator);
     }
+
+    #ifdef LSH_TRACKING
+    this->hash_mean_counter = 0;
+    this->hash_mean_register = 0.0;
+    this->hash_min_register = FLT_MAX;
+    this->hash_max_register = 0.0;
+    #endif
 }
 
 void Chain::Free(Chain& chain) {
@@ -241,15 +241,35 @@ void LSHForest::Free(LSHForest& forest) {
 
 void LSH::dump(const std::string outdir) const {
     if (hashtables != nullptr) {
+        std::filesystem::create_directories(outdir);
         for (uint32_t i = 0; i < N; i++) {
             hashtables[i].dump(outdir + "/" + std::to_string(i) + ".csv");
         }
+        
+        std::ofstream out (outdir + ".csv");
+        out << "ID,Width,K,Shift,HC,HMean,HMin,HMax" << std::endl;
+        for (uint32_t i = 0; i < N; i++) {
+            out << i
+                << "," << hashtables[i].chain.width
+                << "," << hashtables[i].chain.k
+                << "," << hashtables[i].chain.shift
+                #ifdef LSH_TRACKING
+                << "," << hashtables[i].chain.hash_mean_counter
+                << "," << hashtables[i].chain.hash_mean_register
+                << "," << hashtables[i].chain.hash_min_register
+                << "," << hashtables[i].chain.hash_max_register
+                #endif
+                << std::endl;
+        }
+        out.close();
     }
 }
 
 void LSHForest::dump() const {
     general.dump("lsh_dump/general");
+    /*
     for (uint32_t i = 0; i < length_mapped; i++) {
         mapped[i].dump("lsh_dump/" + std::to_string(i));
     }
+    */
 }

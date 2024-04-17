@@ -20,16 +20,40 @@ struct Chain {
     uint32_t k;
     Atom* chain;
 
+    #ifdef LSH_TRACKING
+    uint32_t hash_mean_counter;
+    score_t hash_mean_register;
+    score_t hash_min_register;
+    score_t hash_max_register;
+    #endif
+
     template<typename WF>
-    hash_t hash(const WF& record) const {
+    hash_t hash(const WF& record) {
         hash_t _hash = 0;
         for (uint32_t i = 0; i < k; i++) {
             score_t sum = 0;
             for (uint32_t j = 0; j < actual_vector_size; j++) {
-                sum += chain[i].a[j] * record.fields[j] * 10;
+                sum += chain[i].a[j] * record.fields[j] * LSH_SPREAD;
             }
+            #ifdef LSH_TRACKING
+            score_t val = sum + chain[i].b;
+            if (hash_mean_counter > 0) {
+                hash_mean_register = ((hash_mean_register * hash_mean_counter) + val) / (hash_mean_counter + 1);
+                hash_mean_counter++;
+            } else {
+                hash_mean_register = sum + chain[i].b;
+                hash_mean_counter = 1;
+            }
+            if (val < hash_min_register) {
+                hash_min_register = val;
+            }
+            if (val > hash_max_register) {
+                hash_max_register = val;
+            }
+            #endif
             // uint32_t h = ((uint32_t) std::floor(sum + chain[i].b)) % width;
-            uint32_t h = ((sum + chain[i].b) / (score_t) width);
+            // uint32_t h = ((sum + chain[i].b) / (score_t) width);
+            uint32_t h = sum + chain[i].b;
             _hash = ((_hash << shift) + h) % width;
         }
         return _hash;

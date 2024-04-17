@@ -11,7 +11,7 @@
 //#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 100
+#define TOT_ELEMENTS 1000
 #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
@@ -46,13 +46,13 @@
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
  * */
-// #define ENABLE_EXAUSTIVE
+#define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
 
 /* Enables OpenMP */
-// #define CONCURRENCY
+#define CONCURRENCY
 // #define MAX_CONCURRENCY 2
 
 /* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
@@ -72,5 +72,15 @@
 
 // Enable Locality Sensitive Hashing
 #define ENABLE_LSH_FOREST
+
+// Enable LSH Tracking (infos in hashes and dump of values)
+// #define LSH_TRACKING
+
+#define LSH_TABLES k_nearest_neighbors
+#define LSH_FOREST_TRESHOLD k_nearest_neighbors
+#define LSH_WIDTH(length) std::sqrt(length) * std::log10(length)
+#define LSH_K(width) 1 // 8 * sizeof(hash_t) / std::ceil(std::log2(width))
+#define LSH_SPREAD 13
+#define LSH_SHIFT 1
 
 #endif
