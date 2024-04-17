@@ -78,18 +78,17 @@ score_t first_metric(WithFields& with_fields) {
 
 template <typename WithFields>
 score_t second_metric(WithFields& with_fields) {
-    score_t ab = 0.0;
-    score_t bb = 0.0;
+    score_t gamma = 0.0;
     for (uint32_t i = 0; i < actual_vector_size; i++) {
-        ab += (with_fields.fields[i]) * (with_fields.fields[i] - 1);
-        bb += (with_fields.fields[i] - 1) * (with_fields.fields[i] - 1);
+        gamma += with_fields.fields[i];
     }
-    score_t gamma = ab / bb;
-    score_t one_minus_gamma = 1 - gamma;
+    gamma /= actual_vector_size;
+
     score_t result = 0.0;
     score_t val = 0.0;
+
     for (uint32_t i = 0; i < actual_vector_size; i++) {
-        val = with_fields.fields[i] * one_minus_gamma + gamma;
+        val = with_fields.fields[i] - gamma;
         result += val * val;
     }
     #ifndef FAST_SQRT
