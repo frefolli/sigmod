@@ -63,6 +63,42 @@ inline score_t distance(const WFA& query, const WFB& record) {
     #endif
 }
 
+template <typename WithFields>
+score_t first_metric(WithFields& with_fields) {
+    score_t result = 0.0;
+    for (uint32_t i = 0; i < actual_vector_size; i++) {
+        result += with_fields.fields[i] * with_fields.fields[i];
+    }
+    #ifndef FAST_SQRT
+        return std::sqrt(result);
+    #else
+        return quacke3_sqrt(result);
+    #endif
+}
+
+template <typename WithFields>
+score_t second_metric(WithFields& with_fields) {
+    score_t ab = 0.0;
+    score_t bb = 0.0;
+    for (uint32_t i = 0; i < actual_vector_size; i++) {
+        ab += (with_fields.fields[i]) * (with_fields.fields[i] - 1);
+        bb += (with_fields.fields[i] - 1) * (with_fields.fields[i] - 1);
+    }
+    score_t gamma = ab / bb;
+    score_t one_minus_gamma = 1 - gamma;
+    score_t result = 0.0;
+    score_t val = 0.0;
+    for (uint32_t i = 0; i < actual_vector_size; i++) {
+        val = with_fields.fields[i] * one_minus_gamma + gamma;
+        result += val * val;
+    }
+    #ifndef FAST_SQRT
+        return std::sqrt(result);
+    #else
+        return quacke3_sqrt(result);
+    #endif
+}
+
 inline bool check_if_elegible_by_T(const Query& query, const Record& record) {
     if (query.query_type == BY_C || query.query_type == NORMAL)
       return true;
