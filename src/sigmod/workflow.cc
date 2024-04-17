@@ -240,11 +240,13 @@ void Workflow(const std::string database_path,
     IndexDatabase(database);
     LogTime("Indexes Database");
 
-    /* Initialization */
-    #ifdef ENABLE_PRODUCT_QUANTIZATION
+    #ifdef ENABLE_BALL_FOREST
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
-    
+    #endif
+
+    /* Initialization */
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
     CodeBook codebook = {
         .vector_centroid = MallocVectorCentroid(database.length, M)
     };
@@ -254,13 +256,6 @@ void Workflow(const std::string database_path,
             Kmeans(codebook, database, 30, i * M, (i + 1) * M - 1);
         }
     LogTime("Built CodeBook");
-    #endif
-
-    #ifdef ENABLE_BALL_FOREST
-    #ifndef ENABLE_PRODUCT_QUANTIZATION
-    BallForest ball_forest = BuildBallForest(database);
-    LogTime("Built Ball Forest");
-    #endif
     #endif
 
     #ifdef ENABLE_KD_FOREST
@@ -351,7 +346,6 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_EXAUSTIVE
         #ifdef ENABLE_PRODUCT_QUANTIZATION
             #ifdef ACCURATE_RECALL
-            //score_t product_quantization_score = CompareAndComputeRecallOfSolutionsByDistance(database, query_set, exaustive_solution, product_quantization_solution);
             score_t product_quantization_score = CompareAndComputeRecallOfSolutionsByIndex(database, exaustive_solution, product_quantization_solution);
             #else
             score_t product_quantization_score = CompareSolutions(database, query_set, exaustive_solution, product_quantization_solution);
@@ -472,18 +466,13 @@ void Workflow(const std::string database_path,
     LogTime("Freed Exaustive Solution");
     #endif
 
-    /* Free Models */
-    #ifdef ENABLE_PRODUCT_QUANTIZATION
+    #ifdef ENABLE_BALL_FOREST
     FreeBallForest(ball_forest);
     LogTime("Freed Ball Forest");
     #endif
 
-    #ifdef ENABLE_BALL_FOREST
-    #ifndef ENABLE_PRODUCT_QUANTIZATION
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
     FreeCodeBook(cb);
-    FreeBallForest(ball_forest);
-    LogTime("Freed Ball Forest");
-    #endif
     #endif
 
     #ifdef ENABLE_KD_FOREST

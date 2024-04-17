@@ -16,11 +16,24 @@ struct Atom {
 
 struct Chain {
     uint32_t width;
+    uint32_t shift;
     uint32_t k;
     Atom* chain;
 
-    hash_t hash(const Record& record) const;
-    hash_t hash(const Query& query) const;
+    template<typename WF>
+    hash_t hash(const WF& record) const {
+        hash_t _hash = 0;
+        for (uint32_t i = 0; i < k; i++) {
+            score_t sum = 0;
+            for (uint32_t j = 0; j < actual_vector_size; j++) {
+                sum += chain[i].a[j] * record.fields[j];
+            }
+            uint32_t h = ((uint32_t) std::floor(sum + chain[i].b)) % width;
+            _hash = ((_hash << shift) + h) % width;
+        }
+        return _hash;
+    }
+
     void build(uint32_t database_length);
     static void Free(Chain& chain);
 };

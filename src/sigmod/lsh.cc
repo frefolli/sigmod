@@ -12,15 +12,15 @@
 #include <string>
 #include <cassert>
 
-#define LSH_SPREAD 25
-#define LSH_DEPTH 1
+#define LSH_SPREAD 100
 #define LSH_TABLES k_nearest_neighbors
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 #define LSH_WIDTH(length) std::sqrt(length) * std::log10(length) / 2
 
 void Chain::build(uint32_t database_length) {
     this->width = LSH_WIDTH(database_length);
-    this->k = LSH_DEPTH;
+    this->shift = std::ceil(std::log2(this->width));
+    this->k = std::floor(8 * sizeof(hash_t) / this->shift);
     this->chain = smalloc<Atom>(k);
 
     std::random_device random_device;
@@ -34,32 +34,6 @@ void Chain::build(uint32_t database_length) {
         }
         this->chain[i].b = uniform(generator);
     }
-}
-
-hash_t Chain::hash(const Record& record) const {
-    hash_t _hash = 0;
-    for (uint32_t i = 0; i < k; i++) {
-        score_t sum = 0;
-        for (uint32_t j = 0; j < actual_vector_size; j++) {
-            sum += chain[i].a[j] * record.fields[j];
-        }
-        uint32_t h = ((uint32_t) std::floor(sum + chain[i].b)) % width;
-        _hash = ((_hash << 3) + h) % width;
-    }
-    return _hash;
-}
-
-hash_t Chain::hash(const Query& query) const {
-    hash_t _hash = 0;
-    for (uint32_t i = 0; i < k; i++) {
-        score_t sum = 0;
-        for (uint32_t j = 0; j < actual_vector_size; j++) {
-            sum += chain[i].a[j] * query.fields[j];
-        }
-        uint32_t h = ((uint32_t) std::floor(sum + chain[i].b)) % width;
-        _hash = ((_hash << 3) + h) % width;
-    }
-    return _hash;
 }
 
 void Chain::Free(Chain& chain) {
