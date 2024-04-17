@@ -136,23 +136,14 @@ void LSH::search(const Database& database, const Query& query,
                 uint32_t start = 0;
                 uint32_t end = vec.size();
         
-                std::cout << "INP := " << start << " -> " << end << std::endl;
                 start = SeekHigh(
                     [&database, &vec](uint32_t i) {
-                      assert(i >= 0);
-                      assert(i < vec.size());
-                      assert(vec[i] >= 0);
-                      assert(vec[i] < database.length);
                       return database.at(vec[i]).T;
                     },
                     start, end, query.l
                 );
                 end = SeekLow(
                     [&database, &vec](uint32_t i) {
-                      assert(i >= 0);
-                      assert(i < vec.size());
-                      assert(vec[i] >= 0);
-                      assert(vec[i] < database.length);
                       return database.at(vec[i]).T;
                     },
                     start, end, query.r
@@ -164,7 +155,6 @@ void LSH::search(const Database& database, const Query& query,
                     if (elegible_by_T(query, database.records[index]))
                         board.pushs(index, score);
                 }
-                std::cout << "OUT := " << start << " -> " << end << std::endl;
             }
             break;
         default:
