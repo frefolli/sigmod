@@ -12,15 +12,20 @@
 #include <string>
 #include <cassert>
 
-#define LSH_SPREAD 100
+#define LSH_SPREAD 1
 #define LSH_TABLES k_nearest_neighbors
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 #define LSH_WIDTH(length) std::sqrt(length) * std::log10(length) / 2
 
 void Chain::build(uint32_t database_length) {
     this->width = LSH_WIDTH(database_length);
+    /*
     this->shift = std::ceil(std::log2(this->width));
     this->k = std::floor(8 * sizeof(hash_t) / this->shift);
+    */
+    this->shift = 1;
+    this->k = 1;
+
     this->chain = smalloc<Atom>(k);
 
     std::random_device random_device;
@@ -232,4 +237,19 @@ void LSHForest::Free(LSHForest& forest) {
     forest.mapped = nullptr;
     forest.length_mapped = 0;
   }
+}
+
+void LSH::dump(const std::string outdir) const {
+    if (hashtables != nullptr) {
+        for (uint32_t i = 0; i < N; i++) {
+            hashtables[i].dump(outdir + "/" + std::to_string(i) + ".csv");
+        }
+    }
+}
+
+void LSHForest::dump() const {
+    general.dump("lsh_dump/general");
+    for (uint32_t i = 0; i < length_mapped; i++) {
+        mapped[i].dump("lsh_dump/" + std::to_string(i));
+    }
 }

@@ -22,22 +22,22 @@
 // #define ENABLE_PRODUCT_QUANTIZATION
 
 /* Build a KD Forest and uses it to craft a solution */
-#define ENABLE_KD_FOREST
+// #define ENABLE_KD_FOREST
 
 /* Randomize KD Node dimensions */
 // #define KD_FOREST_DIMENSION_RANDOMIZE
 
 /* Assign KD Node dimensions in order to maximize spread */
-#define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
+// #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
 
 /* Build a Ball Forest and uses it to craft a solution */
-#define ENABLE_BALL_FOREST
+// #define ENABLE_BALL_FOREST
 
 /* Build a VP Forest and uses it to craft a solution */
 // #define ENABLE_VP_FOREST
 
 /* Build a MVP Forest and uses it to craft a solution */
-#define ENABLE_MVP_FOREST
+// #define ENABLE_MVP_FOREST
 
 /* Uses MVPForest::Check on the forest after build */
 // #define CHECK_MVP_FOREST
@@ -46,7 +46,7 @@
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
  * */
-#define ENABLE_EXAUSTIVE
+// #define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
