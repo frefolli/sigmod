@@ -36,7 +36,8 @@ void Kmeans(
     const Database& database, 
     const uint32_t ITERATIONS, 
     const uint32_t start_partition_id, 
-    const uint32_t end_partition_id);
+    const uint32_t end_partition_id,
+    const uint32_t length);
 
 CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint8_t M, const uint8_t dim_partition);
 Codeword& CloneCodeword(const Codeword& cw);

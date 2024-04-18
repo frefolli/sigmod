@@ -169,10 +169,10 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
     };
 
-    for (uint32_t i = 0; i < TOT_ELEMENTS/*query_set.length*/; i++) {
+    for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
-        /*if (i >= TOT_ELEMENTS)
-            break;*/
+        if (i >= TOT_ELEMENTS)
+            break;
         #endif
         #ifdef DISATTEND_CHECKS
         const uint32_t query_type = NORMAL;
@@ -183,6 +183,7 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         
         auto start_query_timer = std::chrono::high_resolution_clock::now();
         if (query_type == NORMAL) {
+            //Debug("i := " + std::to_string(i));
             SearchExaustivePQ(cb, database, solution.results[i], query_set.queries[i]);
         } else {
             SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
@@ -231,7 +232,7 @@ void Workflow(const std::string database_path,
     CodeBook codebook = MallocCodeBook(database.length, K, M, dim_partition);
     #pragma omp parallel for
         for (uint32_t i = 0; i < M; i++) {
-            Kmeans(codebook, database, 30, i * M, (i + 1) * M - 1);
+            Kmeans(codebook, database, 30, i * M, (i + 1) * M - 1, database.length);
         }
     LogTime("Built CodeBook");
     #endif
@@ -350,7 +351,8 @@ void Workflow(const std::string database_path,
         #endif
         #ifdef ENABLE_KD_FOREST
             #ifdef ACCURATE_RECALL
-            score_t kd_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, kd_forest_solution);
+            //score_t kd_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, kd_forest_solution);
+            score_t kd_forest_score = CompareAndComputeRecallOfSolutionsByIndex(database,exaustive_solution, kd_forest_solution);
             #else
             score_t kd_forest_score = CompareSolutions(database, query_set, exaustive_solution, kd_forest_solution);
             #endif

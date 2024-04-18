@@ -22,7 +22,7 @@ const score_t ADC(const score_t matr_dist[M][K], const CodeBook& cb, const uint3
         dist += matr_dist[i][cb.vector_to_centroid[index_vector].centroids[i]];
     }
 
-    return (const score_t) sqrt(dist);
+    return (const score_t) dist;
 }
 
 CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint8_t M, const uint8_t dim_partition){
@@ -74,34 +74,36 @@ void Kmeans(
         const Database& database, 
         const uint32_t ITERATIONS, 
         const uint32_t start_partition_id, 
-        const uint32_t end_partition_id) {
+        const uint32_t end_partition_id,
+        const uint32_t length) {
 
     uint8_t n_partition = start_partition_id / M;
     
     uint32_t dim_centroid[K];
     std::random_device rd;
     std::mt19937 rng(rd());
-    std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
+    std::uniform_int_distribution<uint32_t> uni(0, length-1);
 
     Codeword &codeword = cb.codewords[n_partition];
     
     // Initializing centroids random on a point
-    uint32_t ind_init_db = 0;
+    #pragma omp parallel for
     for (uint32_t i = 0; i < K; i++) {
-        ind_init_db = uni(rd);
+        uint32_t ind_init_db = uni(rd);
         for (uint32_t j = 0; j < dim_partition; j++) {
             codeword.centroids[i].data[j] = database.records[ind_init_db].fields[j + start_partition_id];
         }
     }
 
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
+        #pragma omp parallel for
         for (uint32_t i = 0; i < K; i++) {
             dim_centroid[i] = 0;
         }
 
         // FULL ITERATION
         // computing the nearest centroid
-        for (uint32_t i = 0; i < database.length; i++) {
+        for (uint32_t i = 0; i < length; i++) {
             Record& record = database.records[i];
             score_t min_dist = distance(codeword.centroids[0].data, record.fields, start_partition_id, end_partition_id);
             cb.vector_to_centroid[i].centroids[n_partition] = 0;
@@ -123,6 +125,7 @@ void Kmeans(
         Codeword old_codeword = CloneCodeword(codeword);
 
         // reset centroid
+        #pragma omp parallel for
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
                 codeword.centroids[i].data[j] = 0;
@@ -130,7 +133,8 @@ void Kmeans(
         }
 
         // refill centroid data
-        for (uint32_t i = 0; i < database.length; i++) {
+        #pragma omp parallel for
+        for (uint32_t i = 0; i < length; i++) {
             uint32_t centroid = cb.vector_to_centroid[i].centroids[n_partition];
             Record& record = database.records[i];
             for (uint32_t j = 0; j < dim_partition; j++) {
@@ -139,6 +143,7 @@ void Kmeans(
         }
         
         // compute mean of cumulated coordinates
+        #pragma omp parallel for
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
                 if (dim_centroid[i] != 0){
@@ -176,7 +181,7 @@ void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& res
     auto end_query_timer = std::chrono::high_resolution_clock::now();
         
     long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
-    Debug("TIME preprocessing (ms) := " + std::to_string(sample));
+    //Debug("TIME preprocessing (ms) := " + std::to_string(sample));
 
     start_query_timer = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < database.length; i++) {
@@ -185,7 +190,7 @@ void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& res
     end_query_timer = std::chrono::high_resolution_clock::now();
         
     sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
-    Debug("TIME searching ADC (ms) := " + std::to_string(sample));
+    //Debug("TIME searching ADC (ms) := " + std::to_string(sample));
 
     assert(gboard.full());
     

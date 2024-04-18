@@ -15,14 +15,14 @@
 #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
-// #define ENABLE_DIM_REDUCTION
-// #define N_DIM_REDUCTION 70
+//#define ENABLE_DIM_REDUCTION
+//#define N_DIM_REDUCTION 90
 
 /* Apply product quantization before indexing */
 #define ENABLE_PRODUCT_QUANTIZATION
 
 /* Build a KD Forest and uses it to craft a solution */
-// #define ENABLE_KD_FOREST
+//#define ENABLE_KD_FOREST
 
 /* Randomize KD Node dimensions */
 // #define KD_FOREST_DIMENSION_RANDOMIZE
