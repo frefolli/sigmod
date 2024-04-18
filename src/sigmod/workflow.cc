@@ -227,10 +227,7 @@ void Workflow(const std::string database_path,
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
     
-    CodeBook codebook = {
-        .vector_centroid = MallocVectorCentroid(database.length, M)
-    };
-    Debug("coso");
+    CodeBook codebook = MallocCodeBook(database.length, K, M, dim_partition);
     #pragma omp parallel for
         for (uint32_t i = 0; i < M; i++) {
             Kmeans(codebook, database, 30, i * M, (i + 1) * M - 1);
@@ -443,8 +440,8 @@ void Workflow(const std::string database_path,
 
     /* Free Models */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
-    FreeBallForest(ball_forest);
-    LogTime("Freed Ball Forest");
+    FreeCodeBook(&codebook);
+    LogTime("Freed CodeBook");
     #endif
 
     #ifdef ENABLE_BALL_FOREST

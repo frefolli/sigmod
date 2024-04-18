@@ -11,15 +11,24 @@
 #include <cassert>
 
 const uint8_t M = 10; // #partitions
-const uint32_t K = 256; // #clusters per partition
-const uint8_t dim_partition = 100 / M;
+const uint16_t K = 256; // #clusters per partition
+const uint8_t dim_partition = vector_num_dimension / M; // if you reduce dimension you should use actual_vector_size
+
+struct Centroid{
+    float32_t data[dim_partition];
+};
+
+struct Codeword{
+    Centroid* centroids;
+};
+
+struct VectorToCentroids{
+    uint8_t centroids[M];
+};
 
 struct CodeBook{
-    /* indeces := [id_vector, ids_centroids_associated_foreach_partition] */
-    //std::map<uint32_t, uint8_t[M]> vector_centroid;
-    uint16_t** vector_centroid;
-    /* indeces := [id_partition, id_centroid, centroid_component] */
-    std::map<uint8_t, std::map<uint16_t, float32_t[dim_partition]>> centroids;
+    VectorToCentroids* vector_to_centroid;
+    Codeword* codewords;
 };
 
 void Kmeans(
@@ -29,8 +38,10 @@ void Kmeans(
     const uint32_t start_partition_id, 
     const uint32_t end_partition_id);
 
-uint16_t** MallocVectorCentroid(const uint32_t db_length, const uint8_t n_partitions);
-void FreeCodeBook(CodeBook cb);
+CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint8_t M, const uint8_t dim_partition);
+Codeword& CloneCodeword(const Codeword& cw);
+void FreeCodeBook(CodeBook* cb);
+void FreeCodeword(Codeword* cw);
 
 inline void compute_distributions(const std::vector<uint32_t>& dim_centroids) {
     score_t sum = 0;
