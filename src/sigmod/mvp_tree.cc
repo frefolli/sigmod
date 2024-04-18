@@ -494,7 +494,7 @@ MVPForest MVPForest::Build(const Database& database) {
     std::mutex mutex;
     ThreadPool pool;
     pool.run([&trees, &database, &indexes, &mutex](typename c_map_t::const_iterator cat) {
-        BallTree tree = MVPTree::Build(database, paths, max_p, indexes, cat->second.first, cat->second.second + 1);
+        MVPTree tree = MVPTree::Build(database, paths, max_p, indexes, cat->second.first, cat->second.second + 1);
         std::lock_guard<std::mutex>* guard = new std::lock_guard<std::mutex>(mutex);
         trees[cat->first] = tree;
         delete guard;
