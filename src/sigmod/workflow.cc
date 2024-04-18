@@ -168,7 +168,8 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
     };
-
+    
+    #pragma omp parallel for
     for (uint32_t i = 0; i < query_set.length; i++) {
         #ifdef STOP_AFTER_TOT_ELEMENTS
         if (i >= TOT_ELEMENTS)
