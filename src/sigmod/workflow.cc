@@ -228,9 +228,10 @@ void Workflow(const std::string database_path,
     LogTime("Dimensional reduction database");
     
     ReduceDimensionality(query_set, prj_matrix, N_DIM_REDUCTION);
+    LogTime("Dimensional reduction queryset");
 
     FreeProjectionMatrix((float32_t**) prj_matrix);
-    LogTime("Dimensional reduction queryset");
+    LogTime("Freed PRJ Matrix");
 
     actual_vector_size = N_DIM_REDUCTION;
     #endif

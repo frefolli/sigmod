@@ -1,13 +1,14 @@
 #include <sigmod/lin_alg.hh>
+#include <sigmod/memory.hh>
 #include <cmath>
 
 float32_t* MallocVector(const uint32_t dimension){
-    float32_t* vector = (float32_t*) malloc(sizeof(float32_t) * dimension);
+    float32_t* vector = smalloc<float32_t>(dimension);
     return vector;
 }    
 
 float32_t* MallocVector(const uint32_t dimension, const float32_t initial_value){
-    float32_t* vector = (float32_t*) malloc(sizeof(float32_t) * dimension);
+    float32_t* vector = MallocVector(dimension);
     for (int32_t i = 0; i < dimension; i++) {
         vector[i] = initial_value;
     }
@@ -15,9 +16,9 @@ float32_t* MallocVector(const uint32_t dimension, const float32_t initial_value)
 }    
 
 float32_t** MallocMatrix(const uint32_t rows, const uint32_t columns) {
-    float32_t** matrix = (float32_t **)malloc(rows * sizeof(float32_t*));
+    float32_t** matrix = smalloc<float32_t*>(rows);
     for(uint32_t i = 0; i < rows; i++)
-        matrix[i] = (float32_t *)malloc(columns * sizeof(float32_t));
+        matrix[i] = smalloc<float32_t>(columns);
     return matrix;
 }    
 

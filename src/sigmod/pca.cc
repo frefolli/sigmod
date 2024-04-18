@@ -1,11 +1,16 @@
 #include<sigmod/dimensional_reduction.hh>
 #include<sigmod/lin_alg.hh>
+#include<sigmod/memory.hh>
 
 ComponentResults* MallocComponentResults(const uint32_t n_principal_components, const uint32_t dimension) {
-    ComponentResults* cr = (ComponentResults*) std::malloc(sizeof(ComponentResults));
+    ComponentResults* cr = smalloc<ComponentResults>();
 
-    cr->eigenvalue = (float32_t*) std::malloc(sizeof(float32_t) * n_principal_components);
-    cr->r = (float32_t**) std::malloc(sizeof(float32_t) * n_principal_components * dimension);
+    cr->eigenvalue = smalloc<float32_t>(n_principal_components);
+    cr->r = smalloc<float32_t*>(n_principal_components);
+
+    for (uint32_t i = 0; i < n_principal_components; i++) {
+	cr->r[0] = smalloc<float32_t>(dimension);
+    }
 
     return cr;
 }

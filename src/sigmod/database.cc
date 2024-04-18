@@ -18,7 +18,7 @@ Database ReadDatabase(const std::string input_path) {
     uint32_t db_length;
     assert(1 == fread(&db_length, sizeof(uint32_t), 1, dbfile));
 
-    Record* records = (Record*) std::malloc(sizeof(Record) * db_length);
+    Record* records = smalloc<Record>(db_length);
     RawRecord* records_entry_point = (RawRecord*) records;
     uint32_t records_to_read = db_length;
     while(records_to_read > 0) {
