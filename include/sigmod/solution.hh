@@ -23,6 +23,7 @@ Solution ReadSolution(const std::string input_path, const uint32_t legnth);
 score_t CompareSolutions(const Solution& first, const Solution& second, const uint32_t n_queries);
 score_t CompareSolutionsFromFiles(const std::string first, const std::string second, const uint32_t n_queries);
 score_t CompareSolutions(const Database& database, const QuerySet& query_set, const Solution& expected, const Solution& got);
+
 score_t CompareAndComputeRecallOfSolutionsByDistance(const Database& database,
 					   const QuerySet& query_set,
 					   const Solution& expected,

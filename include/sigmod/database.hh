@@ -22,7 +22,6 @@ void FreeDatabase(Database& database);
 void StatsDatabase(const Database& database);
 
 void IndexDatabase(Database& database);
-void ClusterizeDatabase(const Database& database);
 
 const float32_t** ReduceDimensionality(Database& database, const uint32_t final_dimension);
 

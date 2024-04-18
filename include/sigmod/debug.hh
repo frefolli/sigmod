@@ -18,7 +18,8 @@ void LogTime(const std::string s);
 extern long long SIGMOD_MEMORY_TRACKER;
 extern long long SIGMOD_DISTANCE_COMPUTATIONS;
 
-std::string BytesToString(long long bytes);
+std::string BytesToString(long double bytes);
+std::string LengthToString(long double length);
 void LogMemory(const std::string s);
 
 #endif
