@@ -15,20 +15,21 @@ const uint16_t K = 256; // #clusters per partition
 const uint8_t dim_partition = vector_num_dimension / M; // if you reduce dimension you should use actual_vector_size
 
 struct Centroid{
-    float32_t data[dim_partition];
+    //float32_t data[dim_partition];
+    float32_t* data;
 };
 
 struct Codeword{
-    Centroid* centroids;
-};
-
-struct VectorToCentroids{
-    uint8_t centroids[M];
+    Centroid* centroids; // K
 };
 
 struct CodeBook{
-    VectorToCentroids* vector_to_centroid;
-    Codeword* codewords;
+    uint16_t K;
+    uint8_t M; 
+    uint8_t dim_partition;
+    uint32_t db_length;
+    uint8_t** index_vector_to_index_centroid; // db_length x M
+    Codeword* codewords; // M
 };
 
 void Kmeans(
@@ -39,10 +40,10 @@ void Kmeans(
     const uint32_t end_partition_id,
     const uint32_t length);
 
-CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint8_t M, const uint8_t dim_partition);
-Codeword& CloneCodeword(const Codeword& cw);
+CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint8_t M);
+Codeword& CloneCodeword(const Codeword& cw, const uint16_t K, const uint8_t dim_partition);
 void FreeCodeBook(CodeBook* cb);
-void FreeCodeword(Codeword* cw);
+void FreeCodeword(Codeword* cw, const uint16_t K);
 
 inline void compute_distributions(const std::vector<uint32_t>& dim_centroids) {
     score_t sum = 0;
@@ -92,8 +93,8 @@ inline score_t distance(const float32_t* centroid, const float32_t* vector, cons
 * compute matrix of distances between query and all centroids of all partitions 
 * matr_dist := score_t[M][K]
 */
-void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb);
-const score_t ADC(const score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector);
+void PreprocessingQuery(score_t** matr_dist, const float32_t* query, const CodeBook& cb);
+const score_t ADC(const score_t** matr_dist, const CodeBook& cb, const uint32_t index_vector);
 
 void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query);
 

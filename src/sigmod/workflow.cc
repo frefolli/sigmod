@@ -183,7 +183,7 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         
         auto start_query_timer = std::chrono::high_resolution_clock::now();
         if (query_type == NORMAL) {
-            //Debug("i := " + std::to_string(i));
+            Debug("i := " + std::to_string(i));
             SearchExaustivePQ(cb, database, solution.results[i], query_set.queries[i]);
         } else {
             SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
@@ -229,10 +229,10 @@ void Workflow(const std::string database_path,
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
     
-    CodeBook codebook = MallocCodeBook(database.length, K, M, dim_partition);
+    CodeBook codebook = MallocCodeBook(database.length, K, M);
     #pragma omp parallel for
         for (uint32_t i = 0; i < M; i++) {
-            Kmeans(codebook, database, 30, i * M, (i + 1) * M - 1, database.length);
+            Kmeans(codebook, database, 30, i * codebook.M, (i + 1) * codebook.M - 1, database.length);
         }
     LogTime("Built CodeBook");
     #endif
