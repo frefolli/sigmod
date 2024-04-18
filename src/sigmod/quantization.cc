@@ -95,28 +95,35 @@ void Kmeans(
         }
     }
 
+    #pragma omp parallel for
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
-        #pragma omp parallel for
         for (uint32_t i = 0; i < K; i++) {
             dim_centroid[i] = 0;
         }
 
         // FULL ITERATION
         // computing the nearest centroid
+        #pragma omp parallel for
         for (uint32_t i = 0; i < length; i++) {
             Record& record = database.records[i];
             score_t min_dist = distance(codeword.centroids[0].data, record.fields, start_partition_id, end_partition_id);
             cb.vector_to_centroid[i].centroids[n_partition] = 0;
-            dim_centroid[0]++;
+            #pragma omp critical
+            {
+                dim_centroid[0]++;
+            }
             uint32_t anchored_centroid = 0;
             
             for (uint32_t j = 1; j < K; j++) {
                 score_t dist = distance(codeword.centroids[j].data, record.fields, start_partition_id, end_partition_id);
                 if (dist < min_dist) {
                     min_dist = dist; 
-                    dim_centroid[anchored_centroid]--;
-                    dim_centroid[j]++;
-                    cb.vector_to_centroid[i].centroids[n_partition] = j;
+                    #pragma omp critical
+                    {
+                        dim_centroid[anchored_centroid]--;
+                        dim_centroid[j]++;
+                        cb.vector_to_centroid[i].centroids[n_partition] = j;
+                    }
                     anchored_centroid = j;
                 }
             }
@@ -125,7 +132,6 @@ void Kmeans(
         Codeword old_codeword = CloneCodeword(codeword);
 
         // reset centroid
-        #pragma omp parallel for
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
                 codeword.centroids[i].data[j] = 0;
@@ -133,7 +139,6 @@ void Kmeans(
         }
 
         // refill centroid data
-        #pragma omp parallel for
         for (uint32_t i = 0; i < length; i++) {
             uint32_t centroid = cb.vector_to_centroid[i].centroids[n_partition];
             Record& record = database.records[i];
@@ -143,7 +148,6 @@ void Kmeans(
         }
         
         // compute mean of cumulated coordinates
-        #pragma omp parallel for
         for (uint32_t i = 0; i < K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
                 if (dim_centroid[i] != 0){
