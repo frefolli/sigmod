@@ -76,11 +76,11 @@
 // Enable LSH Tracking (infos in hashes and dump of values)
 // #define LSH_TRACKING
 
-#define LSH_TABLES k_nearest_neighbors
+#define LSH_TABLES k_nearest_neighbors / 2
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 #define LSH_WIDTH(length) std::sqrt(length) * std::log10(length)
 #define LSH_K(width) 1 // 8 * sizeof(hash_t) / std::ceil(std::log2(width))
-#define LSH_SPREAD 13
+#define LSH_SPREAD 7
 #define LSH_SHIFT 1
 
 #endif
