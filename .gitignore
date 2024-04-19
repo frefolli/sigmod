@@ -10,3 +10,5 @@ builddir
 .vscode
 .venv
 .archive
+output-*.txt
+nohup.out

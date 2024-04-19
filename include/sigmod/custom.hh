@@ -1,4 +1,4 @@
 #ifndef CUSTOM_HH
 #define CUSTOM_HH
-#define LSH_TABLES (uint32_t) ((float) k_nearest_neighbors * 0.33)
+#define LSH_SPREAD 96
 #endif

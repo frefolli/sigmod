@@ -78,8 +78,8 @@
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 #define LSH_WIDTH(length) std::sqrt(length) // * std::log10(length)
 #define LSH_K(width) 1 // 8 * sizeof(hash_t) / std::ceil(std::log2(width))
-#define LSH_SPREAD 10
 #define LSH_SHIFT 1
+#define LSH_TABLES (uint32_t) ((float) k_nearest_neighbors * 2)
 #include <sigmod/custom.hh>
 
 #endif

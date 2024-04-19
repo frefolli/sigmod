@@ -40,16 +40,15 @@ def craft_header(data):
 
 def grid_search():
     cum = {}
-    for dx in [0.25, 0.33, 0.5, 0.66, 0.75, 1,
-               1.25, 1.33, 1.5, 1.66, 1.75, 2]:
+    for dx in range(1, 100, 5):
         craft_header({
-            'LSH_TABLES': "(uint32_t) ((float) k_nearest_neighbors * %s)" % dx
+            'LSH_SPREAD': "%s" % dx
         })
-        out = 'output-10m-htn-%s.txt' % dx
+        out = 'output-10m-spd-%s.txt' % dx
         execute_script('contest-10m', out)
         inc = extract_data(out)
-        inc['HTN'] = dx
+        inc['SPD'] = dx
         cum = aggregate(cum, inc)
-    save_df(cum, "plots/htn.csv")
+    save_df(cum, "plots/spd.csv")
 
 grid_search()
