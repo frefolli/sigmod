@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import subprocess
 import re
+import pandas as pd
 
 def execute_script(input_, output_):
     cmd = "make -j3 %s > %s" % (input_, output_)
@@ -14,17 +15,19 @@ def extract_data(in_):
         run_time = int(ss[-10].split(' ')[0])
         
         ss = re.findall(":= [0-9]+\\.[0-9]+", file)
-        recall = ss[0]
+        recall = float(ss[0].split(' ')[1])
 
         return {'build_time': build_time, 'run_time': run_time, 'recall': recall}
 
 def aggregate(cum, inc):
     for key in inc:
+        if key not in cum:
+            cum[key] = []
         cum[key].append(inc[key])
     return cum
 
 def save_df(cum: dict, out: str):
-    return pd.DataFrame(cum).to_csv(out, Index=False)
+    return pd.DataFrame(cum).to_csv(out, index=False)
 
 def craft_header(data):
     file = open("include/sigmod/custom.hh", "w")

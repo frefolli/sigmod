@@ -11,7 +11,7 @@
 //#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 1000
+#define TOT_ELEMENTS 100
 #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
@@ -80,11 +80,6 @@
 #define LSH_K(width) 1 // 8 * sizeof(hash_t) / std::ceil(std::log2(width))
 #define LSH_SPREAD 10
 #define LSH_SHIFT 1
-
-/*
-#define LSH_TABLES (uint32_t) ((float) k_nearest_neighbors * 0.66)
-*/
-
 #include <sigmod/custom.hh>
 
 #endif

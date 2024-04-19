@@ -157,6 +157,7 @@ void LSH::search(const Database& database, const Query& query,
 
 void LSH::build(const Database& database, const uint32_t start, const uint32_t end) {
     this->N = LSH_TABLES;
+    // std::cout << LSH_TABLES << std::endl;
     this->hashtables = smalloc<HashTable>(this->N);
     
     for (uint32_t i = 0; i < N; i++) {

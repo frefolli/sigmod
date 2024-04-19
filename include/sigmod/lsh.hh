@@ -5,6 +5,7 @@
 #include <sigmod/scoreboard.hh>
 #include <sigmod/query.hh>
 #include <sigmod/solution.hh>
+#include <sigmod/flags.hh>
 #include <vector>
 
 typedef uint64_t hash_t;
