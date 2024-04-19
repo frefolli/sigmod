@@ -11,12 +11,12 @@
 //#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 100
+#define TOT_ELEMENTS 1000
 #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
-#define ENABLE_DIM_REDUCTION
-#define N_DIM_REDUCTION 90
+// #define ENABLE_DIM_REDUCTION
+// #define N_DIM_REDUCTION 90
 
 /* Apply product quantization before indexing */
 // #define ENABLE_PRODUCT_QUANTIZATION
@@ -52,7 +52,7 @@
 // #define SHOW_MISMATCH_IN_COMPARISON
 
 /* Enables OpenMP */
-// #define CONCURRENCY
+#define CONCURRENCY
 // #define MAX_CONCURRENCY 2
 
 /* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
@@ -76,11 +76,11 @@
 // Enable LSH Tracking (infos in hashes and dump of values)
 // #define LSH_TRACKING
 
-#define LSH_TABLES k_nearest_neighbors / 2
+#define LSH_TABLES (uint32_t) ((float) k_nearest_neighbors * 0.66)
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
-#define LSH_WIDTH(length) std::sqrt(length) * std::log10(length)
+#define LSH_WIDTH(length) std::sqrt(length) // * std::log10(length)
 #define LSH_K(width) 1 // 8 * sizeof(hash_t) / std::ceil(std::log2(width))
-#define LSH_SPREAD 7
+#define LSH_SPREAD 10
 #define LSH_SHIFT 1
 
 #endif

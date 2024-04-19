@@ -111,41 +111,44 @@ void LSH::search(const Database& database, const Query& query,
         case BY_C_AND_T:
             for (uint32_t i = 0; i < this->N; i++) {
                 hash_t hash = this->hashtables[i].chain.hash(query);
-		LogTime("Cos");
-                std::vector<uint32_t>& vec = this->hashtables[i].buckets->at(hash);
-		LogTime("Ack");
-                uint32_t start = 0;
-                uint32_t end = vec.size();
-        
-                start = SeekHigh(
-                    [&database, &vec](uint32_t i) {
-                      return database.at(vec[i]).T;
-                    },
-                    start, end, query.l
-                );
-                end = SeekLow(
-                    [&database, &vec](uint32_t i) {
-                      return database.at(vec[i]).T;
-                    },
-                    start, end, query.r
-                ) + 1;
+		auto it = this->hashtables[i].buckets->find(hash);
+		if (it != this->hashtables[i].buckets->end()) {
+            std::vector<uint32_t>& vec = it->second;
+			uint32_t start = 0;
+			uint32_t end = vec.size();
+		
+			start = SeekHigh(
+			    [&database, &vec](uint32_t i) {
+			      return database.at(vec[i]).T;
+			    },
+			    start, end, query.l
+			);
+			end = SeekLow(
+			    [&database, &vec](uint32_t i) {
+			      return database.at(vec[i]).T;
+			    },
+			    start, end, query.r
+			) + 1;
 
-                for (uint32_t j = start; j < end; j++) {
-                    const uint32_t index = vec[j];
-                    score_t score = distance(query, database.records[index]);
-                    if (elegible_by_T(query, database.records[index]))
-                        board.pushs(index, score);
-                }
+			for (uint32_t j = start; j < end; j++) {
+			    const uint32_t index = vec[j];
+			    score_t score = distance(query, database.records[index]);
+			    if (elegible_by_T(query, database.records[index]))
+				board.pushs(index, score);
+			}
+		}
             }
             break;
         default:
             for (uint32_t i = 0; i < this->N; i++) {
-		LogTime("Syn");
                 hash_t hash = this->hashtables[i].chain.hash(query);
-		LogTime("Ack");
-                for (uint64_t index : this->hashtables[i].buckets->at(hash)) {
-                    score_t score = distance(query, database.records[index]);
-                    board.pushs(index, score);
+                auto it = this->hashtables[i].buckets->find(hash);
+                if (it != this->hashtables[i].buckets->end()) {
+                    std::vector<uint32_t>& vec = it->second;
+                    for (uint64_t index : vec) {
+                        score_t score = distance(query, database.records[index]);
+                        board.pushs(index, score);
+                    }
                 }
             }
             break;
