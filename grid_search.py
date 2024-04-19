@@ -40,15 +40,15 @@ def craft_header(data):
 
 def grid_search():
     cum = {}
-    for dx in range(1, 100, 5):
+    for dx in range(1, 100, 3):
         craft_header({
-            'LSH_SPREAD': "%s" % dx
+            'LSH_WIDTH(length)': "std::sqrt(length) * %s" % dx
         })
-        out = 'output-10m-spd-%s.txt' % dx
+        out = 'output-10m-wdt-%s.txt' % dx
         execute_script('contest-10m', out)
         inc = extract_data(out)
-        inc['SPD'] = dx
+        inc['WDT'] = dx
         cum = aggregate(cum, inc)
-    save_df(cum, "plots/spd.csv")
+    save_df(cum, "plots/wdt.csv")
 
 grid_search()
