@@ -28,6 +28,7 @@ struct Chain {
     score_t hash_max_register;
     #endif
 
+    #ifndef NEW_LSH_HASH
     template<typename WF>
     hash_t hash(const WF& record) {
         hash_t _hash = 0;
@@ -59,6 +60,23 @@ struct Chain {
         }
         return _hash;
     }
+    #else
+    template<typename WF>
+    hash_t hash(const WF& record) {
+        hash_t _hash = 0;
+        for (uint32_t i = 0; i < k; i++) {
+            score_t sum = 0;
+            for (uint32_t j = 0; j < actual_vector_size; j++) {
+                sum += chain[i].a[j] * record.fields[j];
+            }
+            _hash <<= 1; // lshift "in-place", doesn't change if zero
+            if (sum >= 0) {
+                _hash += 1; // last bit to one, zero otherwise
+            }
+        }
+        return _hash;
+    }
+    #endif
 
     void build(uint32_t database_length);
     static void Free(Chain& chain);

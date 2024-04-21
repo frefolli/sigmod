@@ -82,7 +82,7 @@
 #define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 1)
 
 // K (ex: 1)
-#define LSH_K(width) 1
+#define LSH_K(width) std::ceil(std::log2(width))
 
 // SFT (ex: 1)
 #define LSH_SHIFT 1
@@ -93,6 +93,8 @@
 // WDT (ex: log(length) ~ 24)
 #define LSH_WIDTH(length) std::sqrt(length) * 1
 
-#include <sigmod/custom.hh>
+#define NEW_LSH_HASH
+
+// #include <sigmod/custom.hh>
 
 #endif
