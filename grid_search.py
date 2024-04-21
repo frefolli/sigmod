@@ -2,6 +2,7 @@
 import subprocess
 import re
 import pandas as pd
+import os
 
 def execute_script(input_, output_):
     cmd = "make -j3 %s > %s" % (input_, output_)
@@ -18,6 +19,21 @@ def extract_data(in_):
         recall = float(ss[0].split(' ')[1])
 
         return {'build_time': build_time, 'run_time': run_time, 'recall': recall}
+
+def extract_exaustive(in_):
+    with open(in_, mode="r") as ifstream:
+        file = ifstream.read()
+        ss = re.findall("[0-9]+ ms", file)
+        exaustive = int(ss[-9].split(' ')[0])
+
+        return {'exaustive': exaustive}
+
+def exaustive():
+    cum = {}
+    for entry in os.listdir('outputs'):
+        inc = extract_exaustive(os.path.join('outputs', entry))
+        cum = aggregate(cum, inc)
+    save_df(cum, "plots/ex.csv")
 
 def aggregate(cum, inc):
     for key in inc:
@@ -40,15 +56,15 @@ def craft_header(data):
 
 def grid_search():
     cum = {}
-    for dx in range(1, 100, 3):
+    for dx in range(0, 8):
         craft_header({
-            'LSH_WIDTH(length)': "std::sqrt(length) * %s" % dx
+            'LSH_SHIFT': "%s" % dx
         })
-        out = 'output-10m-wdt-%s.txt' % dx
+        out = 'output-10m-sft-%s.txt' % dx
         execute_script('contest-10m', out)
         inc = extract_data(out)
-        inc['WDT'] = dx
+        inc['SFT'] = dx
         cum = aggregate(cum, inc)
-    save_df(cum, "plots/wdt.csv")
+    save_df(cum, "plots/SFT.csv")
 
-grid_search()
+exaustive()

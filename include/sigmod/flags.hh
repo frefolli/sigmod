@@ -75,11 +75,24 @@
 
 // Enable LSH Tracking (infos in hashes and dump of values)
 // #define LSH_TRACKING
+
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
-#define LSH_K(width) 1 // 8 * sizeof(hash_t) / std::ceil(std::log2(width))
+
+// HTN (ex: 1)
+#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 1)
+
+// K (ex: 1)
+#define LSH_K(width) 1
+
+// SFT (ex: 1)
 #define LSH_SHIFT 1
-#define LSH_SPREAD 1
-#define LSH_TABLES (uint32_t) ((float) k_nearest_neighbors * 2)
+
+// SPD (ex: 15)
+#define LSH_SPREAD 16
+
+// WDT (ex: log(length) ~ 24)
+#define LSH_WIDTH(length) std::sqrt(length) * 1
+
 #include <sigmod/custom.hh>
 
 #endif
