@@ -10,9 +10,9 @@
 #include <cmath>
 #include <cassert>
 
-const uint8_t M = 10; // #partitions
+const uint16_t M = 10; // #partitions
 const uint16_t K = 256; // #clusters per partition
-const uint8_t dim_partition = vector_num_dimension / M; // if you reduce dimension you should use actual_vector_size
+const uint16_t dim_partition = vector_num_dimension / M; // if you reduce dimension you should use actual_vector_size
 
 struct Centroid{
     //float32_t data[dim_partition];
@@ -25,12 +25,18 @@ struct Codeword{
 
 struct CodeBook{
     uint16_t K;
-    uint8_t M; 
-    uint8_t dim_partition;
+    uint16_t M; 
+    uint16_t dim_partition;
     uint32_t db_length;
-    uint8_t** index_vector_to_index_centroid; // db_length x M
+    uint16_t** index_vector_to_index_centroid; // db_length x M
     Codeword* codewords; // M
 };
+
+
+CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint16_t M);
+Codeword& CloneCodeword(const Codeword& cw, const uint16_t K, const uint16_t dim_partition);
+void FreeCodeBook(CodeBook* cb);
+void FreeCodeword(Codeword* cw, const uint16_t K);
 
 void Kmeans(
     CodeBook& cb,
@@ -40,10 +46,7 @@ void Kmeans(
     const uint32_t end_partition_id,
     const uint32_t length);
 
-CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint8_t M);
-Codeword& CloneCodeword(const Codeword& cw, const uint16_t K, const uint8_t dim_partition);
-void FreeCodeBook(CodeBook* cb);
-void FreeCodeword(Codeword* cw, const uint16_t K);
+void quantization(CodeBook& cb, const Database& database, const uint32_t ITERATIONS);
 
 inline void compute_distributions(const std::vector<uint32_t>& dim_centroids) {
     score_t sum = 0;

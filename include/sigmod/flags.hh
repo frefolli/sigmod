@@ -18,8 +18,11 @@
 //#define ENABLE_DIM_REDUCTION
 //#define N_DIM_REDUCTION 90
 
-/* Apply product quantization before indexing */
-#define ENABLE_PRODUCT_QUANTIZATION
+/* Apply product quantization */
+//#define ENABLE_PRODUCT_QUANTIZATION
+
+/* IVF index */
+#define ENABLE_IVF
 
 /* Build a KD Forest and uses it to craft a solution */
 //#define ENABLE_KD_FOREST

@@ -46,6 +46,25 @@ Database ReadDatabase(const std::string input_path) {
     };
 }
 
+Database CreateDatabaseFromMatrix(const float32_t** db, const uint32_t db_length, const uint32_t vector_dimension){
+    Record* records = smalloc<Record>(db_length);
+    for (uint32_t i = 0; i < db_length; i++){
+        records[i].index = i;
+        for (uint32_t j = 0; j < vector_dimension; j++){
+            records[i].fields[j] = db[i][j];
+            records[i].C = -1;
+            records[i].T = -1;
+        }
+    }
+    
+    return {
+        .length = db_length,
+        .records = records,
+        .C_map = {}
+    };
+}
+
+
 void FreeDatabase(Database& database) {
     if (database.records == nullptr)
         return;

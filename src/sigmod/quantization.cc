@@ -6,7 +6,7 @@
 
 void PreprocessingQuery(score_t** matr_dist, const float32_t* query, const CodeBook& cb){
     #pragma omp parallel for collapse(2)
-    for (uint8_t i = 0; i < cb.M; i++){
+    for (uint16_t i = 0; i < cb.M; i++){
         // #pragma omp parallel for
         for (uint32_t j = 0; j < cb.K; j++) {
             matr_dist[i][j]  = distance(cb.codewords[i].centroids[j].data, query, i * cb.M, i * cb.M + cb.M - 1);
@@ -18,36 +18,36 @@ const score_t ADC(const score_t** matr_dist, const CodeBook& cb, const uint32_t 
     score_t dist = 0;
 
     // #pragma omp parallel for
-    for (uint8_t i = 0; i < cb.M; i++) {
+    for (uint16_t i = 0; i < cb.M; i++) {
         dist += matr_dist[i][cb.index_vector_to_index_centroid[index_vector][i]];
     }
 
     return (const score_t) dist;
 }
 
-CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint8_t M){
+CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint16_t M){
     CodeBook* cb = smalloc<CodeBook>();
     cb->K = K;
     cb->M = M;
     cb->dim_partition = actual_vector_size / M;
     cb->db_length = db_length;
-    cb->index_vector_to_index_centroid = smalloc<uint8_t*>(cb->db_length);
+    cb->index_vector_to_index_centroid = smalloc<uint16_t*>(cb->db_length);
     for (uint32_t i = 0; i < cb->db_length; i++) {
-        cb->index_vector_to_index_centroid[i] = smalloc<uint8_t>(M);
+        cb->index_vector_to_index_centroid[i] = smalloc<uint16_t>(cb->M);
     }
     
-    cb->codewords = smalloc<Codeword>(M);
-    for (uint8_t i = 0; i < M; i++){
-        cb->codewords[i].centroids = smalloc<Centroid>(K);
+    cb->codewords = smalloc<Codeword>(cb->M);
+    for (uint16_t i = 0; i < M; i++){
+        cb->codewords[i].centroids = smalloc<Centroid>(cb->K);
         for (uint32_t j = 0; j < K; j++) {
-            cb->codewords[i].centroids[j].data = smalloc<float32_t>(dim_partition);
+            cb->codewords[i].centroids[j].data = smalloc<float32_t>(cb->dim_partition);
         }
         
     }
     return *cb;
 }
 
-Codeword& CloneCodeword(const Codeword& cw, const uint16_t K, const uint8_t dim_partition){
+Codeword& CloneCodeword(const Codeword& cw, const uint16_t K, const uint16_t dim_partition){
     Codeword* cw_cp = smalloc<Codeword>();
     cw_cp->centroids = smalloc<Centroid>(K);
     for (uint32_t i = 0; i < K; i++) {
@@ -102,9 +102,9 @@ void Kmeans(
         const uint32_t end_partition_id,
         const uint32_t length) {
 
-    uint8_t n_partition = start_partition_id / M;
+    uint16_t n_partition = start_partition_id / cb.M;
     
-    uint32_t* dim_centroid = smalloc<uint32_t>(K);
+    uint32_t* dim_centroid = smalloc<uint32_t>(cb.K);
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, length-1);
@@ -120,7 +120,7 @@ void Kmeans(
     }
 
     for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++) {
-        for (uint32_t i = 0; i < K; i++) {
+        for (uint32_t i = 0; i < cb.K; i++) {
             dim_centroid[i] = 0;
         }
 
@@ -133,7 +133,7 @@ void Kmeans(
             dim_centroid[0]++;
             uint32_t anchored_centroid = 0;
             
-            for (uint32_t j = 1; j < K; j++) {
+            for (uint32_t j = 1; j < cb.K; j++) {
                 score_t dist = distance(codeword.centroids[j].data, record.fields, start_partition_id, end_partition_id);
                 if (dist < min_dist) {
                     min_dist = dist; 
@@ -148,7 +148,7 @@ void Kmeans(
         Codeword old_codeword = CloneCodeword(codeword, cb.K, cb.dim_partition);
 
         // reset centroid
-        for (uint32_t i = 0; i < K; i++) {
+        for (uint32_t i = 0; i < cb.K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
                 codeword.centroids[i].data[j] = 0;
             }
@@ -164,7 +164,7 @@ void Kmeans(
         }
         
         // compute mean of cumulated coordinates
-        for (uint32_t i = 0; i < K; i++) {
+        for (uint32_t i = 0; i < cb.K; i++) {
             for (uint32_t j = 0; j < dim_partition; j++) {
                 if (dim_centroid[i] != 0){
                     codeword.centroids[i].data[j] /= dim_centroid[i];
@@ -175,7 +175,7 @@ void Kmeans(
         Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
         score_t cerr = 0;
         score_t err;
-        for (uint32_t i = 0; i < K; i++) {
+        for (uint32_t i = 0; i < cb.K; i++) {
             err = 0;
             for (uint32_t j = 0; j < dim_partition; j++) {
                 err += pow(codeword.centroids[i].data[j] - old_codeword.centroids[i].data[j], 2);
@@ -184,16 +184,23 @@ void Kmeans(
             cerr += err;    
         }
         Debug(" Cumulative centroid error := " + std::to_string(cerr));
-        FreeCodeword(&old_codeword, 1); // ! error Invalid Pointer 
+        FreeCodeword(&old_codeword, 1); 
     }
     free(dim_centroid);
 }
 
+void quantization(CodeBook& cb, const Database& database, const uint32_t ITERATIONS){
+    #pragma omp parallel for
+        for (uint32_t i = 0; i < cb.M; i++) {
+            Kmeans(cb, database, ITERATIONS, i * cb.M, (i + 1) * cb.M - 1, database.length);
+        }
+}
+
 void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query) {
     Scoreboard gboard;
-    score_t** matr_dist = smalloc<score_t*>(M);
-    for (uint16_t i = 0; i < M; i++){
-        matr_dist[i] = smalloc<score_t>(K);
+    score_t** matr_dist = smalloc<score_t*>(cb.M);
+    for (uint16_t i = 0; i < cb.M; i++){
+        matr_dist[i] = smalloc<score_t>(cb.K);
     }
     //assert(query.query_type == NORMAL);
 
@@ -222,7 +229,7 @@ void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& res
         rank--;
     }
 
-    for (uint16_t i = 0; i < M; i++){
+    for (uint16_t i = 0; i < cb.M; i++){
         free(matr_dist[i]);
     }
     free(matr_dist);
