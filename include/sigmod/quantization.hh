@@ -17,6 +17,7 @@ const uint16_t dim_partition = vector_num_dimension / M; // if you reduce dimens
 struct Centroid{
     //float32_t data[dim_partition];
     float32_t* data;
+    uint32_t n_vectors_mapped = 0;
 };
 
 struct Codeword{
@@ -43,7 +44,7 @@ void Kmeans(
     const Database& database, 
     const uint32_t ITERATIONS, 
     const uint32_t start_partition_id, 
-    const uint32_t end_partition_id,
+    //const uint32_t end_partition_id,
     const uint32_t length);
 
 void quantization(CodeBook& cb, const Database& database, const uint32_t ITERATIONS);
@@ -100,5 +101,8 @@ void PreprocessingQuery(score_t** matr_dist, const float32_t* query, const CodeB
 const score_t ADC(const score_t** matr_dist, const CodeBook& cb, const uint32_t index_vector);
 
 void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query);
+
+void DebugCodeBook(const CodeBook& cb);
+void DebugQuantization(const CodeBook& cb, const Database& db);
 
 #endif

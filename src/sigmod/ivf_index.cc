@@ -69,6 +69,9 @@ void initializeIVF(IVF& invertedfile, const Database& db, const uint32_t iterati
     quantization(invertedfile.codebook_coarse, db, iteration);
     LogTime("Built Coarse quantization");
 
+    DebugQuantization(invertedfile.codebook_coarse, db);
+    //DebugCodeBook(invertedfile.codebook_coarse);
+
     compute_residual_vectors_for_db(invertedfile, db);
     LogTime("Built residuals");
 
@@ -85,7 +88,7 @@ void initializeIVF(IVF& invertedfile, const Database& db, const uint32_t iterati
         }
         invertedfile.inverted_lists[ivl_idx].res.push_back(n);
     }
-    DebugIVF(invertedfile);
+    
     
 }
 
@@ -122,10 +125,10 @@ void searchIVF(const IVF& invertedfile, Result& result, const Query& query) {
 
         for (NodeIVL* node : invertedfile.inverted_lists[course_centroid.second].res) {
             score_t dist = 0;
-            for (uint32_t i = 0; i < invertedfile.codebook_pq.M; i++) {
-                const uint16_t start_index = i * invertedfile.codebook_pq.M;
+            for (uint32_t j = 0; j < invertedfile.codebook_pq.M; j++) {
+                const uint16_t start_index = j * invertedfile.codebook_pq.M;
                 const uint16_t end_index = start_index + invertedfile.codebook_pq.M - 1;
-                dist += distance(invertedfile.codebook_pq.codewords[i].centroids[node->pq_centroids_idx[i]].data, res_query, start_index, end_index);
+                dist += distance(invertedfile.codebook_pq.codewords[j].centroids[node->pq_centroids_idx[j]].data, res_query, start_index, end_index);
             }
             gboard.push(node->vector_idx, dist);
         }

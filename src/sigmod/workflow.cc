@@ -274,8 +274,9 @@ void Workflow(const std::string database_path,
 
     #ifdef ENABLE_IVF
     IVF ivf = MallocIVF(1024, 256, 10, database.length);
-    initializeIVF(ivf, database, 30);
-    DebugIVF(ivf);
+    initializeIVF(ivf, database, 60);
+
+    //DebugIVF(ivf);
     Debug("Built IVF");
     #endif
 
