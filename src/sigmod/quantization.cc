@@ -92,6 +92,15 @@ void FreeCodeBook(CodeBook* cb) {
     }
 }
 
+void Kmeans_parallel(
+        CodeBook& cb,
+        const Database& database, 
+        const uint32_t ITERATIONS, 
+        const uint32_t start_partition_id, 
+        //const uint32_t end_partition_id,
+        const uint32_t length) {
+    
+}
 
 /* [start_partition_id, end_partition_id] */
 void Kmeans(
@@ -107,7 +116,8 @@ void Kmeans(
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, length-1);
-    score_t cerr = 1;
+    score_t cerr = 4;
+    score_t prec_cerr = 1;
 
     Codeword &codeword = cb.codewords[n_partition];
     
@@ -121,7 +131,8 @@ void Kmeans(
         codeword.centroids[i].n_vectors_mapped = 0;
     }
 
-    for (uint32_t iteration = 0; iteration < ITERATIONS  && cerr > 10e-4; iteration++) {
+    for (uint32_t iteration = 0; iteration < ITERATIONS  && cerr > 10e-4 && cerr - prec_cerr > 2; iteration++) {
+        #pragma omp parallel for
         for (uint32_t i = 0; i < cb.K; i++) {
             codeword.centroids[i].n_vectors_mapped = 0;
         }
@@ -143,13 +154,12 @@ void Kmeans(
                 score_t dist = distance(codeword.centroids[j].data, record.fields, start_partition_id, start_partition_id + cb.dim_partition - 1);
                 if (dist < min_dist) {
                     min_dist = dist; 
-                    
                     #pragma omp critical
                     {
                     codeword.centroids[anchored_centroid].n_vectors_mapped--;
                     codeword.centroids[j].n_vectors_mapped++;
-                    cb.index_vector_to_index_centroid[i][n_partition] = j;
                     }
+                    cb.index_vector_to_index_centroid[i][n_partition] = j;
                     anchored_centroid = j;
                 }
             }
@@ -166,14 +176,18 @@ void Kmeans(
         }
 
         // refill centroid data
+        #pragma omp parallel for
         for (uint32_t i = 0; i < length; i++) {
             uint32_t centroid = cb.index_vector_to_index_centroid[i][n_partition];
             Record& record = database.records[i];
             for (uint32_t j = 0; j < cb.dim_partition; j++) {
+                #pragma omp critical
+                {
                 codeword.centroids[centroid].data[j] += record.fields[j + start_partition_id];
+                }
             }
         }
-        
+
         // compute mean of cumulated coordinates
         #pragma omp parallel for
         for (uint32_t i = 0; i < cb.K; i++) {
@@ -185,6 +199,7 @@ void Kmeans(
         }
 
         Debug(" -- Iteration " + std::to_string(iteration) + " -- ");
+        prec_cerr = cerr;
         cerr = 0;
         score_t err;
         for (uint32_t i = 0; i < cb.K; i++) {
@@ -198,6 +213,7 @@ void Kmeans(
         Debug(" Cumulative centroid error := " + std::to_string(cerr));
         FreeCodeword(&old_codeword, 1); 
     }
+
 }
 
 void quantization(CodeBook& cb, const Database& database, const uint32_t ITERATIONS){
