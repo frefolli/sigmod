@@ -112,6 +112,7 @@ void Kmeans(
     Codeword &codeword = cb.codewords[n_partition];
     
     // Initializing centroids random on a point
+    #pragma omp parallel for
     for (uint32_t i = 0; i < cb.K; i++) {
         uint32_t ind_init_db = uni(rd);
         for (uint32_t j = 0; j < cb.dim_partition; j++) {
@@ -127,20 +128,28 @@ void Kmeans(
 
         // FULL ITERATION
         // computing the nearest centroid
+        #pragma omp parallel for
         for (uint32_t i = 0; i < length; i++) {
             Record& record = database.records[i];
             score_t min_dist = distance(codeword.centroids[0].data, record.fields, start_partition_id, start_partition_id + cb.dim_partition - 1);
             cb.index_vector_to_index_centroid[i][n_partition] = 0;
+            #pragma omp critical
+            {
             codeword.centroids[0].n_vectors_mapped++;
+            }
             uint32_t anchored_centroid = 0;
             
             for (uint32_t j = 1; j < cb.K; j++) {
                 score_t dist = distance(codeword.centroids[j].data, record.fields, start_partition_id, start_partition_id + cb.dim_partition - 1);
                 if (dist < min_dist) {
                     min_dist = dist; 
+                    
+                    #pragma omp critical
+                    {
                     codeword.centroids[anchored_centroid].n_vectors_mapped--;
                     codeword.centroids[j].n_vectors_mapped++;
                     cb.index_vector_to_index_centroid[i][n_partition] = j;
+                    }
                     anchored_centroid = j;
                 }
             }
@@ -149,6 +158,7 @@ void Kmeans(
         Codeword old_codeword = CloneCodeword(codeword, cb.K, cb.dim_partition);
 
         // reset centroid
+        #pragma omp parallel for
         for (uint32_t i = 0; i < cb.K; i++) {
             for (uint32_t j = 0; j < cb.dim_partition; j++) {
                 codeword.centroids[i].data[j] = 0;
@@ -165,6 +175,7 @@ void Kmeans(
         }
         
         // compute mean of cumulated coordinates
+        #pragma omp parallel for
         for (uint32_t i = 0; i < cb.K; i++) {
             for (uint32_t j = 0; j < cb.dim_partition; j++) {
                 if (codeword.centroids[i].n_vectors_mapped != 0){
