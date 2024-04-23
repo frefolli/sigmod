@@ -61,11 +61,15 @@ void HashTable::build(const Database& database, const uint32_t start, const uint
   }
 
   this->buckets = new std::map<hash_t, std::vector<uint32_t>>();
+  #ifdef LSH_TRACKING
   this->max_hash = 0;
+  #endif
   for (uint32_t i = 0; i < this->length; i++) {
       this->buckets->operator[](this->hashes[i]).push_back(start + i);
+      #ifdef LSH_TRACKING
       if (this->hashes[i] > this->max_hash)
           this->max_hash = this->hashes[i];
+      #endif
   }
 
   #pragma omp parallel for

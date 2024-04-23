@@ -87,7 +87,9 @@ struct HashTable {
     hash_t* hashes;
     uint32_t length;
     std::map<hash_t, std::vector<uint32_t>>* buckets;
+    #ifdef LSH_TRACKING
     uint64_t max_hash;
+    #endif
     uint32_t start;
     uint32_t end;
 
