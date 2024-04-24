@@ -22,7 +22,7 @@ struct KDTree {
 
 struct KDForest {
     uint32_t* indexes;
-    std::map<uint32_t, KDTree> trees;
+    std::unordered_map<uint32_t, KDTree> trees;
 };
 
 bool IsLeaf(const KDNode* node);

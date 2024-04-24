@@ -60,7 +60,7 @@ void HashTable::build(const Database& database, const uint32_t start, const uint
       this->hashes[i] = chain.hash(database.records[start + i]);
   }
 
-  this->buckets = new std::map<hash_t, std::vector<uint32_t>>();
+  this->buckets = new std::unordered_map<hash_t, std::vector<uint32_t>>();
   #ifdef LSH_TRACKING
   this->max_hash = 0;
   #endif

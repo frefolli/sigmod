@@ -16,10 +16,10 @@ const uint8_t dim_partition = 100 / M;
 
 struct CodeBook{
     /* indeces := [id_vector, ids_centroids_associated_foreach_partition] */
-    //std::map<uint32_t, uint8_t[M]> vector_centroid;
+    //std::unordered_map<uint32_t, uint8_t[M]> vector_centroid;
     uint16_t** vector_centroid;
     /* indeces := [id_partition, id_centroid, centroid_component] */
-    std::map<uint8_t, std::map<uint16_t, float32_t[dim_partition]>> centroids;
+    std::unordered_map<uint8_t, std::unordered_map<uint16_t, float32_t[dim_partition]>> centroids;
 };
 
 void Kmeans(

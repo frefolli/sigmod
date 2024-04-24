@@ -22,7 +22,7 @@ struct VPTree {
 
 struct VPForest {
     uint32_t* indexes;
-    std::map<uint32_t, VPTree> trees;
+    std::unordered_map<uint32_t, VPTree> trees;
 };
 
 void FreeVPNode(VPNode* node);

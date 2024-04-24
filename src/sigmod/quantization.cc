@@ -58,7 +58,7 @@ void Kmeans(
     std::mt19937 rng(rd());
     std::uniform_int_distribution<uint32_t> uni(0, database.length-1);
 
-    std::map<uint16_t, float32_t[dim_partition]> &centroids = cb.centroids[n_partition];
+    std::unordered_map<uint16_t, float32_t[dim_partition]> &centroids = cb.centroids[n_partition];
     
     // Initializing centroids random on a point
     uint32_t ind_init_db = 0;
@@ -95,7 +95,7 @@ void Kmeans(
             }
         }
 
-        std::map<uint16_t, float32_t[dim_partition]> old_centroids = centroids;
+        std::unordered_map<uint16_t, float32_t[dim_partition]> old_centroids = centroids;
 
         // reset centroid
         for (uint32_t i = 0; i < K; i++) {

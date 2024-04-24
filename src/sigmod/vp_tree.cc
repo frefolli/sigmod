@@ -103,7 +103,7 @@ VPForest BuildVPForest(const Database& database) {
 
     score_t* distances = (score_t*) malloc (sizeof(score_t) * database.length);
 
-    std::map<uint32_t, VPTree> trees;
+    std::unordered_map<uint32_t, VPTree> trees;
     for (auto cat : database.C_map) {
         trees[cat.first] = BuildVPTree(database, indexes, distances, cat.second.first, cat.second.second + 1);
     }

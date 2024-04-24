@@ -2,7 +2,7 @@
 #define STATS_HH
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <ostream>
 #include <sigmod/config.hh>
 
@@ -47,7 +47,7 @@ struct ScalarEntry {
 
 struct CategoricalEntry {
     std::string what;
-    std::map<uint32_t, uint32_t> counts;
+    std::unordered_map<uint32_t, uint32_t> counts;
 
     template <typename Accessor>
     static CategoricalEntry forArrayCellField(const Accessor accessor, const uint32_t length, const std::string what) {
