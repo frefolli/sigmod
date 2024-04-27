@@ -275,9 +275,6 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_LSH_FOREST
     LSHForest lsh_forest;
     lsh_forest.build(database);
-    #ifdef LSH_TRACKING
-    lsh_forest.dump();
-    #endif
     LogTime("Built LSH Forest");
     #endif
 

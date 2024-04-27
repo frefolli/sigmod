@@ -65,14 +65,18 @@ inline score_t distance(const WFA& query, const WFB& record) {
 
 template <typename WithFields>
 score_t first_metric(WithFields& with_fields) {
-    score_t result = 0.0;
+    score_t sum = 0.0;
     for (uint32_t i = 0; i < actual_vector_size; i++) {
-        result += with_fields.fields[i] * with_fields.fields[i];
+        sum += with_fields.fields[i] * with_fields.fields[i];
     }
-    #ifndef FAST_SQRT
-        return std::sqrt(result);
+    #ifdef FAST_DISTANCE
+        return sum;
     #else
-        return quacke3_sqrt(result);
+        #ifndef FAST_SQRT
+            return std::sqrt(sum);
+        #else
+            return quacke3_sqrt(sum);
+        #endif
     #endif
 }
 
@@ -84,17 +88,21 @@ score_t second_metric(WithFields& with_fields) {
     }
     gamma /= actual_vector_size;
 
-    score_t result = 0.0;
+    score_t sum = 0.0;
     score_t val = 0.0;
 
     for (uint32_t i = 0; i < actual_vector_size; i++) {
         val = with_fields.fields[i] - gamma;
-        result += val * val;
+        sum += val * val;
     }
-    #ifndef FAST_SQRT
-        return std::sqrt(result);
+    #ifdef FAST_DISTANCE
+        return sum;
     #else
-        return quacke3_sqrt(result);
+        #ifndef FAST_SQRT
+            return std::sqrt(sum);
+        #else
+            return quacke3_sqrt(sum);
+        #endif
     #endif
 }
 

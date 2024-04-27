@@ -17,28 +17,17 @@
 void Chain::build(uint32_t database_length) {
     this->width = LSH_WIDTH(database_length);
     this->k = LSH_K(this->width);
-    this->shift = LSH_SHIFT;
-
     this->chain = smalloc<Atom>(k);
 
     std::random_device random_device;
     std::mt19937 generator(random_device());
-    std::uniform_real_distribution<float32_t> uniform(0, width);
     std::normal_distribution<float32_t> normal(0, 1);
     
     for (uint32_t i = 0; i < this->k; i++) {
         for (uint32_t j = 0; j < actual_vector_size; j++) {
             this->chain[i].a[j] = normal(generator);
         }
-        this->chain[i].b = uniform(generator);
     }
-
-    #ifdef LSH_TRACKING
-    this->hash_mean_counter = 0;
-    this->hash_mean_register = 0.0;
-    this->hash_min_register = FLT_MAX;
-    this->hash_max_register = 0.0;
-    #endif
 }
 
 void Chain::Free(Chain& chain) {
@@ -61,15 +50,8 @@ void HashTable::build(const Database& database, const uint32_t start, const uint
   }
 
   this->buckets = new std::unordered_map<hash_t, std::vector<uint32_t>>();
-  #ifdef LSH_TRACKING
-  this->max_hash = 0;
-  #endif
   for (uint32_t i = 0; i < this->length; i++) {
       this->buckets->operator[](this->hashes[i]).push_back(start + i);
-      #ifdef LSH_TRACKING
-      if (this->hashes[i] > this->max_hash)
-          this->max_hash = this->hashes[i];
-      #endif
   }
 
   #pragma omp parallel for
@@ -264,13 +246,6 @@ void LSH::dump(const std::string outdir) const {
             out << i
                 << "," << hashtables[i].chain.width
                 << "," << hashtables[i].chain.k
-                << "," << hashtables[i].chain.shift
-                #ifdef LSH_TRACKING
-                << "," << hashtables[i].chain.hash_mean_counter
-                << "," << hashtables[i].chain.hash_mean_register
-                << "," << hashtables[i].chain.hash_min_register
-                << "," << hashtables[i].chain.hash_max_register
-                #endif
                 << std::endl;
         }
         out.close();

@@ -11,8 +11,8 @@
 //#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 40000
-#define STOP_AFTER_TOT_ELEMENTS
+// #define TOT_ELEMENTS 40
+// #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
 // #define ENABLE_DIM_REDUCTION
@@ -46,7 +46,7 @@
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
  * */
-#define ENABLE_EXAUSTIVE
+// #define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
@@ -56,7 +56,7 @@
 // #define MAX_CONCURRENCY 2
 
 /* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
-// #define FAST_DISTANCE
+#define FAST_DISTANCE
 
 /* Enables Fast sqrt: uses Quacke III approximation */
 // #define FAST_SQRT
@@ -73,27 +73,16 @@
 // Enable Locality Sensitive Hashing
 #define ENABLE_LSH_FOREST
 
-// Enable LSH Tracking (infos in hashes and dump of values)
-// #define LSH_TRACKING
-
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 
 // HTN (ex: 1)
-#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.5)
+#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.20)
 
 // K (ex: 1)
-#define LSH_K(width) std::ceil(std::log2(width))
-
-// SFT (ex: 1)
-#define LSH_SHIFT 1
-
-// SPD (ex: 15)
-#define LSH_SPREAD 16
+#define LSH_K(width) std::ceil(std::log2(width) + 2)
 
 // WDT (ex: log(length) ~ 24)
 #define LSH_WIDTH(length) std::sqrt(length)
-
-#define NEW_LSH_HASH
 
 // #include <sigmod/custom.hh>
 

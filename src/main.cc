@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <omp.h>
-// #define FULL_THRUST
+#define FULL_THRUST
 
 void assert_file_exists(std::string path, std::string what) {
   if (!std::filesystem::exists(path)) {
