@@ -433,6 +433,11 @@ void Workflow(const std::string database_path,
             WriteSolution(lsh_forest_solution, out_path);
         #endif
     #endif
+
+    #ifdef ENABLE_LSH_FOREST
+    WriteSolution(lsh_forest_solution, "output.bin");
+    LogTime("Wrote LSH Forest Solution");
+    #endif
     
     /* Free Solution */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
@@ -494,7 +499,9 @@ void Workflow(const std::string database_path,
     LogTime("Freed LSH Forest");
     #endif
 
+    #ifndef TRANSLATE_INDEXES
     Debug("Remember that solution must be converted in the end by taking `i := database.records[i].index`");
+    #endif
 
     FreeDatabase(database);
     FreeQuerySet(query_set);

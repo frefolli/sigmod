@@ -86,4 +86,7 @@
 
 // #include <sigmod/custom.hh>
 
+// Translate Indexes
+#define TRANSLATE_INDEXES
+
 #endif

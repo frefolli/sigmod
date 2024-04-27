@@ -182,7 +182,11 @@ void LSHForest::search(const Database& database, Result& result, const Query& qu
 
     uint32_t rank = board.size() - 1;
     while(!board.empty()) {
+        #ifdef TRANSLATE_INDEXES
+        result.data[rank] = database.records[board.top().index].index;
+        #else
         result.data[rank] = board.top().index;
+        #endif
         board.pop();
         rank -= 1;
     }
