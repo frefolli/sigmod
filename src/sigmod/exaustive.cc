@@ -3,6 +3,7 @@
 #include <sigmod/seek.hh>
 #include <sigmod/debug.hh>
 #include <cassert>
+#include <fstream>
 
 void FilterIndexesByT(const Database& database, uint32_t& start_index, uint32_t& end_index, const float32_t l, const float32_t r) {
     // it's guaranteed that the database is ordered by C, T, fields
@@ -82,7 +83,11 @@ void SearchExaustive(const Database& database, Result& result, const Query& quer
     assert (scoreboard.full());
     uint32_t rank = scoreboard.size() - 1;
     while(!scoreboard.empty()) {
+        #ifdef TRANSLATE_INDEXES
+        result.data[rank] = database.records[scoreboard.top().index].index;
+        #else
         result.data[rank] = scoreboard.top().index;
+        #endif
         scoreboard.pop();
         rank -= 1;
     }

@@ -151,7 +151,7 @@ BallForest BuildBallForest(const Database& database) {
         indexes[i] = i;
     }
 
-    std::map<uint32_t, BallTree> trees;
+    std::unordered_map<uint32_t, BallTree> trees;
     #ifdef CONCURRENCY
     std::mutex mutex;
     ThreadPool pool;

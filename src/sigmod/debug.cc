@@ -1,5 +1,6 @@
 #include <sigmod/debug.hh>
 #include <chrono>
+#include <cmath>
 
 auto SIGMOD_LOG_TIME = std::chrono::high_resolution_clock::now();
 
@@ -11,22 +12,53 @@ void LogTime(const std::string s) {
     SIGMOD_LOG_TIME = now;
 }
 
-std::string BytesToString(long long bytes) {
+inline std::string sround(long double value, uint32_t precision = 3) {
+    std::string rep = std::to_string(value);
+    for (uint32_t i = 0; i < rep.size(); i++) {
+        if (rep.at(i) == '.') {
+            uint32_t len = std::min((uint32_t)rep.size(), i + precision + (uint32_t)1);
+            return rep.substr(0, len);
+        }
+    }
+    return rep;
+}
+
+std::string BytesToString(long double bytes) {
     std::string rep = "";
-    static const long long KILO = 1024;
-    static const long long MEGA = KILO*1024;
-    static const long long GIGA = MEGA*1024;
-    static const long long TERA = GIGA*1024;
+    static const long double KILO = 1024;
+    static const long double MEGA = KILO*1024;
+    static const long double GIGA = MEGA*1024;
+    static const long double TERA = GIGA*1024;
     if (bytes > TERA) {
-        rep = std::to_string(bytes/TERA) + " TB";
+        rep = sround(bytes/TERA) + " TB";
     } else if (bytes > GIGA) {
-        rep = std::to_string(bytes/GIGA) + " GB";
+        rep = sround(bytes/GIGA) + " GB";
     } else if (bytes > MEGA) {
-        rep = std::to_string(bytes/MEGA) + " MB";
+        rep = sround(bytes/MEGA) + " MB";
     } else if (bytes > KILO) {
-        rep = std::to_string(bytes/KILO) + " KB";
+        rep = sround(bytes/KILO) + " KB";
     } else {
         rep = std::to_string(bytes) + " B";
+    }
+    return rep;
+}
+
+std::string LengthToString(long double length) {
+    std::string rep = "";
+    static const long double KILO = 1024;
+    static const long double MEGA = KILO*1024;
+    static const long double GIGA = MEGA*1024;
+    static const long double TERA = GIGA*1024;
+    if (length > TERA) {
+        rep = sround(length/TERA) + " T";
+    } else if (length > GIGA) {
+        rep = sround(length/GIGA) + " G";
+    } else if (length > MEGA) {
+        rep = sround(length/MEGA) + " M";
+    } else if (length > KILO) {
+        rep = sround(length/KILO) + " K";
+    } else {
+        rep = std::to_string((long long) length);
     }
     return rep;
 }

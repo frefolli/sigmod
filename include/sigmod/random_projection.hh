@@ -7,6 +7,7 @@
 #include <sigmod/database.hh>
 #include <sigmod/query_set.hh>
 #include <sigmod/lin_alg.hh>
+#include <sigmod/debug.hh>
 
 /**
  * Riduce dimensionality of the dataset by projecting all data from starting 

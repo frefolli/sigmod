@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <omp.h>
+#define FULL_THRUST
 
 void assert_file_exists(std::string path, std::string what) {
   if (!std::filesystem::exists(path)) {
@@ -34,7 +35,7 @@ int main(int argc, char** args) {
     assert_file_exists(query_set_path, "query_set_path");
     
     #ifdef COMPARE_SOLUTIONS
-
+    /*
     std::string first_solutions[] = {
         "./output/output-exaustive.bin",
         "./output/output-ball-forest.bin",
@@ -58,11 +59,19 @@ int main(int argc, char** args) {
             << CompareSolutionsFromFiles(first_solutions[i], second_solutions[i], 1000)
             << std::endl;
     }
-
+*/  
+    std::cout << "Recall between " << "output-exaustive.bin" << " - " 
+            << "sol.bin" << " := " 
+            << CompareSolutionsFromFiles("./output/output-exaustive.bin", "./sol.bin", 1000)
+            << std::endl;
     #else
 
     std::cout << "max_threads := " << omp_get_max_threads() << std::endl;
+    #ifndef FULL_THRUST
+    omp_set_num_threads(omp_get_max_threads() - 3);
+    #else
     omp_set_num_threads(omp_get_max_threads());
+    #endif
     std::cout << "thread_num := " << omp_get_num_threads() << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();

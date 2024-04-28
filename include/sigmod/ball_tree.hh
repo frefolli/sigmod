@@ -22,7 +22,7 @@ struct BallTree {
 
 struct BallForest {
     uint32_t* indexes;
-    std::map<uint32_t, BallTree> trees;
+    std::unordered_map<uint32_t, BallTree> trees;
 };
 
 void FreeBallNode(BallNode* node);

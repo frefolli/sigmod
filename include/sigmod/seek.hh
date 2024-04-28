@@ -2,6 +2,7 @@
 #define SEEK_HH
 
 #include <sigmod/record.hh>
+#include <iostream>
 
 /* Seek(accessor, start, end, value) {
  *  - accessor is a callable Index -> Value such that accessor(i) is the i-th element of a collection
@@ -25,12 +26,12 @@ uint32_t SeekLow(const Accessor accessor,
     uint32_t r = end - 1;
     uint32_t m = (l + r) / 2;
 
-    while(l <= r) {
+    while(l < r) {
         const float32_t center = accessor(m);
-        if (center > value) {
+        if (center > value && m > start) {
             r = m - 1;
             m = (l + r) / 2;
-        } else if (center < value) {
+        } else if (center < value && m < end - 1) {
             l = m + 1;
             m = (l + r) / 2;
         } else {
@@ -52,12 +53,12 @@ uint32_t SeekHigh(const Accessor accessor,
     uint32_t r = end - 1;
     uint32_t m = (l + r) / 2;
 
-    while(l <= r) {
+    while(l < r) {
         const float32_t center = accessor(m);
-        if (center > value) {
+        if (center > value && m > start) {
             r = m - 1;
             m = (l + r) / 2;
-        } else if (center < value) {
+        } else if (center < value && m < end - 1) {
             l = m + 1;
             m = (l + r) / 2;
         } else {

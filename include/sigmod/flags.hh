@@ -8,15 +8,18 @@
 // #define DISATTEND_CHECKS
 
 /* Compare 2 solutions saved on files */
-// #define COMPARE_SOLUTIONS
+//#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 4
-#define STOP_AFTER_TOT_ELEMENTS
+// #define TOT_ELEMENTS 40
+// #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
 // #define ENABLE_DIM_REDUCTION
-// #define N_DIM_REDUCTION 70
+// #define N_DIM_REDUCTION 90
+
+/* Apply product quantization before indexing */
+// #define ENABLE_PRODUCT_QUANTIZATION
 
 /* Build a KD Forest and uses it to craft a solution */
 // #define ENABLE_KD_FOREST
@@ -28,7 +31,7 @@
 // #define KD_FOREST_DIMENSION_MAXIMIZE_SPREAD
 
 /* Build a Ball Forest and uses it to craft a solution */
-#define ENABLE_BALL_FOREST
+// #define ENABLE_BALL_FOREST
 
 /* Build a VP Forest and uses it to craft a solution */
 // #define ENABLE_VP_FOREST
@@ -48,11 +51,12 @@
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
 
-/* Enables thread pools */
-// #define CONCURRENCY
+/* Enables OpenMP */
+#define CONCURRENCY
+// #define MAX_CONCURRENCY 2
 
 /* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
-// #define FAST_DISTANCE
+#define FAST_DISTANCE
 
 /* Enables Fast sqrt: uses Quacke III approximation */
 // #define FAST_SQRT
@@ -66,7 +70,23 @@
 /* Use the actual Recall function of the Task */
 #define ACCURATE_RECALL
 
-// Enable KMC and Clusterization
-#define KMC_EOTI_FS
+// Enable Locality Sensitive Hashing
+#define ENABLE_LSH_FOREST
+
+#define LSH_FOREST_TRESHOLD k_nearest_neighbors
+
+// HTN (ex: 1)
+#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.20)
+
+// K (ex: 1)
+#define LSH_K(width) std::ceil(std::log2(width) + 2)
+
+// WDT (ex: log(length) ~ 24)
+#define LSH_WIDTH(length) std::sqrt(length)
+
+// #include <sigmod/custom.hh>
+
+// Translate Indexes
+#define TRANSLATE_INDEXES
 
 #endif

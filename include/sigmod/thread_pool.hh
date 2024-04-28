@@ -1,7 +1,7 @@
 #ifndef THREAD_POOL_HH
 #define THREAD_POOL_HH
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <iostream>
 #include <cstdint>
 #include <mutex>
@@ -13,13 +13,13 @@
 
 struct ThreadPool {
     uint32_t n_of_workers = 1;
-    std::map<uint32_t, std::thread*> threads = {};
+    std::unordered_map<uint32_t, std::thread*> threads = {};
     std::deque<uint32_t> finished = {};
     std::mutex mutex;
 
     uint32_t id_counter = 0;
 
-    ThreadPool(uint32_t n_of_workers = CORES);
+    ThreadPool(uint32_t n_of_workers = 5);
 
     void release(uint32_t ID);
     void erase();
@@ -30,7 +30,7 @@ struct ThreadPool {
 
 /*
 void foo_one() {
-    typedef std::map<uint32_t, std::pair<uint32_t, uint32_t>> c_map_t;
+    typedef std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> c_map_t;
     c_map_t C_map;
     for (uint32_t i = 0; i < 40; i++) {
         C_map[i] = {i * 200, i * 200 + 200};

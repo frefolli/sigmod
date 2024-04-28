@@ -112,7 +112,7 @@ KDForest BuildKDForest(const Database& database) {
         indexes[i] = i;
     }
 
-    std::map<uint32_t, KDTree> trees;
+    std::unordered_map<uint32_t, KDTree> trees;
     for (auto cat : database.C_map) {
         trees[cat.first] = BuildKDTree(database, indexes, cat.second.first, cat.second.second);
     }
