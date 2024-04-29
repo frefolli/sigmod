@@ -69,9 +69,6 @@ void initializeIVF(IVF& invertedfile, const Database& db, const uint32_t iterati
     quantization(invertedfile.codebook_coarse, db, iteration);
     LogTime("Built Coarse quantization");
 
-    DebugQuantization(invertedfile.codebook_coarse, db);
-    //DebugCodeBook(invertedfile.codebook_coarse);
-
     compute_residual_vectors_for_db(invertedfile, db);
     LogTime("Built residuals");
 

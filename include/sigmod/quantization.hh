@@ -97,7 +97,7 @@ inline score_t distance(const float32_t* centroid, const float32_t* vector, cons
 * compute matrix of distances between query and all centroids of all partitions 
 * matr_dist := score_t[M][K]
 */
-void PreprocessingQuery(score_t** matr_dist, const float32_t* query, const CodeBook& cb);
+void ComputeDistancesVectorToCentroids(score_t** matr_dist, const float32_t* vector, const CodeBook& cb);
 const score_t ADC(const score_t** matr_dist, const CodeBook& cb, const uint32_t index_vector);
 
 void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query);
