@@ -60,9 +60,6 @@ builddir/src/sigmod/ball_tree.o: src/sigmod/ball_tree.cc include/sigmod/c_map.hh
 builddir/src/sigmod/random.o: src/sigmod/random.cc include/sigmod/database.hh include/sigmod/query_set.hh include/sigmod/random.hh include/sigmod/config.hh
 	g++ -Iinclude --std=c++17 -O3 -pthread -fopenmp -o builddir/src/sigmod/random.o -c src/sigmod/random.cc
 
-builddir/src/sigmod/quantization.o: src/sigmod/quantization.cc include/sigmod/scoreboard.hh include/sigmod/solution.hh include/sigmod/memory.hh include/sigmod/database.hh include/sigmod/query.hh include/sigmod/quantization.hh include/sigmod/debug.hh
-	g++ -Iinclude --std=c++17 -O3 -pthread -fopenmp -o builddir/src/sigmod/quantization.o -c src/sigmod/quantization.cc
-
 builddir/src/sigmod/query.o: src/sigmod/query.cc include/sigmod/config.hh include/sigmod/query.hh
 	g++ -Iinclude --std=c++17 -O3 -pthread -fopenmp -o builddir/src/sigmod/query.o -c src/sigmod/query.cc
 

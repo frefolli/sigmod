@@ -2,7 +2,7 @@
 #define FLAGS_HH
 
 /* Scoreboard::add always checks if an input Candidate could be already in the collection */
-#define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
+// #define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
 
 /* Query.query_type is ignored as if it was NORMAL */
 // #define DISATTEND_CHECKS
@@ -15,17 +15,14 @@
 // #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
-//#define ENABLE_DIM_REDUCTION
-//#define N_DIM_REDUCTION 90
+// #define ENABLE_DIM_REDUCTION
+// #define N_DIM_REDUCTION 90
 
-/* Apply product quantization */
-//#define ENABLE_PRODUCT_QUANTIZATION
-
-/* IVF index */
-#define ENABLE_IVF
+/* Apply product quantization before indexing */
+// #define ENABLE_PRODUCT_QUANTIZATION
 
 /* Build a KD Forest and uses it to craft a solution */
-//#define ENABLE_KD_FOREST
+// #define ENABLE_KD_FOREST
 
 /* Randomize KD Node dimensions */
 // #define KD_FOREST_DIMENSION_RANDOMIZE
