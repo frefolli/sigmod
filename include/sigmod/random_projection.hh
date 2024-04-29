@@ -55,11 +55,13 @@ inline void MultiplyQuerySetMatrix(
         for (uint32_t j = 0; j < final_dimension; j++) {
             temp_vect[j] = 0;
             for (uint32_t k = 0; k < dimension; k++) {
+                Debug("i := " + std::to_string(i) + ", j := " + std::to_string(j) + ", k := " + std::to_string(k));
                 temp_vect[j] += queryset.queries[i].fields[k] * prj_matrix[k][j];
             }
         }
         CopyVectorFrom(temp_vect, queryset.queries[i].fields, final_dimension);
     }
+
     FreeVector(temp_vect);
 }
 

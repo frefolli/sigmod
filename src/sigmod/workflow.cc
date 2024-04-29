@@ -13,6 +13,7 @@
 #include <sigmod/debug.hh>
 #include <sigmod/random_projection.hh>
 #include <sigmod/lsh.hh>
+#include <sigmod/ivf_index.hh>
 #include <chrono>
 #include <sigmod/quantization.hh>
 
@@ -198,9 +199,47 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
         
         auto start_query_timer = std::chrono::high_resolution_clock::now();
         if (query_type == NORMAL) {
+            //Debug("i := " + std::to_string(i));
             SearchExaustivePQ(cb, database, solution.results[i], query_set.queries[i]);
         } else {
             SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
+        }
+
+        auto end_query_timer = std::chrono::high_resolution_clock::now();
+        
+        long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
+
+        solution.time_score_queries[query_type].second = 
+            solution.time_score_queries[query_type].first / (solution.time_score_queries[query_type].first + 1) * solution.time_score_queries[query_type].second 
+            + sample / (solution.time_score_queries[query_type].first + 1);
+        solution.time_score_queries[query_type].first++;
+    }
+    return solution;
+}
+
+Solution SolveForQueriesWithIVF(const Database& database,
+        const IVF& ivf,
+        const QuerySet& query_set) {
+    Solution solution = {
+        .length = query_set.length,
+        .results = (Result*) malloc(sizeof(Result) * query_set.length)
+    };
+
+    for (uint32_t i = 0; i < query_set.length; i++) {
+        #ifdef STOP_AFTER_TOT_ELEMENTS
+        if (i >= TOT_ELEMENTS)
+            break;
+        #endif
+        #ifdef DISATTEND_CHECKS
+        const uint32_t query_type = NORMAL;
+        #else
+        const uint32_t query_type = (uint32_t) (query_set.queries[i].query_type);
+        #endif
+
+        
+        auto start_query_timer = std::chrono::high_resolution_clock::now();
+        if (query_type == NORMAL) {
+            searchIVF(ivf, solution.results[i], query_set.queries[i]);
         }
 
         auto end_query_timer = std::chrono::high_resolution_clock::now();
@@ -242,19 +281,25 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_BALL_FOREST
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
+    
+    CodeBook& codebook = MallocCodeBook(database.length, 256, 10);
+    quantization(codebook, database, 30);
+    DebugQuantization(codebook, database);
+    LogTime("Built CodeBook");
     #endif
 
-    /* Initialization */
-    #ifdef ENABLE_PRODUCT_QUANTIZATION
-    CodeBook codebook = {
-        .vector_centroid = MallocVectorCentroid(database.length, M)
-    };
-    Debug("coso");
-    #pragma omp parallel for
-        for (uint32_t i = 0; i < M; i++) {
-            Kmeans(codebook, database, 30, i * M, (i + 1) * M - 1);
-        }
-    LogTime("Built CodeBook");
+    #ifdef ENABLE_IVF
+    IVF ivf = MallocIVF(1024, 256, 10, database.length);
+    initializeIVF(ivf, database, 30);
+
+    Debug("Built IVF");
+    #endif
+
+    #ifdef ENABLE_BALL_FOREST
+    #ifndef ENABLE_PRODUCT_QUANTIZATION
+    BallForest ball_forest = BuildBallForest(database);
+    LogTime("Built Ball Forest");
+    #endif
     #endif
 
     #ifdef ENABLE_KD_FOREST
@@ -285,6 +330,17 @@ void Workflow(const std::string database_path,
     LogTime("Used Product Quantization");
     for(uint8_t k = 0; k < 4; k++){
         std::pair<uint32_t, uint64_t> time_score_query = product_quantization_solution.time_score_queries[k];
+        Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
+        std::to_string(time_score_query.second) + " ms/q");
+    }
+    #endif
+
+    #ifdef ENABLE_IVF
+    Solution ivf_solution = 
+        SolveForQueriesWithIVF(database, ivf, query_set);
+    LogTime("Used IVF");
+    for(uint8_t k = 0; k < 4; k++){
+        std::pair<uint32_t, uint64_t> time_score_query = ivf_solution.time_score_queries[k];
         Debug("Tot. queries type " + std::to_string(k) + " := " + std::to_string(time_score_query.first) + ", executed in " + 
         std::to_string(time_score_query.second) + " ms/q");
     }
@@ -352,6 +408,17 @@ void Workflow(const std::string database_path,
             Debug("Recall(Product Quantization) := " + std::to_string(product_quantization_score));
             LogTime("Compared Product Quantization to Exaustive");
         #endif
+
+        #ifdef ENABLE_IVF
+            #ifdef ACCURATE_RECALL
+            //score_t product_quantization_score = CompareAndComputeRecallOfSolutionsByDistance(database, query_set, exaustive_solution, product_quantization_solution);
+            score_t ivf_score = CompareAndComputeRecallOfSolutionsByIndex(database, exaustive_solution, ivf_solution);
+            #else
+            score_t ivf_score = CompareSolutions(database, query_set, exaustive_solution, ivf_solution);
+            #endif
+            Debug("Recall(IVF) := " + std::to_string(ivf_score));
+            LogTime("Compared IVF to Exaustive");
+        #endif
         #ifdef ENABLE_BALL_FOREST
             #ifdef ACCURATE_RECALL
             score_t ball_forest_score = CompareAndComputeRecallOfSolutionsByIndex(database, exaustive_solution, ball_forest_solution);
@@ -363,7 +430,8 @@ void Workflow(const std::string database_path,
         #endif
         #ifdef ENABLE_KD_FOREST
             #ifdef ACCURATE_RECALL
-            score_t kd_forest_score = CompareAndComputeRecallOfSolutionsByIndex(database, exaustive_solution, kd_forest_solution);
+            //score_t kd_forest_score = CompareAndComputeRecallOfSolutions(database, query_set, exaustive_solution, kd_forest_solution);
+            score_t kd_forest_score = CompareAndComputeRecallOfSolutionsByIndex(database,exaustive_solution, kd_forest_solution);
             #else
             score_t kd_forest_score = CompareSolutions(database, query_set, exaustive_solution, kd_forest_solution);
             #endif
@@ -470,9 +538,10 @@ void Workflow(const std::string database_path,
     LogTime("Freed Exaustive Solution");
     #endif
 
-    #ifdef ENABLE_BALL_FOREST
-    FreeBallForest(ball_forest);
-    LogTime("Freed Ball Forest");
+    /* Free Models */
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
+    FreeCodeBook(&codebook);
+    LogTime("Freed CodeBook");
     #endif
 
     #ifdef ENABLE_PRODUCT_QUANTIZATION
