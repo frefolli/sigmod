@@ -1,13 +1,14 @@
 #include<sigmod/statistical_indeces.hh>
 #include<cmath>
 #include<sigmod/lin_alg.hh>
+#include<sigmod/memory.hh>
 
 StatisticalIndeces* MallocStatisticalIndeces(Database& database, 
     const float32_t mean, const float32_t var, const float32_t std) {
-    StatisticalIndeces* si = (StatisticalIndeces*) std::malloc(sizeof(StatisticalIndeces));
+    StatisticalIndeces* si = smalloc<StatisticalIndeces>(sizeof(StatisticalIndeces));
     si->db = &database;
-    si->mean = (float32_t*) std::malloc(sizeof(float32_t) * vector_num_dimension);
-    si->var = (float32_t*) std::malloc(sizeof(float32_t) * vector_num_dimension);
+    si->mean = (float32_t*) smalloc<float32_t>(vector_num_dimension);
+    si->var = (float32_t*) smalloc<float32_t>(vector_num_dimension);
     return si;
 }
 

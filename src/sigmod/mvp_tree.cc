@@ -11,14 +11,14 @@
 #include <string>
 #include <iostream>
 #include <cassert>
-#include <map>
+#include <unordered_map>
 #include <cfloat>
 
 const uint32_t DATABASE_LENGTH = 1000000;
 const uint32_t QUERYSET_LENGTH = 1;
 uint32_t SIGMOD_MAX_LEVEL_REACHED = 0;
 uint32_t SIGMOD_MALFORMED_LEAFS = 0;
-std::map<uint32_t, uint32_t> SIGMOD_INTERNAL_BRANCH_USAGE = {};
+std::unordered_map<uint32_t, uint32_t> SIGMOD_INTERNAL_BRANCH_USAGE = {};
 
 void MVPNode::Free(MVPNode* node) {
   if (node != nullptr) {
@@ -489,11 +489,11 @@ MVPForest MVPForest::Build(const Database& database) {
     for (uint32_t i = 0; i < paths_size; i++)
         paths[i] = -1;
 
-    std::map<uint32_t, MVPTree> trees;
+    std::unordered_map<uint32_t, MVPTree> trees;
     #ifdef CONCURRENCY
     std::mutex mutex;
     ThreadPool pool;
-    pool.run([&trees, &database, &indexes, &mutex](typename c_map_t::const_iterator cat) {
+    pool.run([&trees, &database, &indexes, &mutex, &paths, &max_p](typename c_map_t::const_iterator cat) {
         MVPTree tree = MVPTree::Build(database, paths, max_p, indexes, cat->second.first, cat->second.second + 1);
         std::lock_guard<std::mutex>* guard = new std::lock_guard<std::mutex>(mutex);
         trees[cat->first] = tree;

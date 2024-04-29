@@ -1,4 +1,5 @@
+#!/bin/bash
+
 make clean
-make -j32
-# ./test
+make -j
 ./builddir/main.exe

@@ -1,47 +1,33 @@
+#include <algorithm>
+#include <iterator>
+#include <ostream>
 #include <sigmod/lsh.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/memory.hh>
+#include <sigmod/seek.hh>
 #include <cmath>
 #include <random>
 #include <fstream>
 #include <omp.h>
 #include <string>
-
-#define LSH_SPREAD 25
-#define LSH_DEPTH 1
-#define LSH_TABLES k_nearest_neighbors
-#define LSH_FOREST_TRESHOLD k_nearest_neighbors
-#define LSH_WIDTH(length) std::sqrt(length) * std::log10(length) / 2
+#include <cassert>
+#include <filesystem>
+#include <cfloat>
 
 void Chain::build(uint32_t database_length) {
     this->width = LSH_WIDTH(database_length);
-    this->k = LSH_DEPTH;
+    this->k = LSH_K(this->width);
     this->chain = smalloc<Atom>(k);
 
     std::random_device random_device;
     std::mt19937 generator(random_device());
-    std::uniform_real_distribution<float32_t> uniform(0, width);
-    std::normal_distribution<float32_t> normal(0, LSH_SPREAD);
+    std::normal_distribution<float32_t> normal(0, 1);
     
     for (uint32_t i = 0; i < this->k; i++) {
         for (uint32_t j = 0; j < actual_vector_size; j++) {
             this->chain[i].a[j] = normal(generator);
         }
-        this->chain[i].b = uniform(generator);
     }
-}
-
-hash_t Chain::hash(Record& record) const {
-    hash_t _hash = 0;
-    for (uint32_t i = 0; i < k; i++) {
-        score_t sum = 0;
-        for (uint32_t j = 0; j < actual_vector_size; j++) {
-            sum += chain[i].a[j] * record.fields[j];
-        }
-        uint32_t h = ((uint32_t) std::floor(sum + chain[i].b)) % width;
-        _hash = ((_hash << 3) + h) % width;
-    }
-    return _hash;
 }
 
 void Chain::Free(Chain& chain) {
@@ -54,22 +40,34 @@ void Chain::Free(Chain& chain) {
 }
 
 void HashTable::build(const Database& database, const uint32_t start, const uint32_t end) {
-    this->length = end - start;
-    this->chain.build(database.length);
+  this->length = end - start;
+  this->chain.build(database.length);
 
-    this->hashes = smalloc<hash_t>(this->length);
-    #pragma omp parallel for
-    for (uint32_t i = 0; i < this->length; i++) {
-        this->hashes[i] = chain.hash(database.records[start + i]);
-    }
+  this->hashes = smalloc<hash_t>(this->length);
+  #pragma omp parallel for
+  for (uint32_t i = 0; i < this->length; i++) {
+      this->hashes[i] = chain.hash(database.records[start + i]);
+  }
 
-    this->buckets = new std::map<hash_t, std::vector<uint32_t>>();
-    this->max_hash = 0;
-    for (uint32_t i = 0; i < this->length; i++) {
-        this->buckets->operator[](this->hashes[i]).push_back(start + i);
-        if (this->hashes[i] > this->max_hash)
-            this->max_hash = this->hashes[i];
-    }
+  this->buckets = new std::unordered_map<hash_t, std::vector<uint32_t>>();
+  for (uint32_t i = 0; i < this->length; i++) {
+      this->buckets->operator[](this->hashes[i]).push_back(start + i);
+  }
+
+  #pragma omp parallel for
+  for (uint32_t i = 0; i < this->buckets->size(); i++) {
+    auto it = this->buckets->begin();
+    std::advance(it, i);
+    std::sort(it->second.begin(), it->second.end(), [&database](uint32_t a, uint32_t b) {
+      if (database.records[a].T != database.records[b].T)
+          return (database.records[a].T < database.records[b].T);
+      for (uint32_t i = 0; i < actual_vector_size; i++) {
+          if (database.records[a].fields[i] != database.records[b].fields[i])
+              return (database.records[a].fields[i] < database.records[b].fields[i]);
+      }
+      return true;
+    });
+  }
 }
 
 void HashTable::Free(HashTable& hashtable) {
@@ -92,49 +90,60 @@ void HashTable::dump(const std::string outfile) const {
     out.close();
 }
 
-void LSH::lshSearch(const Database& database, const uint32_t target_index) const {
-    Record& target = database.records[target_index];
-    Scoreboard board;
-    for (uint32_t i = 0; i < N; i++) {
-        hash_t hash = this->hashtables[i].chain.hash(target);
-        for (uint64_t index : this->hashtables[i].buckets->at(hash)) {
-            score_t score = distance(target, database.records[index]);
-            board.pushs(index, score);
-        }
-    }
+void LSH::search(const Database& database, const Query& query,
+                 Scoreboard& board, const uint32_t query_type) const {
+    switch(query_type) {
+        case BY_T:
+        case BY_C_AND_T:
+            for (uint32_t i = 0; i < this->N; i++) {
+                hash_t hash = this->hashtables[i].chain.hash(query);
+		auto it = this->hashtables[i].buckets->find(hash);
+		if (it != this->hashtables[i].buckets->end()) {
+            std::vector<uint32_t>& vec = it->second;
+			uint32_t start = 0;
+			uint32_t end = vec.size();
+		
+			start = SeekHigh(
+			    [&database, &vec](uint32_t i) {
+			      return database.at(vec[i]).T;
+			    },
+			    start, end, query.l
+			);
+			end = SeekLow(
+			    [&database, &vec](uint32_t i) {
+			      return database.at(vec[i]).T;
+			    },
+			    start, end, query.r
+			) + 1;
 
-    std::ofstream out("lshsq_" + std::to_string(target_index) + ".csv");
-    out << "Rank,ID,Score" << std::endl;
-    uint32_t rank = board.size() - 1;
-    while(!board.empty()) {
-        out << rank << "," << board.top().index << "," << board.top().score << std::endl;
-        board.pop();
-        rank--;
+			for (uint32_t j = start; j < end; j++) {
+			    const uint32_t index = vec[j];
+			    score_t score = distance(query, database.records[index]);
+			    if (elegible_by_T(query, database.records[index]))
+				board.pushs(index, score);
+			}
+		}
+            }
+            break;
+        default:
+            for (uint32_t i = 0; i < this->N; i++) {
+                hash_t hash = this->hashtables[i].chain.hash(query);
+                auto it = this->hashtables[i].buckets->find(hash);
+                if (it != this->hashtables[i].buckets->end()) {
+                    std::vector<uint32_t>& vec = it->second;
+                    for (uint64_t index : vec) {
+                        score_t score = distance(query, database.records[index]);
+                        board.pushs(index, score);
+                    }
+                }
+            }
+            break;
     }
-    out.close();
-}
-
-void LSH::eSearch(const Database& database, const uint32_t target_index) const {
-    Record& target = database.records[target_index];
-    Scoreboard board;
-    for (uint32_t index = 0; index < database.length; index++) {
-        score_t score = distance(target, database.records[index]);
-        board.pushs(index, score);
-    }
-
-    std::ofstream out("esq_" + std::to_string(target_index) + ".csv");
-    out << "Rank,ID,Score" << std::endl;
-    uint32_t rank = board.size() - 1;
-    while(!board.empty()) {
-        out << rank << "," << board.top().index << "," << board.top().score << std::endl;
-        board.pop();
-        rank--;
-    }
-    out.close();
-}
+};
 
 void LSH::build(const Database& database, const uint32_t start, const uint32_t end) {
     this->N = LSH_TABLES;
+    // std::cout << LSH_TABLES << std::endl;
     this->hashtables = smalloc<HashTable>(this->N);
     
     for (uint32_t i = 0; i < N; i++) {
@@ -152,6 +161,36 @@ void LSH::Free(LSH& lsh) {
         lsh.N = 0;
     }
 }
+
+void LSHForest::search(const Database& database, Result& result, const Query& query) const {
+    #ifdef DISATTEND_CHECKS
+    const uint32_t query_type = NORMAL;
+    #else
+    const uint32_t query_type = (uint32_t) (query.query_type);
+    #endif
+
+    Scoreboard board;
+    switch (query_type) {
+        case BY_C:
+        case BY_C_AND_T:
+            this->mapped[(uint32_t) query.v].search(database, query, board, query_type);
+            break;
+        default:
+            this->general.search(database, query, board, query_type);
+            break;
+    }
+
+    uint32_t rank = board.size() - 1;
+    while(!board.empty()) {
+        #ifdef TRANSLATE_INDEXES
+        result.data[rank] = database.records[board.top().index].index;
+        #else
+        result.data[rank] = board.top().index;
+        #endif
+        board.pop();
+        rank -= 1;
+    }
+};
 
 void LSHForest::build(const Database& database) {
   this->general.build(database, 0, database.length);
@@ -198,24 +237,30 @@ void LSHForest::Free(LSHForest& forest) {
   }
 }
 
-void ClusterizeDatabase(const Database& database) {
-  LSHForest forest;
-  forest.build(database);
-  LogTime("Built LSH Forest");
+void LSH::dump(const std::string outdir) const {
+    if (hashtables != nullptr) {
+        std::filesystem::create_directories(outdir);
+        for (uint32_t i = 0; i < N; i++) {
+            hashtables[i].dump(outdir + "/" + std::to_string(i) + ".csv");
+        }
+        
+        std::ofstream out (outdir + ".csv");
+        out << "ID,Width,K,Shift,HC,HMean,HMin,HMax" << std::endl;
+        for (uint32_t i = 0; i < N; i++) {
+            out << i
+                << "," << hashtables[i].chain.width
+                << "," << hashtables[i].chain.k
+                << std::endl;
+        }
+        out.close();
+    }
+}
 
-  LSHForest::Free(forest);
-  LogTime("Freed LSH Forest");
-  /*
-  for (uint32_t i = 0; i < lsh.N; i++) {
-      lsh.hashtables[i].dump("H" + std::to_string(i) + ".csv");
-  }
-  LogTime("Dumped HTs");
-
-  lsh.lshSearch(database, 7017);
-  LogTime("Searched with LSH");
-
-  lsh.eSearch(database, 7017);
-  LogTime("Searched with Exaustive");
-  
-  */
+void LSHForest::dump() const {
+    general.dump("lsh_dump/general");
+    /*
+    for (uint32_t i = 0; i < length_mapped; i++) {
+        mapped[i].dump("lsh_dump/" + std::to_string(i));
+    }
+    */
 }
