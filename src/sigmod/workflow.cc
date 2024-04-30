@@ -176,10 +176,9 @@ Solution SolveForQueriesWithLSHForest(const Database& database,
     return solution;
 }
 
-Solution SolveForQueriesWithPQAndBallForest(const Database& database,
+Solution SolveForQueriesWithPQ(const Database& database,
         const CodeBook& cb,
-        const QuerySet& query_set,
-        const BallForest& forest) {
+        const QuerySet& query_set) {
     Solution solution = {
         .length = query_set.length,
         .results = (Result*) malloc(sizeof(Result) * query_set.length)
@@ -198,12 +197,8 @@ Solution SolveForQueriesWithPQAndBallForest(const Database& database,
 
         
         auto start_query_timer = std::chrono::high_resolution_clock::now();
-        if (query_type == NORMAL) {
-            //Debug("i := " + std::to_string(i));
-            SearchExaustivePQ(cb, database, solution.results[i], query_set.queries[i]);
-        } else {
-            SearchBallForest(forest, database, solution.results[i], query_set.queries[i]);
-        }
+
+        SearchExaustivePQ(cb, database, solution.results[i], query_set.queries[i]);
 
         auto end_query_timer = std::chrono::high_resolution_clock::now();
         
@@ -278,9 +273,7 @@ void Workflow(const std::string database_path,
     LogTime("Indexes Database");
 
     #ifdef ENABLE_PRODUCT_QUANTIZATION
-    BallForest ball_forest = BuildBallForest(database);
-    LogTime("Built Ball Forest");
-    
+
     CodeBook* codebook = MallocCodeBook(database.length, 256, 10);
     quantization(*codebook, database, 30);
     DebugQuantization(*codebook, database);
@@ -325,7 +318,7 @@ void Workflow(const std::string database_path,
     /* Usage */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
     Solution product_quantization_solution = 
-        SolveForQueriesWithPQAndBallForest(database, *codebook, query_set, ball_forest);
+        SolveForQueriesWithPQ(database, *codebook, query_set);
     LogTime("Used Product Quantization");
     for(uint8_t k = 0; k < 4; k++){
         std::pair<uint32_t, uint64_t> time_score_query = product_quantization_solution.time_score_queries[k];
