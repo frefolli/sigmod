@@ -95,6 +95,8 @@ void LSH::search(const Database& database, const Query& query,
       for (uint32_t i = 0; i < this->N; i++) {
         hash_t hash = this->hashtables[i].chain.hash(query);
         std::vector<uint32_t>& vec = this->hashtables[i].buckets[hash];
+        if (vec.size() == 0)
+          break;
         uint32_t start = 0;
         uint32_t end = vec.size();
       
@@ -123,6 +125,8 @@ void LSH::search(const Database& database, const Query& query,
       for (uint32_t i = 0; i < this->N; i++) {
         hash_t hash = this->hashtables[i].chain.hash(query);
         std::vector<uint32_t>& vec = this->hashtables[i].buckets[hash];
+        if (vec.size() == 0)
+          break;
         for (uint64_t index : vec) {
             score_t score = distance(query, database.records[index]);
             board.pushs(index, score);
