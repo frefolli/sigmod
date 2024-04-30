@@ -170,3 +170,18 @@
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 ```
+
+# Product Quantization
+## Product Quantization for Nearest Neighbor Search
+```
+@ARTICLE{5432202,
+  author={Jégou, Herve and Douze, Matthijs and Schmid, Cordelia},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence}, 
+  title={Product Quantization for Nearest Neighbor Search}, 
+  year={2011},
+  volume={33},
+  number={1},
+  pages={117-128},
+  keywords={Quantization;Nearest neighbor searches;Indexing;Neural networks;Euclidean distance;File systems;Scalability;Image databases;Permission;Electronic mail;High-dimensional indexing;image indexing;very large databases;approximate search.},
+  doi={10.1109/TPAMI.2010.57}}
+```

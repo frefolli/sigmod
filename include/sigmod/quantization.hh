@@ -10,27 +10,44 @@
 #include <cmath>
 #include <cassert>
 
-const uint8_t M = 10; // #partitions
-const uint32_t K = 256; // #clusters per partition
-const uint8_t dim_partition = 100 / M;
+const uint16_t M = 10; // #partitions
+const uint16_t K = 256; // #clusters per partition
+const uint16_t dim_partition = vector_num_dimension / M; // if you reduce dimension you should use actual_vector_size
+
+struct Centroid{
+    //float32_t data[dim_partition];
+    float32_t* data;
+    uint32_t n_vectors_mapped = 0;
+};
+
+struct Codeword{
+    Centroid* centroids; // K
+};
 
 struct CodeBook{
-    /* indeces := [id_vector, ids_centroids_associated_foreach_partition] */
-    //std::unordered_map<uint32_t, uint8_t[M]> vector_centroid;
-    uint16_t** vector_centroid;
-    /* indeces := [id_partition, id_centroid, centroid_component] */
-    std::unordered_map<uint8_t, std::unordered_map<uint16_t, float32_t[dim_partition]>> centroids;
+    uint16_t K;
+    uint16_t M; 
+    uint16_t dim_partition;
+    uint32_t db_length;
+    uint16_t** index_vector_to_index_centroid; // db_length x M
+    Codeword* codewords; // M
 };
+
+
+CodeBook* MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint16_t M);
+Codeword* CloneCodeword(const Codeword& cw, const uint16_t K, const uint16_t dim_partition);
+void FreeCodeBook(CodeBook* cb);
+void FreeCodeword(Codeword* cw, const uint16_t K);
 
 void Kmeans(
     CodeBook& cb,
     const Database& database, 
     const uint32_t ITERATIONS, 
     const uint32_t start_partition_id, 
-    const uint32_t end_partition_id);
+    //const uint32_t end_partition_id,
+    const uint32_t length);
 
-uint16_t** MallocVectorCentroid(const uint32_t db_length, const uint8_t n_partitions);
-void FreeCodeBook(CodeBook cb);
+void quantization(CodeBook& cb, const Database& database, const uint32_t ITERATIONS);
 
 inline void compute_distributions(const std::vector<uint32_t>& dim_centroids) {
     score_t sum = 0;
@@ -80,9 +97,12 @@ inline score_t distance(const float32_t* centroid, const float32_t* vector, cons
 * compute matrix of distances between query and all centroids of all partitions 
 * matr_dist := score_t[M][K]
 */
-void PreprocessingQuery(score_t matr_dist[M][K], const float32_t* query, const CodeBook& cb);
-const score_t ADC(const score_t matr_dist[M][K], const CodeBook& cb, const uint32_t index_vector);
+void ComputeDistancesVectorToCentroids(score_t** matr_dist, const float32_t* vector, const CodeBook& cb);
+const score_t ADC(const score_t** matr_dist, const CodeBook& cb, const uint32_t index_vector);
 
 void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& result, const Query& query);
+
+void DebugCodeBook(const CodeBook& cb);
+void DebugQuantization(const CodeBook& cb, const Database& db);
 
 #endif

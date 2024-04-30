@@ -60,6 +60,7 @@ inline void MultiplyQuerySetMatrix(
         }
         CopyVectorFrom(temp_vect, queryset.queries[i].fields, final_dimension);
     }
+
     FreeVector(temp_vect);
 }
 

@@ -18,6 +18,7 @@ struct Database {
 };
 
 Database ReadDatabase(const std::string input_path);
+void CreateDatabaseFromMatrix(Database& database, const float32_t** db, const uint32_t db_length, const uint32_t vector_dimension);
 void FreeDatabase(Database& database);
 void StatsDatabase(const Database& database);
 

@@ -2,10 +2,10 @@
 #define FLAGS_HH
 
 /* Scoreboard::add always checks if an input Candidate could be already in the collection */
-// #define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
+//#define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
 
 /* Query.query_type is ignored as if it was NORMAL */
-// #define DISATTEND_CHECKS
+ #define DISATTEND_CHECKS
 
 /* Compare 2 solutions saved on files */
 //#define COMPARE_SOLUTIONS
@@ -15,14 +15,17 @@
 // #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
-// #define ENABLE_DIM_REDUCTION
-// #define N_DIM_REDUCTION 90
+//#define ENABLE_DIM_REDUCTION
+//#define N_DIM_REDUCTION 90
 
-/* Apply product quantization before indexing */
-// #define ENABLE_PRODUCT_QUANTIZATION
+/* Apply product quantization */
+#define ENABLE_PRODUCT_QUANTIZATION
+
+/* IVF index */
+#define ENABLE_IVF
 
 /* Build a KD Forest and uses it to craft a solution */
-// #define ENABLE_KD_FOREST
+//#define ENABLE_KD_FOREST
 
 /* Randomize KD Node dimensions */
 // #define KD_FOREST_DIMENSION_RANDOMIZE
@@ -46,7 +49,7 @@
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
  * */
-// #define ENABLE_EXAUSTIVE
+ #define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
