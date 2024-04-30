@@ -1,18 +1,15 @@
 #include <algorithm>
-#include <iterator>
+#include <cstdint>
 #include <ostream>
 #include <sigmod/lsh.hh>
 #include <sigmod/scoreboard.hh>
 #include <sigmod/memory.hh>
 #include <sigmod/seek.hh>
-#include <cmath>
 #include <random>
 #include <fstream>
 #include <omp.h>
 #include <string>
-#include <cassert>
 #include <filesystem>
-#include <cfloat>
 
 void Chain::build(uint32_t database_length) {
     this->width = LSH_WIDTH(database_length);
@@ -49,16 +46,16 @@ void HashTable::build(const Database& database, const uint32_t start, const uint
       this->hashes[i] = chain.hash(database.records[start + i]);
   }
 
-  this->buckets = new std::unordered_map<hash_t, std::vector<uint32_t>>();
+  const uint32_t n_of_hashes = 2 << chain.k;
+  this->buckets = new std::vector<uint32_t>[n_of_hashes];
   for (uint32_t i = 0; i < this->length; i++) {
-      this->buckets->operator[](this->hashes[i]).push_back(start + i);
+      this->buckets[this->hashes[i]].push_back(start + i);
   }
 
   #pragma omp parallel for
   for (uint32_t i = 0; i < this->buckets->size(); i++) {
-    auto it = this->buckets->begin();
-    std::advance(it, i);
-    std::sort(it->second.begin(), it->second.end(), [&database](uint32_t a, uint32_t b) {
+    std::vector<uint32_t>& bucket = this->buckets[i];
+    std::sort(bucket.begin(), bucket.end(), [&database](uint32_t a, uint32_t b) {
       if (database.records[a].T != database.records[b].T)
           return (database.records[a].T < database.records[b].T);
       for (uint32_t i = 0; i < actual_vector_size; i++) {
@@ -75,7 +72,7 @@ void HashTable::Free(HashTable& hashtable) {
         free(hashtable.hashes);
         hashtable.hashes = nullptr;
         hashtable.length = 0;
-        delete hashtable.buckets;
+        delete[] hashtable.buckets;
         hashtable.buckets = nullptr;
         Chain::Free(hashtable.chain);
     }
@@ -84,61 +81,55 @@ void HashTable::Free(HashTable& hashtable) {
 void HashTable::dump(const std::string outfile) const {
     std::ofstream out(outfile);
     out << "ID,Count" << std::endl;
-    for (auto it = this->buckets->begin(); it != this->buckets->end(); it++) {
-        out << it->first << "," << it->second.size() << std::endl;
+    for (uint32_t i = 0; i < this->buckets->size(); i++) {
+        out << i << "," << this->buckets[i].size() << std::endl;
     }
     out.close();
 }
 
 void LSH::search(const Database& database, const Query& query,
                  Scoreboard& board, const uint32_t query_type) const {
-    switch(query_type) {
-        case BY_T:
-        case BY_C_AND_T:
-            for (uint32_t i = 0; i < this->N; i++) {
-                hash_t hash = this->hashtables[i].chain.hash(query);
-		auto it = this->hashtables[i].buckets->find(hash);
-		if (it != this->hashtables[i].buckets->end()) {
-            std::vector<uint32_t>& vec = it->second;
-			uint32_t start = 0;
-			uint32_t end = vec.size();
-		
-			start = SeekHigh(
-			    [&database, &vec](uint32_t i) {
-			      return database.at(vec[i]).T;
-			    },
-			    start, end, query.l
-			);
-			end = SeekLow(
-			    [&database, &vec](uint32_t i) {
-			      return database.at(vec[i]).T;
-			    },
-			    start, end, query.r
-			) + 1;
+  switch(query_type) {
+    case BY_T:
+    case BY_C_AND_T:
+      for (uint32_t i = 0; i < this->N; i++) {
+        hash_t hash = this->hashtables[i].chain.hash(query);
+        std::vector<uint32_t>& vec = this->hashtables[i].buckets[hash];
+        uint32_t start = 0;
+        uint32_t end = vec.size();
+      
+        start = SeekHigh(
+            [&database, &vec](uint32_t i) {
+              return database.at(vec[i]).T;
+            },
+            start, end, query.l
+        );
+        end = SeekLow(
+            [&database, &vec](uint32_t i) {
+              return database.at(vec[i]).T;
+            },
+            start, end, query.r
+        ) + 1;
 
-			for (uint32_t j = start; j < end; j++) {
-			    const uint32_t index = vec[j];
-			    score_t score = distance(query, database.records[index]);
-			    if (elegible_by_T(query, database.records[index]))
-				board.pushs(index, score);
-			}
-		}
-            }
-            break;
-        default:
-            for (uint32_t i = 0; i < this->N; i++) {
-                hash_t hash = this->hashtables[i].chain.hash(query);
-                auto it = this->hashtables[i].buckets->find(hash);
-                if (it != this->hashtables[i].buckets->end()) {
-                    std::vector<uint32_t>& vec = it->second;
-                    for (uint64_t index : vec) {
-                        score_t score = distance(query, database.records[index]);
-                        board.pushs(index, score);
-                    }
-                }
-            }
-            break;
-    }
+        for (uint32_t j = start; j < end; j++) {
+            const uint32_t index = vec[j];
+            score_t score = distance(query, database.records[index]);
+            if (elegible_by_T(query, database.records[index]))
+          board.pushs(index, score);
+        }
+      }
+      break;
+    default:
+      for (uint32_t i = 0; i < this->N; i++) {
+        hash_t hash = this->hashtables[i].chain.hash(query);
+        std::vector<uint32_t>& vec = this->hashtables[i].buckets[hash];
+        for (uint64_t index : vec) {
+            score_t score = distance(query, database.records[index]);
+            board.pushs(index, score);
+        }
+      }
+      break;
+  }
 };
 
 void LSH::build(const Database& database, const uint32_t start, const uint32_t end) {

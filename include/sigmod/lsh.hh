@@ -43,7 +43,7 @@ struct HashTable {
     Chain chain;
     hash_t* hashes;
     uint32_t length;
-    std::unordered_map<hash_t, std::vector<uint32_t>>* buckets;
+    std::vector<uint32_t>* buckets;
     uint32_t start;
     uint32_t end;
 

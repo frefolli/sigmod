@@ -46,7 +46,7 @@
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
  * */
-// #define ENABLE_EXAUSTIVE
+#define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
