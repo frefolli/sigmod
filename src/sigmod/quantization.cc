@@ -25,7 +25,7 @@ const score_t ADC(const score_t** matr_dist, const CodeBook& cb, const uint32_t 
     return (const score_t) dist;
 }
 
-CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint16_t M){
+CodeBook* MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint16_t M){
     CodeBook* cb = smalloc<CodeBook>();
     cb->K = K;
     cb->M = M;
@@ -44,10 +44,10 @@ CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint1
         }
         
     }
-    return *cb;
+    return cb;
 }
 
-Codeword& CloneCodeword(const Codeword& cw, const uint16_t K, const uint16_t dim_partition){
+Codeword* CloneCodeword(const Codeword& cw, const uint16_t K, const uint16_t dim_partition){
     Codeword* cw_cp = smalloc<Codeword>();
     cw_cp->centroids = smalloc<Centroid>(K);
     for (uint32_t i = 0; i < K; i++) {
@@ -57,7 +57,7 @@ Codeword& CloneCodeword(const Codeword& cw, const uint16_t K, const uint16_t dim
         }    
     }
      
-    return *cw_cp;
+    return cw_cp;
 }
 
 void FreeCodeword(Codeword* codeword, const uint16_t K) {
@@ -146,7 +146,6 @@ void Kmeans(
         const Database& database, 
         const uint32_t ITERATIONS, 
         const uint32_t start_partition_id, 
-        //const uint32_t end_partition_id,
         const uint32_t length) {
 
     uint16_t n_partition = start_partition_id / cb.dim_partition;
@@ -193,7 +192,7 @@ void Kmeans(
     for (uint32_t iteration = 0; iteration < ITERATIONS  && cerr > 1e-4 ; iteration++) {
         
 
-        Codeword old_codeword = CloneCodeword(codeword, cb.K, cb.dim_partition);
+        Codeword* old_codeword = CloneCodeword(codeword, cb.K, cb.dim_partition);
 
         update_position_centroid(database, cb, n_partition);
 
@@ -226,22 +225,22 @@ void Kmeans(
         for (uint32_t i = 0; i < cb.K; i++) {
             err = 0;
             for (uint32_t j = 0; j < cb.dim_partition; j++) {
-                err += pow(codeword.centroids[i].data[j] - old_codeword.centroids[i].data[j], 2);
+                err += pow(codeword.centroids[i].data[j] - old_codeword->centroids[i].data[j], 2);
             }
             err = sqrt(err);
             cerr += err;    
         }
         Debug(" Cumulative centroid error := " + std::to_string(cerr));
-        FreeCodeword(&old_codeword, 1); 
+        FreeCodeword(old_codeword, 1); 
 
     }
 
 }
 
 void quantization(CodeBook& cb, const Database& database, const uint32_t ITERATIONS){
-    //#pragma omp parallel for
+    #pragma omp parallel for
         for (uint32_t i = 0; i < cb.M; i++) {
-            Kmeans(cb, database, ITERATIONS, i * cb.dim_partition, /*i * (cb.dim_partition) + cb.dim_partition - 1,*/ database.length);
+            Kmeans(cb, database, ITERATIONS, i * cb.dim_partition, database.length);
         }
 }
 
@@ -251,23 +250,20 @@ void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& res
     for (uint16_t i = 0; i < cb.M; i++){
         matr_dist[i] = smalloc<score_t>(cb.K);
     }
-    //assert(query.query_type == NORMAL);
 
     auto start_query_timer = std::chrono::high_resolution_clock::now();
     ComputeDistancesVectorToCentroids(matr_dist, query.fields, cb);
     auto end_query_timer = std::chrono::high_resolution_clock::now();
         
     long long sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
-    //Debug("TIME preprocessing (ms) := " + std::to_string(sample));
 
     start_query_timer = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < database.length; i++) {
-        gboard.push(i, ADC((const score_t**)matr_dist, cb, i));
+        gboard.pushs(i, ADC((const score_t**)matr_dist, cb, i));
     }
     end_query_timer = std::chrono::high_resolution_clock::now();
         
     sample = std::chrono::duration_cast<std::chrono::milliseconds>(end_query_timer - start_query_timer).count();
-    //Debug("TIME searching ADC (ms) := " + std::to_string(sample));
 
     assert(gboard.full());
     
@@ -313,13 +309,6 @@ void DebugQuantization(const CodeBook& cb, const Database& db){
         }
 
         ComputeDistancesVectorToCentroids(matr_dist, db.records[i].fields, cb);
-        //Debug("Distance matrix between vector and all centroids");
-        /*for (uint32_t j = 0; j < cb.M; j++){
-            for (uint32_t k = 0; k < cb.K; k++){
-                std::cout << matr_dist[j][k] << " "; 
-            }
-            std::cout << std::endl; 
-        }*/
 
         for (uint32_t j = 0; j < cb.M; j++){
             uint32_t centroid =  min_centroid((const score_t*)matr_dist[j], cb.K);

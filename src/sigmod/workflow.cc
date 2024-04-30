@@ -238,9 +238,8 @@ Solution SolveForQueriesWithIVF(const Database& database,
 
         
         auto start_query_timer = std::chrono::high_resolution_clock::now();
-        if (query_type == NORMAL) {
-            searchIVF(ivf, solution.results[i], query_set.queries[i]);
-        }
+
+        searchIVF(ivf, solution.results[i], query_set.queries[i]);
 
         auto end_query_timer = std::chrono::high_resolution_clock::now();
         
@@ -278,19 +277,19 @@ void Workflow(const std::string database_path,
     IndexDatabase(database);
     LogTime("Indexes Database");
 
-    #ifdef ENABLE_BALL_FOREST
+    #ifdef ENABLE_PRODUCT_QUANTIZATION
     BallForest ball_forest = BuildBallForest(database);
     LogTime("Built Ball Forest");
     
-    CodeBook& codebook = MallocCodeBook(database.length, 256, 10);
-    quantization(codebook, database, 30);
-    DebugQuantization(codebook, database);
+    CodeBook* codebook = MallocCodeBook(database.length, 256, 10);
+    quantization(*codebook, database, 30);
+    DebugQuantization(*codebook, database);
     LogTime("Built CodeBook");
     #endif
 
     #ifdef ENABLE_IVF
-    IVF ivf = MallocIVF(1024, 256, 10, database.length);
-    initializeIVF(ivf, database, 30);
+    IVF* ivf = MallocIVF(1024, 256, 10, database.length);
+    initializeIVF(*ivf, database, 30);
 
     Debug("Built IVF");
     #endif
@@ -326,7 +325,7 @@ void Workflow(const std::string database_path,
     /* Usage */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
     Solution product_quantization_solution = 
-        SolveForQueriesWithPQAndBallForest(database, codebook, query_set, ball_forest);
+        SolveForQueriesWithPQAndBallForest(database, *codebook, query_set, ball_forest);
     LogTime("Used Product Quantization");
     for(uint8_t k = 0; k < 4; k++){
         std::pair<uint32_t, uint64_t> time_score_query = product_quantization_solution.time_score_queries[k];
@@ -337,7 +336,7 @@ void Workflow(const std::string database_path,
 
     #ifdef ENABLE_IVF
     Solution ivf_solution = 
-        SolveForQueriesWithIVF(database, ivf, query_set);
+        SolveForQueriesWithIVF(database, *ivf, query_set);
     LogTime("Used IVF");
     for(uint8_t k = 0; k < 4; k++){
         std::pair<uint32_t, uint64_t> time_score_query = ivf_solution.time_score_queries[k];
@@ -540,12 +539,13 @@ void Workflow(const std::string database_path,
 
     /* Free Models */
     #ifdef ENABLE_PRODUCT_QUANTIZATION
-    FreeCodeBook(&codebook);
+    FreeCodeBook(codebook);
     LogTime("Freed CodeBook");
     #endif
 
-    #ifdef ENABLE_PRODUCT_QUANTIZATION
-    FreeCodeBook(cb);
+    #ifdef ENABLE_IVF
+    FreeIVF(ivf);
+    LogTime("Freed IVF");
     #endif
 
     #ifdef ENABLE_KD_FOREST

@@ -34,8 +34,8 @@ struct CodeBook{
 };
 
 
-CodeBook& MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint16_t M);
-Codeword& CloneCodeword(const Codeword& cw, const uint16_t K, const uint16_t dim_partition);
+CodeBook* MallocCodeBook(const uint32_t db_length, const uint16_t K, const uint16_t M);
+Codeword* CloneCodeword(const Codeword& cw, const uint16_t K, const uint16_t dim_partition);
 void FreeCodeBook(CodeBook* cb);
 void FreeCodeword(Codeword* cw, const uint16_t K);
 

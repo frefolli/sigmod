@@ -4,6 +4,9 @@
 #include <sigmod/quantization.hh>
 #include <sigmod/memory.hh>
 
+//std::priority_queue<std::pair<score_t, uint16_t>, std::vector<std::pair<score_t, uint16_t>>, std::greater<std::pair<score_t, uint16_t>>>
+typedef std::pair<score_t, uint16_t> distance_centroid_t;
+
 struct NodeIVL{
     uint32_t vector_idx;
     uint16_t* pq_centroids_idx; // M_pq
@@ -20,7 +23,7 @@ struct IVF{
     IVL* inverted_lists; // K_coarse
 };
 
-IVF& MallocIVF(const uint32_t K_coarse_quantization, const uint32_t K_product_quantization, const uint32_t M_product_quantization, const uint32_t db_length);
+IVF* MallocIVF(const uint32_t K_coarse_quantization, const uint32_t K_product_quantization, const uint32_t M_product_quantization, const uint32_t db_length);
 NodeIVL* MallocNodeIVL(const uint16_t M_product_quantization);
 IVL* MallocIVL(const uint16_t K_coarse);
 void FreeIVF(IVF* ivf);

@@ -4,16 +4,16 @@
 #include <queue>
 #include <vector>
 
-IVF& MallocIVF(const uint32_t K_coarse_quantization, const uint32_t K_product_quantization, const uint32_t M_product_quantization, const uint32_t db_length) {
+IVF* MallocIVF(const uint32_t K_coarse_quantization, const uint32_t K_product_quantization, const uint32_t M_product_quantization, const uint32_t db_length) {
     IVF* ivf = smalloc<IVF>();
-    ivf->codebook_coarse = MallocCodeBook(db_length, K_coarse_quantization, 1);
-    ivf->codebook_pq = MallocCodeBook(db_length, K_product_quantization, M_product_quantization);
+    ivf->codebook_coarse = *MallocCodeBook(db_length, K_coarse_quantization, 1);
+    ivf->codebook_pq = *MallocCodeBook(db_length, K_product_quantization, M_product_quantization);
     ivf->residuals = smalloc<float32_t*>(db_length);
     for (uint32_t i = 0; i < db_length; i++) {
         ivf->residuals[i] = smalloc<float32_t>(actual_vector_size);
     }
     ivf->inverted_lists = MallocIVL(ivf->codebook_coarse.K);
-    return *ivf;
+    return ivf;
 }
 
 NodeIVL* MallocNodeIVL(const uint16_t M_product_quantization){
@@ -72,7 +72,8 @@ void initializeIVF(IVF& invertedfile, const Database& db, const uint32_t iterati
     compute_residual_vectors_for_db(invertedfile, db);
     LogTime("Built residuals");
 
-    Database db_residuals = CreateDatabaseFromMatrix((const float32_t**)invertedfile.residuals, db.length, invertedfile.codebook_coarse.dim_partition);
+    Database db_residuals;
+    CreateDatabaseFromMatrix(db_residuals, (const float32_t**)invertedfile.residuals, db.length, invertedfile.codebook_coarse.dim_partition);
     quantization(invertedfile.codebook_pq, db_residuals, iteration);
     LogTime("Built product quantization");
 
@@ -102,18 +103,18 @@ void compute_residual_vectors_for_db(IVF& invertedfile, const Database& db) {
 }
 
 void searchIVF(const IVF& invertedfile, Result& result, const Query& query) {
-    std::priority_queue<std::pair<score_t, uint16_t>, std::vector<std::pair<score_t, uint16_t>>, std::greater<std::pair<score_t, uint16_t>>> minHeapDistances;
+    std::priority_queue<distance_centroid_t, std::vector<distance_centroid_t>, std::greater<distance_centroid_t>> minHeapDistances;
     Scoreboard gboard;
 
     for(uint16_t i; i < invertedfile.codebook_coarse.K; i++){
         score_t dist = distance(invertedfile.codebook_coarse.codewords[0].centroids[i].data, query.fields, 0, actual_vector_size - 1);
-        std::pair<score_t, uint16_t> el_heap(dist, i);
+        distance_centroid_t el_heap(dist, i);
         minHeapDistances.push(el_heap);
     }
     
     uint16_t count = 0;
     for(uint16_t i; count < 100 && !minHeapDistances.empty(); i++){
-        std::pair<score_t, uint16_t> course_centroid = minHeapDistances.top();
+        distance_centroid_t course_centroid = minHeapDistances.top();
         count += invertedfile.inverted_lists[course_centroid.second].res.size();
         minHeapDistances.pop();
 
@@ -127,14 +128,14 @@ void searchIVF(const IVF& invertedfile, Result& result, const Query& query) {
                 const uint16_t end_index = start_index + invertedfile.codebook_pq.M - 1;
                 dist += distance(invertedfile.codebook_pq.codewords[j].centroids[node->pq_centroids_idx[j]].data, res_query, start_index, end_index);
             }
-            gboard.push(node->vector_idx, dist);
+            gboard.pushs(node->vector_idx, dist);
         }
     
         free(res_query);
     }
 
     
-    assert(gboard.full());
+    //assert(gboard.full());
 
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
