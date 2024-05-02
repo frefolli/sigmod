@@ -51,9 +51,7 @@ void HashTable::build(const Database& database, uint32_t ith, const uint32_t sta
 
   this->buckets = new std::unordered_map<hash_t, std::vector<uint32_t>>();
   for (uint32_t i = 0; i < this->length; i++) {
-    for (uint32_t j = 0; j < LSH_PQ; j++) {
-        this->buckets->operator[](this->hashes[i] + j).push_back(start + i);
-    }
+    this->buckets->operator[](this->hashes[i]).push_back(start + i);
   }
 
   #pragma omp parallel for
@@ -131,7 +129,17 @@ void LSH::search(const Database& database, const Query& query,
             for (uint32_t i = 0; i < this->N; i++) {
                 hash_t hash = this->hashtables[i].chain.hash(query);
                 
-                for (uint32_t j = 0; j < LSH_PQ; j++) {
+                for (uint32_t j = 0; j < LSH_PQ/2; j++) {
+                    auto it = this->hashtables[i].buckets->find(hash - j);
+                    if (it != this->hashtables[i].buckets->end()) {
+                        std::vector<uint32_t>& vec = it->second;
+                        for (uint64_t index : vec) {
+                            score_t score = distance(query, database.records[index]);
+                            board.pushs(index, score);
+                        }
+                    }
+                }
+                for (uint32_t j = 1; j < LSH_PQ/2; j++) {
                     auto it = this->hashtables[i].buckets->find(hash + j);
                     if (it != this->hashtables[i].buckets->end()) {
                         std::vector<uint32_t>& vec = it->second;
