@@ -79,11 +79,11 @@
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 
 // HTN (ex: 1)
-// #define LSH_TABLES 1
-#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.20)
+// #define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.20)
+#define LSH_TABLES 1
 
 // K (ex: 1)
-#define LSH_K(width) std::ceil(std::log2(width) + 2)
+#define LSH_K(width) std::ceil(std::log2(width))
 
 // WDT (ex: log(length) ~ 24)
 #define LSH_WIDTH(length) std::sqrt(length)

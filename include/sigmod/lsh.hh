@@ -20,7 +20,7 @@ struct Chain {
     Atom* chain;
 
     template<typename WF>
-    hash_t hash(const WF& record) {
+    hash_t hash(const WF& record) const {
         hash_t _hash = 0;
         for (uint32_t i = 0; i < k; i++) {
             score_t sum = 0;

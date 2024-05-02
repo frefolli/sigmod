@@ -87,55 +87,76 @@ void HashTable::dump(const std::string outfile) const {
     out.close();
 }
 
+inline void ExploreBucket(const Database& database, const Query& query,
+                          Scoreboard& board, const HashTable& ht, const hash_t hash) {
+  auto it = ht.buckets->find(hash);
+  if (it != ht.buckets->end()) {
+    std::vector<uint32_t>& vec = it->second;
+    for (uint64_t index : vec) {
+      score_t score = distance(query, database.records[index]);
+      board.pushs(index, score);
+    }
+  }
+}
+
+inline void ExploreBucketByT(const Database& database, const Query& query,
+                             Scoreboard& board, const HashTable& ht, const hash_t hash) {
+  auto it = ht.buckets->find(hash);
+  if (it != ht.buckets->end()) {
+    std::vector<uint32_t>& vec = it->second;
+    uint32_t start = 0;
+    uint32_t end = vec.size();
+  
+    start = SeekHigh(
+        [&database, &vec](uint32_t i) {
+          return database.at(vec[i]).T;
+        },
+        start, end, query.l
+    );
+    end = SeekLow(
+        [&database, &vec](uint32_t i) {
+          return database.at(vec[i]).T;
+        },
+        start, end, query.r
+    ) + 1;
+
+    for (uint32_t j = start; j < end; j++) {
+        const uint32_t index = vec[j];
+        score_t score = distance(query, database.records[index]);
+        board.pushs(index, score);
+    }
+  }
+}
+
+inline hash_t CraftVariant(hash_t original, uint16_t pivot) {
+  return original ^ ((uint32_t)1 << pivot);
+}
+
 void LSH::search(const Database& database, const Query& query,
                  Scoreboard& board, const uint32_t query_type) const {
-    switch(query_type) {
-        case BY_T:
-        case BY_C_AND_T:
-            for (uint32_t i = 0; i < this->N; i++) {
-                hash_t hash = this->hashtables[i].chain.hash(query);
-		auto it = this->hashtables[i].buckets->find(hash);
-		if (it != this->hashtables[i].buckets->end()) {
-            std::vector<uint32_t>& vec = it->second;
-			uint32_t start = 0;
-			uint32_t end = vec.size();
-		
-			start = SeekHigh(
-			    [&database, &vec](uint32_t i) {
-			      return database.at(vec[i]).T;
-			    },
-			    start, end, query.l
-			);
-			end = SeekLow(
-			    [&database, &vec](uint32_t i) {
-			      return database.at(vec[i]).T;
-			    },
-			    start, end, query.r
-			) + 1;
-
-			for (uint32_t j = start; j < end; j++) {
-			    const uint32_t index = vec[j];
-			    score_t score = distance(query, database.records[index]);
-			    if (elegible_by_T(query, database.records[index]))
-				board.pushs(index, score);
-			}
-		}
-            }
-            break;
-        default:
-            for (uint32_t i = 0; i < this->N; i++) {
-                hash_t hash = this->hashtables[i].chain.hash(query);
-                auto it = this->hashtables[i].buckets->find(hash);
-                if (it != this->hashtables[i].buckets->end()) {
-                    std::vector<uint32_t>& vec = it->second;
-                    for (uint64_t index : vec) {
-                        score_t score = distance(query, database.records[index]);
-                        board.pushs(index, score);
-                    }
-                }
-            }
-            break;
-    }
+  switch(query_type) {
+    case BY_T:
+    case BY_C_AND_T:
+      for (uint32_t i = 0; i < this->N; i++) {
+        const HashTable& ht = this->hashtables[i];
+        hash_t hash = ht.chain.hash(query);
+        ExploreBucketByT(database, query, board, ht, hash);
+        for (uint16_t i = 0; i < ht.chain.k; i++) {
+          ExploreBucketByT(database, query, board, ht, CraftVariant(hash, i));
+        }
+      }
+      break;
+    default:
+      for (uint32_t i = 0; i < this->N; i++) {
+        const HashTable& ht = this->hashtables[i];
+        hash_t hash = ht.chain.hash(query);
+        ExploreBucket(database, query, board, ht, hash);
+        for (uint16_t i = 0; i < ht.chain.k; i++) {
+          ExploreBucket(database, query, board, ht, CraftVariant(hash, i));
+        }
+      }
+      break;
+  }
 };
 
 void LSH::build(const Database& database, const uint32_t start, const uint32_t end) {
