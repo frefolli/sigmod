@@ -64,19 +64,6 @@ def plot_partition(hashtables: dict, output: str):
     plt.savefig(output)
     plt.close()
 
-def plot_properties(df, output: str):
-    plt.figure(figsize=(30, 30))
-
-    plt.plot(range(len(df)), sorted(df.HMean), marker='o', label='HMean')
-    plt.plot(range(len(df)), sorted(df.HMin), marker='o', label='HMin')
-    plt.plot(range(len(df)), sorted(df.HMax), marker='o', label='HMax')
-    
-    plt.xlabel('#')
-    plt.ylabel('Mean of Hash (sum + b)')
-    plt.legend()
-    plt.savefig(output)
-    plt.close()
-
 def plot_lsh_forest():
     for lsh_dir in ['lsh_dump/general']:#get_lsh_list():
         print("Processing LSH := %s" % lsh_dir)
@@ -87,6 +74,5 @@ def plot_lsh_forest():
             plot_distribution(hashtables, 'dst_%s.png' % lsh_key)
             plot_partition(hashtables, 'ptr_%s.png' % lsh_key)
             data = pd.read_csv(lsh_dir + '.csv')
-            plot_properties(data, 'pro_%s.png' % lsh_key)
 
 plot_lsh_forest()

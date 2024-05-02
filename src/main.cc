@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <omp.h>
-#define FULL_THRUST
+// #define FULL_THRUST
 
 void assert_file_exists(std::string path, std::string what) {
   if (!std::filesystem::exists(path)) {
@@ -68,7 +68,7 @@ int main(int argc, char** args) {
 
     std::cout << "max_threads := " << omp_get_max_threads() << std::endl;
     #ifndef FULL_THRUST
-    omp_set_num_threads(omp_get_max_threads() - 3);
+    omp_set_num_threads(1);
     #else
     omp_set_num_threads(omp_get_max_threads());
     #endif

@@ -6,6 +6,7 @@
 #include <sigmod/query.hh>
 #include <sigmod/solution.hh>
 #include <sigmod/flags.hh>
+#include <iostream>
 #include <vector>
 
 typedef uint64_t hash_t;
@@ -16,15 +17,19 @@ struct Atom {
 
 struct Chain {
     uint32_t width;
-    uint32_t k;
+    uint32_t n_of_hash_functions;
+    uint32_t start_of_pq;
+    uint32_t length_of_pq;
     Atom* chain;
 
     template<typename WF>
     hash_t hash(const WF& record) {
         hash_t _hash = 0;
-        for (uint32_t i = 0; i < k; i++) {
+        for (uint32_t i = 0; i < n_of_hash_functions; i++) {
             score_t sum = 0;
-            for (uint32_t j = 0; j < actual_vector_size; j++) {
+            for (uint32_t k = 0; k < length_of_pq; k++) {
+                const uint32_t j = start_of_pq + k;
+                // if you want random start_of_pq, add mod operation above
                 sum += chain[i].a[j] * record.fields[j];
             }
             _hash <<= 1; // lshift "in-place", doesn't change if zero
@@ -35,7 +40,7 @@ struct Chain {
         return _hash;
     }
 
-    void build(uint32_t database_length);
+    void build(uint32_t database_length, uint32_t ith);
     static void Free(Chain& chain);
 };
 
@@ -47,7 +52,7 @@ struct HashTable {
     uint32_t start;
     uint32_t end;
 
-    void build(const Database& database, const uint32_t start, const uint32_t end);
+    void build(const Database& database, uint32_t ith, const uint32_t start, const uint32_t end);
     static void Free(HashTable& hashtable);
     void dump(const std::string outfile) const;
 };

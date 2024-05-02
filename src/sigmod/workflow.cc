@@ -312,6 +312,7 @@ void Workflow(const std::string database_path,
     #ifdef ENABLE_LSH_FOREST
     LSHForest lsh_forest;
     lsh_forest.build(database);
+    lsh_forest.dump();
     LogTime("Built LSH Forest");
     #endif
 

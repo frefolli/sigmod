@@ -1,3 +1,4 @@
+#include "sigmod/config.hh"
 #include <algorithm>
 #include <iterator>
 #include <ostream>
@@ -5,25 +6,24 @@
 #include <sigmod/scoreboard.hh>
 #include <sigmod/memory.hh>
 #include <sigmod/seek.hh>
-#include <cmath>
 #include <random>
 #include <fstream>
 #include <omp.h>
 #include <string>
-#include <cassert>
 #include <filesystem>
-#include <cfloat>
 
-void Chain::build(uint32_t database_length) {
-    this->width = LSH_WIDTH(database_length);
-    this->k = LSH_K(this->width);
-    this->chain = smalloc<Atom>(k);
+void Chain::build(uint32_t database_length, uint32_t ith) {
+    this->n_of_hash_functions = LSH_K(database_length);
+    this->width = (1 << this->n_of_hash_functions);
+    this->chain = smalloc<Atom>(this->n_of_hash_functions);
+    this->length_of_pq = LSH_PQ;
+    this->start_of_pq = this->length_of_pq * ith;
 
     std::random_device random_device;
     std::mt19937 generator(random_device());
     std::normal_distribution<float32_t> normal(0, 1);
     
-    for (uint32_t i = 0; i < this->k; i++) {
+    for (uint32_t i = 0; i < this->n_of_hash_functions; i++) {
         for (uint32_t j = 0; j < actual_vector_size; j++) {
             this->chain[i].a[j] = normal(generator);
         }
@@ -34,14 +34,14 @@ void Chain::Free(Chain& chain) {
     if (chain.chain != nullptr) {
         free(chain.chain);
         chain.chain = nullptr;
-        chain.k = 0;
+        chain.n_of_hash_functions = 0;
         chain.width = 0;
     }
 }
 
-void HashTable::build(const Database& database, const uint32_t start, const uint32_t end) {
+void HashTable::build(const Database& database, uint32_t ith, const uint32_t start, const uint32_t end) {
   this->length = end - start;
-  this->chain.build(database.length);
+  this->chain.build(length, ith);
 
   this->hashes = smalloc<hash_t>(this->length);
   #pragma omp parallel for
@@ -142,12 +142,12 @@ void LSH::search(const Database& database, const Query& query,
 };
 
 void LSH::build(const Database& database, const uint32_t start, const uint32_t end) {
-    this->N = LSH_TABLES;
+    this->N = actual_vector_size / LSH_PQ;
     // std::cout << LSH_TABLES << std::endl;
     this->hashtables = smalloc<HashTable>(this->N);
     
     for (uint32_t i = 0; i < N; i++) {
-        hashtables[i].build(database, start, end);
+        hashtables[i].build(database, i, start, end);
     }
 }
 
@@ -245,11 +245,13 @@ void LSH::dump(const std::string outdir) const {
         }
         
         std::ofstream out (outdir + ".csv");
-        out << "ID,Width,K,Shift,HC,HMean,HMin,HMax" << std::endl;
+        out << "ID,Width,K,PQ,SPQ" << std::endl;
         for (uint32_t i = 0; i < N; i++) {
             out << i
                 << "," << hashtables[i].chain.width
-                << "," << hashtables[i].chain.k
+                << "," << hashtables[i].chain.n_of_hash_functions
+                << "," << hashtables[i].chain.length_of_pq
+                << "," << hashtables[i].chain.start_of_pq
                 << std::endl;
         }
         out.close();
@@ -258,9 +260,7 @@ void LSH::dump(const std::string outdir) const {
 
 void LSHForest::dump() const {
     general.dump("lsh_dump/general");
-    /*
     for (uint32_t i = 0; i < length_mapped; i++) {
         mapped[i].dump("lsh_dump/" + std::to_string(i));
     }
-    */
 }
