@@ -5,14 +5,11 @@
 #include <sigmod/scoreboard.hh>
 #include <sigmod/memory.hh>
 #include <sigmod/seek.hh>
-#include <cmath>
 #include <random>
 #include <fstream>
 #include <omp.h>
 #include <string>
-#include <cassert>
 #include <filesystem>
-#include <cfloat>
 
 void Chain::build(uint32_t database_length) {
     this->width = LSH_WIDTH(database_length);
@@ -21,11 +18,11 @@ void Chain::build(uint32_t database_length) {
 
     std::random_device random_device;
     std::mt19937 generator(random_device());
-    std::normal_distribution<float32_t> normal(0, 1);
+    std::uniform_real_distribution<float32_t> uniform(-1, 1);
     
     for (uint32_t i = 0; i < this->k; i++) {
         for (uint32_t j = 0; j < actual_vector_size; j++) {
-            this->chain[i].a[j] = normal(generator);
+            this->chain[i].a[j] = uniform(generator);
         }
     }
 }
@@ -41,7 +38,7 @@ void Chain::Free(Chain& chain) {
 
 void HashTable::build(const Database& database, const uint32_t start, const uint32_t end) {
   this->length = end - start;
-  this->chain.build(database.length);
+  this->chain.build(length);
 
   this->hashes = smalloc<hash_t>(this->length);
   #pragma omp parallel for
