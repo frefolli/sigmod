@@ -123,6 +123,7 @@ void LSH::search(const Database& database, const Query& query,
 				board.pushs(index, score);
 			}
 		}
+        //std::cout<<query. << std::endl;
                 for (uint16_t i = 0; i < this->hashtables[i].chain.n_of_hash_functions; i++){
                     hash = CraftVariant(hash, i);
         auto it = this->hashtables[i].buckets->find(hash);
