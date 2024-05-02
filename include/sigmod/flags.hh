@@ -5,7 +5,7 @@
 //#define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
 
 /* Query.query_type is ignored as if it was NORMAL */
- #define DISATTEND_CHECKS
+// #define DISATTEND_CHECKS
 
 /* Compare 2 solutions saved on files */
 //#define COMPARE_SOLUTIONS
@@ -55,7 +55,7 @@
 // #define SHOW_MISMATCH_IN_COMPARISON
 
 /* Enables OpenMP */
-#define CONCURRENCY
+//#define CONCURRENCY
 // #define MAX_CONCURRENCY 2
 
 /* Enables Fast Distance: which map d(a, b) -> d(a, b)^2, thus reducing the amount of operations to be done */
@@ -74,7 +74,7 @@
 #define ACCURATE_RECALL
 
 // Enable Locality Sensitive Hashing
-#define ENABLE_LSH_FOREST
+//#define ENABLE_LSH_FOREST
 
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 
