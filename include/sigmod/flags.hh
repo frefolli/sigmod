@@ -5,14 +5,14 @@
 //#define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
 
 /* Query.query_type is ignored as if it was NORMAL */
- #define DISATTEND_CHECKS
+// #define DISATTEND_CHECKS
 
 /* Compare 2 solutions saved on files */
 //#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 1000
-#define STOP_AFTER_TOT_ELEMENTS
+//#define TOT_ELEMENTS 1000
+//#define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
 //#define ENABLE_DIM_REDUCTION
@@ -79,7 +79,7 @@
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 
 // HTN (ex: 1)
-#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.20)
+#define LSH_TABLES 1 //(uint32_t)(((float)k_nearest_neighbors) * 0.20)
 
 // K (ex: 1)
 #define LSH_K(length) std::ceil(std::log2(std::sqrt(length)))
