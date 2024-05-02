@@ -11,8 +11,8 @@
 //#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-#define TOT_ELEMENTS 1000
-#define STOP_AFTER_TOT_ELEMENTS
+//#define TOT_ELEMENTS 1000
+//#define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
 //#define ENABLE_DIM_REDUCTION
