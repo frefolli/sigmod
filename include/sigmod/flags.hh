@@ -5,7 +5,7 @@
 //#define SCOREBOARD_ALWAYS_CHECK_DUPLICATES
 
 /* Query.query_type is ignored as if it was NORMAL */
- #define DISATTEND_CHECKS
+// #define DISATTEND_CHECKS
 
 /* Compare 2 solutions saved on files */
 //#define COMPARE_SOLUTIONS
@@ -19,10 +19,10 @@
 //#define N_DIM_REDUCTION 90
 
 /* Apply product quantization */
-#define ENABLE_PRODUCT_QUANTIZATION
+//#define ENABLE_PRODUCT_QUANTIZATION
 
 /* IVF index */
-#define ENABLE_IVF
+//#define ENABLE_IVF
 
 /* Build a KD Forest and uses it to craft a solution */
 //#define ENABLE_KD_FOREST
@@ -79,7 +79,7 @@
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 
 // HTN (ex: 1)
-#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.20)
+#define LSH_TABLES 1//(uint32_t)(((float)k_nearest_neighbors) * 0.20)
 
 // K (ex: 1)
 #define LSH_K(width) std::ceil(std::log2(width) + 2)

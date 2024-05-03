@@ -97,6 +97,8 @@ void LSH::search(const Database& database, const Query& query,
         case BY_C_AND_T:
             for (uint32_t i = 0; i < this->N; i++) {
                 hash_t hash = this->hashtables[i].chain.hash(query);
+                for (uint32_t j = 0; j <= this->hashtables[i].chain.k; j++){
+
 		auto it = this->hashtables[i].buckets->find(hash);
 		if (it != this->hashtables[i].buckets->end()) {
             std::vector<uint32_t>& vec = it->second;
@@ -123,19 +125,28 @@ void LSH::search(const Database& database, const Query& query,
 				board.pushs(index, score);
 			}
 		}
+                    hash = CraftVariant(hash, j);
+                }
             }
             break;
         default:
             for (uint32_t i = 0; i < this->N; i++) {
                 hash_t hash = this->hashtables[i].chain.hash(query);
-                auto it = this->hashtables[i].buckets->find(hash);
-                if (it != this->hashtables[i].buckets->end()) {
-                    std::vector<uint32_t>& vec = it->second;
-                    for (uint64_t index : vec) {
-                        score_t score = distance(query, database.records[index]);
-                        board.pushs(index, score);
+
+                for (uint32_t j = 0; j <= this->hashtables[i].chain.k; j++){
+
+                    auto it = this->hashtables[i].buckets->find(hash);
+                    if (it != this->hashtables[i].buckets->end()) {
+                        std::vector<uint32_t>& vec = it->second;
+                        for (uint64_t index : vec) {
+                            score_t score = distance(query, database.records[index]);
+                            board.pushs(index, score);
+                        }
                     }
+
+                    hash = CraftVariant(hash, j);
                 }
+                
             }
             break;
     }

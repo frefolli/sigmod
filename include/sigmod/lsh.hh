@@ -10,6 +10,10 @@
 
 typedef uint64_t hash_t;
 
+inline hash_t CraftVariant(const hash_t origin, const uint32_t pivot) {
+    return origin ^ (1 << pivot);
+}
+
 struct Atom {
     float32_t a[vector_num_dimension];
 };
