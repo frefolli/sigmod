@@ -21,7 +21,8 @@ void Chain::build(uint32_t database_length) {
 
     std::random_device random_device;
     std::mt19937 generator(random_device());
-    std::normal_distribution<float32_t> normal(0, 1);
+    //std::normal_distribution<float32_t> normal(0, 1);
+    std::uniform_real_distribution<float32_t> normal(0, 1);
     
     for (uint32_t i = 0; i < this->k; i++) {
         for (uint32_t j = 0; j < actual_vector_size; j++) {
