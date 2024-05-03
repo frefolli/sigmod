@@ -19,10 +19,10 @@
 //#define N_DIM_REDUCTION 90
 
 /* Apply product quantization */
-#define ENABLE_PRODUCT_QUANTIZATION
+//#define ENABLE_PRODUCT_QUANTIZATION
 
 /* IVF index */
-#define ENABLE_IVF
+//#define ENABLE_IVF
 
 /* Build a KD Forest and uses it to craft a solution */
 //#define ENABLE_KD_FOREST
@@ -74,7 +74,7 @@
 #define ACCURATE_RECALL
 
 // Enable Locality Sensitive Hashing
-//#define ENABLE_LSH_FOREST
+#define ENABLE_LSH_FOREST
 
 #define LSH_FOREST_TRESHOLD k_nearest_neighbors
 
