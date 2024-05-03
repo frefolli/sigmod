@@ -113,9 +113,9 @@ void LSH::search(const Database &database, const Query &query,
         for (uint32_t i = 0; i < this->N; i++)
         {
             hash_t hash = this->hashtables[i].chain.hash(query);
-            for (uint16_t j = 0; j <= this->hashtables[i].chain.n_of_hash_functions + 1; j++)
+            for (uint16_t j = 0; j <= (this->hashtables[i].chain.n_of_hash_functions + 1); j++)
             {
-                auto it = this->hashtables[i].buckets->find(hash);
+                auto it = this->hashtables[i].buckets->find(CraftVariant(hash, j));
                 if (it != this->hashtables[i].buckets->end())
                 {
                     std::vector<uint32_t> &vec = it->second;
@@ -144,7 +144,6 @@ void LSH::search(const Database &database, const Query &query,
                             board.pushs(index, score);
                     }
                 }
-                hash = CraftVariant(hash, j);
             }
         }
         break;
@@ -154,9 +153,9 @@ void LSH::search(const Database &database, const Query &query,
         {
             hash_t hash = this->hashtables[i].chain.hash(query);
 
-            for (uint16_t j = 0; j <= this->hashtables[i].chain.n_of_hash_functions + 1; j++)
+            for (uint16_t j = 0; j <= (this->hashtables[i].chain.n_of_hash_functions + 1); j++)
             {
-                auto it = this->hashtables[i].buckets->find(hash);
+                auto it = this->hashtables[i].buckets->find(CraftVariant(hash, j));
                 if (it != this->hashtables[i].buckets->end())
                 {
                     std::vector<uint32_t> &vec = it->second;
@@ -166,7 +165,6 @@ void LSH::search(const Database &database, const Query &query,
                         board.pushs(index, score);
                     }
                 }
-                hash = CraftVariant(hash, j);
             }
         }
         break;
