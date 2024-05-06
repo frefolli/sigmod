@@ -76,16 +76,12 @@
 // Enable Locality Sensitive Hashing
 #define ENABLE_LSH_FOREST
 
-#define LSH_FOREST_TRESHOLD k_nearest_neighbors
+#define LSH_FOREST_TRESHOLD 2000
 
-// HTN (ex: 1)
-// #define LSH_TABLES 1
-#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.20)
+#define LSH_TABLES 20
 
-// K (ex: 1)
 #define LSH_K(width) std::ceil(std::log2(width) + 2)
 
-// WDT (ex: log(length) ~ 24)
 #define LSH_WIDTH(length) std::sqrt(length)
 
 // #include <sigmod/custom.hh>

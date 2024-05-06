@@ -10,6 +10,7 @@
 #include <omp.h>
 #include <string>
 #include <filesystem>
+#include <sigmod/exaustive.hh>
 
 void Chain::build(uint32_t database_length) {
     this->width = LSH_WIDTH(database_length);
@@ -93,33 +94,36 @@ void LSH::search(const Database& database, const Query& query,
         case BY_T:
         case BY_C_AND_T:
             for (uint32_t i = 0; i < this->N; i++) {
-                hash_t hash = this->hashtables[i].chain.hash(query);
-		auto it = this->hashtables[i].buckets->find(hash);
-		if (it != this->hashtables[i].buckets->end()) {
-            std::vector<uint32_t>& vec = it->second;
-			uint32_t start = 0;
-			uint32_t end = vec.size();
-		
-			start = SeekHigh(
-			    [&database, &vec](uint32_t i) {
-			      return database.at(vec[i]).T;
-			    },
-			    start, end, query.l
-			);
-			end = SeekLow(
-			    [&database, &vec](uint32_t i) {
-			      return database.at(vec[i]).T;
-			    },
-			    start, end, query.r
-			) + 1;
+              hash_t hash = this->hashtables[i].chain.hash(query);
+              auto it = this->hashtables[i].buckets->find(hash);
+              if (it != this->hashtables[i].buckets->end()) {
+                      std::vector<uint32_t>& vec = it->second;
+                uint32_t start = 0;
+                uint32_t end = vec.size();
+              
+                start = SeekHigh(
+                    [&database, &vec](uint32_t i) {
+                      return database.at(vec[i]).T;
+                    },
+                    start, end, query.l
+                );
+                end = SeekLow(
+                    [&database, &vec](uint32_t i) {
+                      return database.at(vec[i]).T;
+                    },
+                    start, end, query.r
+                ) + 1;
 
-			for (uint32_t j = start; j < end; j++) {
-			    const uint32_t index = vec[j];
-			    score_t score = distance(query, database.records[index]);
-			    if (elegible_by_T(query, database.records[index]))
-				board.pushs(index, score);
-			}
-		}
+                // already filtered
+                for (uint32_t j = start; j < end; j++) {
+                    const uint32_t index = vec[j];
+                    if (!board.has(index)) {
+                      score_t score = distance(query, database.records[index]);
+                      //if (elegible_by_T(query, database.records[index]))
+                      board.push(index, score);
+                    }
+                }
+              }
             }
             break;
         default:
@@ -129,8 +133,10 @@ void LSH::search(const Database& database, const Query& query,
                 if (it != this->hashtables[i].buckets->end()) {
                     std::vector<uint32_t>& vec = it->second;
                     for (uint64_t index : vec) {
+                      if (!board.has(index)) {
                         score_t score = distance(query, database.records[index]);
-                        board.pushs(index, score);
+                        board.push(index, score);
+                      }
                     }
                 }
             }
@@ -168,10 +174,32 @@ void LSHForest::search(const Database& database, Result& result, const Query& qu
 
     Scoreboard board;
     switch (query_type) {
-        case BY_C:
-        case BY_C_AND_T:
-            this->mapped[(uint32_t) query.v].search(database, query, board, query_type);
+        case BY_C: {
+            uint32_t c = (uint32_t) query.v;
+            if (this->mapped[c].hashtables != nullptr) {
+              this->mapped[c].search(database, query, board, query_type);
+            } else {
+              uint32_t start_index = 0;
+              uint32_t end_index = database.length;
+              FilterIndexesByC(database.C_map, start_index, end_index, c);
+              ExaustiveSearch(database, query, board, start_index, end_index);
+            }
             break;
+        };
+        case BY_C_AND_T: {
+            uint32_t c = (uint32_t) query.v;
+            if (this->mapped[c].hashtables != nullptr) {
+              this->mapped[c].search(database, query, board, query_type);
+            } else {
+              uint32_t start_index = 0;
+              uint32_t end_index = database.length;
+              FilterIndexesByC(database.C_map, start_index, end_index, c);
+              FilterIndexesByT(database, start_index, end_index, query.l, query.r);
+              // already filtered
+              ExaustiveSearch(database, query, board, start_index, end_index);
+            }
+            break;
+        };
         default:
             this->general.search(database, query, board, query_type);
             break;
@@ -207,7 +235,7 @@ void LSHForest::build(const Database& database) {
     if (database.C_map.find(i) != database.C_map.end()) {
       auto range = database.C_map.at(i);
       const uint32_t length = range.second + 1 - range.first;
-      if (length >= LSH_FOREST_TRESHOLD) {
+      if (length > LSH_FOREST_TRESHOLD) {
           this->mapped[i].build(database, range.first, range.second + 1);
           LogTime("Built Map for C = " + std::to_string(i) + ", len = " + LengthToString(length));
       } else {
