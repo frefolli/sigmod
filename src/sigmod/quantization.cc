@@ -91,7 +91,7 @@ void FreeCodeBook(CodeBook* cb) {
         }
     }
 }
-
+/*
 void Kmeans_parallel(
         CodeBook& cb,
         const Database& database, 
@@ -101,6 +101,7 @@ void Kmeans_parallel(
         const uint32_t length) {
     
 }
+*/
 
 uint32_t min_centroid(const score_t* vect, const uint32_t length){
     uint32_t min_idx = 0;
@@ -269,7 +270,11 @@ void SearchExaustivePQ(const CodeBook& cb, const Database& database, Result& res
     
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
+        #ifdef TRANSLATE_INDEXES
+        result.data[rank] = database.records[gboard.top().index].index;
+        #else
         result.data[rank] = gboard.top().index;
+        #endif
         gboard.pop();
         rank--;
     }

@@ -234,7 +234,7 @@ Solution SolveForQueriesWithIVF(const Database& database,
         
         auto start_query_timer = std::chrono::high_resolution_clock::now();
 
-        searchIVF(ivf, solution.results[i], query_set.queries[i]);
+        searchIVF(ivf, database, solution.results[i], query_set.queries[i]);
 
         auto end_query_timer = std::chrono::high_resolution_clock::now();
         
