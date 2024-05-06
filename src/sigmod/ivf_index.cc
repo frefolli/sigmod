@@ -102,7 +102,7 @@ void compute_residual_vectors_for_db(IVF& invertedfile, const Database& db) {
     }
 }
 
-void searchIVF(const IVF& invertedfile, Result& result, const Query& query) {
+void searchIVF(const IVF& invertedfile, const Database& database, Result& result, const Query& query) {
     std::priority_queue<distance_centroid_t, std::vector<distance_centroid_t>, std::greater<distance_centroid_t>> minHeapDistances;
     Scoreboard gboard;
 
@@ -139,7 +139,11 @@ void searchIVF(const IVF& invertedfile, Result& result, const Query& query) {
 
     uint32_t rank = gboard.size() - 1;
     while(!gboard.empty()) {
+        #ifdef TRANSLATE_INDEXES
+        result.data[rank] = database.records[gboard.top().index].index;
+        #else
         result.data[rank] = gboard.top().index;
+        #endif
         gboard.pop();
         rank--;
     }

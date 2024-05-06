@@ -32,7 +32,7 @@ void FreeIVL(IVL* ivl);
 
 void compute_residual_vectors_for_db(IVF& invertedfile, const Database& db);
 void initializeIVF(IVF& invertedfile, const Database& db, const uint32_t iteration);
-void searchIVF(const IVF& invertedfile, Result& result, const Query& query);
+void searchIVF(const IVF& invertedfile, const Database& database, Result& result, const Query& query);
 
 void DebugIVF(const IVF& invertedfile);
 
