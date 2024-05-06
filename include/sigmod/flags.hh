@@ -11,7 +11,7 @@
 //#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-// #define TOT_ELEMENTS 40
+// #define TOT_ELEMENTS 40000
 // #define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
@@ -19,10 +19,10 @@
 //#define N_DIM_REDUCTION 90
 
 /* Apply product quantization */
-//#define ENABLE_PRODUCT_QUANTIZATION
+// #define ENABLE_PRODUCT_QUANTIZATION
 
 /* IVF index */
-//#define ENABLE_IVF
+// #define ENABLE_IVF
 
 /* Build a KD Forest and uses it to craft a solution */
 //#define ENABLE_KD_FOREST
@@ -49,7 +49,7 @@
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
  * */
- #define ENABLE_EXAUSTIVE
+// #define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
@@ -76,15 +76,12 @@
 // Enable Locality Sensitive Hashing
 #define ENABLE_LSH_FOREST
 
-#define LSH_FOREST_TRESHOLD k_nearest_neighbors
+#define LSH_FOREST_TRESHOLD 2000
 
-// HTN (ex: 1)
-#define LSH_TABLES (uint32_t)(((float)k_nearest_neighbors) * 0.20)
+#define LSH_TABLES 20
 
-// K (ex: 1)
 #define LSH_K(width) std::ceil(std::log2(width) + 2)
 
-// WDT (ex: log(length) ~ 24)
 #define LSH_WIDTH(length) std::sqrt(length)
 
 // #include <sigmod/custom.hh>

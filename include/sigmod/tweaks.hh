@@ -10,6 +10,6 @@
 #define VP_NODE_SIZE k_nearest_neighbors
 
 /* Used while reading/writing things from/to files */
-#define BATCH_SIZE 100000
+#define BATCH_SIZE 1000000
 
 #endif
