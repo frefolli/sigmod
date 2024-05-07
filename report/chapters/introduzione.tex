@@ -1,0 +1,130 @@
+\chapter{Introduzione}
+
+Il contest di programmazione ACM SIGMOD 2024 si è articolato nello sviluppo di una soluzione 
+per una variante del KNN problem (con $K=100$) per un dataset $D$ di dimensione 
+$10^7$ vettori e un insieme di query $Q$ di dimensione $4\cdot 10^6$. Ciascun 
+vettore del dataset possiede dei metadati che specificano la sua categoria e il
+suo timestamp. Dal momento che si hanno dei metadati associati ai vettori, si 
+identificano anche $4$ tipologie, ognuna specifica dei filtri da applicare sui 
+metadati del dataset:
+\begin{itemize}
+    \item Query tipo $0$: non si applicano filtri sui metadati.
+    \item Query tipo $1$: si filtra il database rispetto alla categoria specificata della query, si considerano 
+    solo i vettori che hanno la stessa categoria del vettore di query.
+    \item Query tipo $2$: si filtra rispetto all'intervallo di timestamp specificato della query,
+    si considerano solo i vettori che hanno il timestamp compreso nell'intervallo 
+    specificato dal vettore di query.
+    \item query tipo $3$: si applicano entrambi i filtri della tipologia $1$ e $2$.
+\end{itemize}
+
+I vettori di query e del dataset sono composti da $100$ componenti.
+
+Il codice della risoluzione verrà testato in una macchina virtuale con $32$ Thread,
+$64Gb$ di RAM e $64Gb$ di spazio. Si ha inoltre un tempo massimo di esecuzione 
+di $20$ minuti.
+
+Formalmente, il problema introdotto precedentemente può essere descritto nel 
+seguente modo. Siano $D\subseteq \mathbb{R}^{100}$ e $Q\subseteq \mathbb{R}^{100}$
+rispettivamente gli insiemi dei vettori di dataset e del queryset.
+
+Siano $c:D\cup Q\to \mathbb{N}$ e $t:D\to \mathbb{R}_+$ le funzioni che restituiscono 
+la categoria e il timestamp dei vettori del dataset e/o del queryset.
+Sia $type: Q\to \mathbb{0, 1, 2, 3}$ e $bound:Q \to \mathbb{R}^2_+$ le funzioni
+che restituiscono rispettivamente la tipologia e l'intervallo di timestamp dei 
+vettori del queryset.
+
+Quindi la ricerca si effettua in base ai casi, $\forall q\in Q$:
+\begin{itemize}
+    \item $type(q) = 0$ (query senza filtraggio): si trova $S_q$ ($S_q \subseteq D$ 
+    e $|S_q| = 100$) tale che 
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in D - S_q$$  
+    \item $type(q) = 1$ (query filtrando sulla categoria): si trova $S_q$ ($S_q \subseteq \{x| x\in D, c(x) = c(q)\}$ 
+    e $|S_q| = 100$) tale che 
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D, c(x) = c(q)\}$$  
+    \item $type(q) = 2$ (query filtrando sull'intervallo di timestamp): si trova 
+    $S_q$ ($S_q \subseteq \{x| x\in D, t(x) \in timestamp(q)\}$ 
+    e $|S_q| = 100$) tale che 
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D, t(x) \in timestamp(q)\}$$  
+    \item $type(q) = 3$ (query filtrando sull'intervallo di timestamp e sulla categoria): si trova 
+    $S_q$ ($S_q \subseteq \{x| x\in D, t(x) \in timestamp(q),  c(x) = c(q)\}$ 
+    e $|S_q| = 100$) tale che 
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D, t(x) \in timestamp(q), c(x) = c(q)\}$$  
+\end{itemize}
+Dove $d$ è la distanza euclidea applicata alle $100$ componenti dei vettori.
+
+Dal momento che la dimensione del dataset e del queryset non è banale l'approccio
+esaustivo e banale basato sull'effettivo confronto della query $q$ 
+La soluzione finale $\mathcal{S}$ coinciderà con $ \mathcal{S} = \bigcup_{q\in Q} S_q$.
+
+Un modo per risolvere questo problema è adottare l'approccio naive esaustivo (EN), ovvero 
+confrontare ciascun vettore di query con tutti i vettori del database filtrato. 
+A livello di complessità è insostenibile, infatti supponento nel caso peggiore 
+di avere solo query del tipo $0$, significa che si calcoleranno un totale di 
+$\mathcal{O}(|Q| \cdot |D|)$ distanze, con l'aggiunta della complessità di creazione
+della soluzione. La creazione della soluzione può essere trattata mediante l'ausilio 
+di un max-heap, contenente le coppie vettore database e distanza vettore-query ($D\times \mathbb{R}_+$),
+la dimensione può essere considerata fissa a $K(=100)$, questo significa che l'inserimento 
+della singola coppia comporta una complessità $\mathcal{O}(K)$. Dal momento che 
+si tenterà di inserire $\mathcal{O}(|D|)$ coppie allora la costruzione della 
+soluzione per ogni singola query sarà $\mathcal{O}(|D|\cdot K)$, complessivamente per l'intero 
+queryset si avrà $\mathcal{O}(|Q| \cdot |D|\cdot K)$. Dal momento che $K$ è costante 
+a $100$ allora si può approssimare la complessità di costruzione della soluzione 
+a  $\mathcal{O}(|Q| \cdot |D|)$. Complessità che risultano essere proibitive quando 
+si lavora su $|D|= 10^7$ e $|Q|= 4\cdot 10^6$, infatti supponendo di impiegare $1ms$ 
+a calcolare una singola distanza allora significa che per effettuare solo tutti i 
+confronti si impiegherà $0,001 \cdot |D| \cdot |Q| = 4\cdot 10^{10}$
+secondi che vuol dire circa $1268$ giorni, anche parallelizzando al massimo 
+il tutto si impiegherà circa $1268/32 = 39$ giorni. 
+
+EN non può essere adottata come soluzione finale, ma è stata utile per poter 
+stimare la Recall dei metodi sviluppati in seguito. Infatti, dal momento che i 
+creatori della challenge hanno rilasciato differenti versioni del dataset ($10^4, 10^6, 10^7$) e del 
+queryset ($10^2, 10^5, 10^6$), è stato possibile confrontare le soluzioni di EN
+e dei metodi sviluppati sui dataset con una grandezza minore. 
+
+Visto che EN è proibitivo, è stata effettuata una ricerca sulla letteratura 
+relativa all'argomento. Da questa ricerca sono stati estratti diversi approci, 
+un primo approccio si basa sull'uso di alberi metrici come KD-tree, MVP-tree, VP-tree e Ball-tree 
+che funzionano bene per vettori che hanno una dimensione ridotta, ma esplodono 
+di complessità quando vengono eseguiti su dimensioni elevate come nell'attuale 
+caso in esame. Perciò è stato pensato di ridurre la dimensionalità dei vettori 
+utilizzando un algoritmo di riduzione di dimensionalità, prima con PCA e successivamente 
+con Random Projection (RP). Entrambi i metodi non hanno portato a soluzioni migliori 
+dal momento che, vista l'indipendenza delle componenti, PCA non trovava autovettori 
+con una netta e grande varianza spiegata, mentre RP permetteva solo di ridurre al 
+massimo la dimensionalità a $90$ componenti per preservare la recall sopra il $90\%$.
+In ogni caso questi approcci non permettevano di rientrare nel limite di tempo 
+della challenge.
+
+Successivamente è stato tentato l'approccio dei grafi metrici come Hierarchical 
+Navigable Small World Graphs (HNSW). A livello teorico permette di ridurre i tempi
+di ricerca (infatti la complessità è $\mathcal{O}(log |D|)$), il problema è 
+che la costruzione della struttura è risutata troppo pesante e non è stato trovato 
+un modo per migliorare i tempi. Il problema principale della costruzione è che 
+il fatto che alla fine si va a calcolare un totale di $\mathcal{O}(|D|\cdot |D|)$
+distanze che a livello di tempo è risultato proibitivo.
+
+Successivamente è stato tentato l'approccio della quantizzazione dei vettori con 
+la Product Quantization (PQ) e gli Inverted File Index (IVF). Il problema di questi 
+due approcci è che richiedono troppo tempo per costruire l'indice dal momento che 
+PQ nasconde $M(=10)$ Kmeans ($256$ centroidi l'uno) che eseguiti in parallelo permettono 
+di ridurre i tempi di costruzione ma la Recall si riduceva troppo. Invece,
+IVF nasconde prima un Kmeans con più di $1024$ centroidi e poi una PQ con $M(=10)$
+Kmeans ($256$ centroidi l'uno) comportando una recall simile a PQ, ma con tempi 
+maggiorati. In realtà 
+si è riusciti ad avere una Recall di circa $0.95$ (sul dataset da $10k$ e queryset 
+da $100$), ma richiedeva un numero di centroidi per il primo Kmeans di $500k$,
+comportando un esplosione in termini di tempo quando si eseguiva il metodo su 
+dataset più grandi.
+
+Infine è stata trovato l'approccio finale basato su $LSH$ che ha permesso, attraverso 
+una fase di fine-tuning dei parametri, di raggiungere un compromesso tra tempi di 
+esecuzione e recall discreti.
+
+
+
+
+
+
+
+
