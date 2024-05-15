@@ -1,0 +1,83 @@
+\chapter{Soluzione proposta}
+L'approccio vincente si è basato su locality-sensitive hashing (LSH).
+Gli approcci basati su LSH consistono nella definizione di una funzione di hash 
+che ha l'obiettivo di partizionare il dataset $D$ in una serie di bucket, ciascuno 
+formato in modo tale da contenere vettori che sono i più simili possibili, rispetto 
+alla distanza euclidea. 
+
+La costruzione della funzione di hash deve essere fatta in modo tale da 
+massimizzare il numero di collisioni tra i vettori simili e ridurre al minimo 
+il numero di collisioni per vettori differenti. 
+
+In questo modo la ricerca si articola in:
+\begin{itemize}
+    \item calcolare l'hash della query e si ottiene l'indice del bucket
+    \item calcolare le distanze tra la query e tutti i vettori nel bucket ed 
+    estrarre i 100 più vicini
+\end{itemize} 
+
+Questo approccio permette di ridurre il numero di distanze calcolate, dal momento 
+che si confrontano solo la query con i vettori nel bucket. Il problema è trovare 
+un approccio per costruire una funzione di hash che sia veloce da calcolare e 
+che permetta di creare dei bucket di buona qualità.
+
+\section{Costruzione della funzione di hash}
+
+La funzione di hash che è stata definita si basa su \textbf{Random Projection}(RP),
+esattamente lo stesso algoritmo di riduzione di dimensionalità. 
+L'idea è di definire $k' = \lceil \log_2{\sqrt{|D|}} + 2\rceil$ iperpiani randomici che suddividono
+lo spazio dei vettori del dataset in $2^{k'}$ regioni, ad ogni regione si associa 
+un hash e tutti i vettori che cadono nella stessa regione verranno mappati sullo 
+stesso hash, quindi inseriti nello stesso bucket.
+
+\begin{nota}
+La scelta del valore $k'$ è stata effettuata con una gridsearch degli iperparamentri 
+che sarà illustrata nelle sezioni successive.
+\end{nota}
+
+Ogni singolo $i$-esimo iperpiano è stato definito dal suo vettore norma $n_i$
+generato randomicamente, estraendo le singole componenti da una distribuzione uniforme 
+($n_i \in U[-1,1]^{100}$). L'hash di un vettore viene calcolato considerandolo 
+come un numero binario di $k'$ bit, dove l'$i$-esimo bit $h_i$ dell'hash specifica:
+\begin{itemize}
+    \item $h_i = 1$: il vettore $v$ è posizionato sopra L'iperpiano definito dalla 
+    norma $n_i$
+    \item $h_i = 0$: il vettore $v$ è posizionato sotto L'iperpiano definito dalla 
+    norma $n_i$
+\end{itemize}
+
+A livello matematico si riduce all'equazione 
+$$h_i = \begin{cases}
+    1 & n_i \cdot v \ge 0\\
+    0 & n_i \cdot v < 0
+\end{cases}$$ 
+
+Dove $\cdot$ è il prodotto interno in $\mathbb{R}^{100}$. Lo pseudocodice della 
+funzione di hash è stato riportato nel listato \ref{list:funzione_hash}.
+
+\begin{algorithm}
+    \SetAlgoLined
+    \KwData{vettore $v\in D$}
+    \KwResult{hash $h\in \mathbb{N}$}
+
+    \Begin{
+        $h= 0$\;
+        \For{$i=1$ \KwTo $k'$}{
+            $partial = n_i \cdot v$\;
+            $h = h << 1$\;
+            \If{$partial \ge 0$}{
+                $h= h+1$\;
+            }
+        }
+    }
+    \caption{Pseudocodice della funzione di hash}
+    \label{list:funzione_hash}
+\end{algorithm}
+
+\begin{nota}
+    L'hash viene calcolato solo sulle componenti del vettore e non sui metadati.
+\end{nota}
+
+La complessità della funzione di hash è $\mathcal{O}(k'\cdot n)$
+
+\section{Costruzione della hash table}

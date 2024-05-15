@@ -91,8 +91,8 @@ caso in esame. Perciò è stato pensato di applicare i metodi dopo aver applicat
 un algoritmo di riduzione di dimensionalità con l'obiettivo di ridurre 
 i tempi di esecuzione.
 
-Sono stati testati gli algoritmi di riduzione come Principal Component Analysis (PCA) 
-e Random Projection (RP). PCA è stato immediatamente scartato dal momento che 
+Sono stati testati gli algoritmi di riduzione come \textbf{Principal Component Analysis} (PCA) 
+e \textbf{Random Projection} (RP). PCA è stato immediatamente scartato dal momento che 
 calcolando la matrice di correlazione sul dataset $D$ si è ottenuta un'assenza 
 di correlazione tra le componenti che preannuncia una spiegazione di variabilità 
 di dati uniforme tra tutti gli autovettori della matrice di correlazione, comportando 
@@ -101,8 +101,8 @@ un approccio alternativo con Random Projection (RP) che ha permesso di ridurre l
 dimensionalità a $90$ componenti per preservare la recall sopra il $90\%$, ma 
 senza significativi miglioramenti nei tempi di esecuzione degli alberi metrici.
 
-Successivamente è stato tentato l'approccio dei grafi metrici come Hierarchical 
-Navigable Small World Graphs (HNSW). A livello teorico permette di ridurre i tempi
+Successivamente è stato tentato l'approccio dei grafi metrici come \textbf{Hierarchical 
+Navigable Small World Graphs} (HNSW). A livello teorico permette di ridurre i tempi
 di ricerca (infatti la complessità è $\mathcal{O}(log |D|)$), il problema è 
 che la costruzione della struttura è risutata troppo pesante e non è stato trovato 
 un modo per migliorare i tempi. Il problema principale della costruzione è 
@@ -110,7 +110,7 @@ il fatto che alla fine si va a calcolare un totale di $\mathcal{O}(|D|\cdot |D|)
 distanze che a livello di tempo è risultato proibitivo.
 
 Successivamente è stato tentato l'approccio della quantizzazione dei vettori con 
-la Product Quantization (PQ) e gli Inverted File Index (IVF). Il problema di questi 
+la \textbf{Product Quantization} (PQ) e gli \textbf{Inverted File Index} (IVF). Il problema di questi 
 due approcci è che richiedono troppo tempo per costruire l'indice dal momento che 
 PQ nasconde $M(=10)$ Kmeans ($K=256$ cluster l'uno) che eseguiti in parallelo si 
 è riusciti a mantenere contenuti i tempi di costruzione, ma con una Recall troppo 
