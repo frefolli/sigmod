@@ -1,7 +1,8 @@
 \chapter{Soluzione proposta}
-L'approccio vincente si è basato su locality-sensitive hashing (LSH).
+L'approccio vincente si è basato su \textbf{locality-sensitive hashing} (LSH).
 Gli approcci basati su LSH consistono nella definizione di una funzione di hash 
-che ha l'obiettivo di partizionare il dataset $D$ in una serie di bucket, ciascuno 
+che ha l'obiettivo di partizionare il dataset $D$ in una hash table composta 
+da una serie di bucket, ciascuno 
 formato in modo tale da contenere vettori che sono i più simili possibili, rispetto 
 alla distanza euclidea. 
 
@@ -11,7 +12,7 @@ il numero di collisioni per vettori differenti.
 
 In questo modo la ricerca si articola in:
 \begin{itemize}
-    \item calcolare l'hash della query e si ottiene l'indice del bucket
+    \item calcolare l'hash della query che definisce l'indice del bucket
     \item calcolare le distanze tra la query e tutti i vettori nel bucket ed 
     estrarre i 100 più vicini
 \end{itemize} 
@@ -25,24 +26,25 @@ che permetta di creare dei bucket di buona qualità.
 
 La funzione di hash che è stata definita si basa su \textbf{Random Projection}(RP),
 esattamente lo stesso algoritmo di riduzione di dimensionalità. 
+
 L'idea è di definire $k' = \lceil \log_2{\sqrt{|D|}} + 2\rceil$ iperpiani randomici che suddividono
 lo spazio dei vettori del dataset in $2^{k'}$ regioni, ad ogni regione si associa 
-un hash e tutti i vettori che cadono nella stessa regione verranno mappati sullo 
-stesso hash, quindi inseriti nello stesso bucket.
+un hash e tutti i vettori che cadono afferiscono alla stessa regione produrranno 
+una collisione, quindi verranno inseriti nello stesso bucket.
 
 \begin{nota}
 La scelta del valore $k'$ è stata effettuata con una gridsearch degli iperparamentri 
 che sarà illustrata nelle sezioni successive.
 \end{nota}
 
-Ogni singolo $i$-esimo iperpiano è stato definito dal suo vettore norma $n_i$
-generato randomicamente, estraendo le singole componenti da una distribuzione uniforme 
+Ogni singolo $i$-esimo iperpiano è stato definito dal suo vettore norma $n_i$,
+generato randomicamente estraendo le singole componenti da una distribuzione uniforme 
 ($n_i \in U[-1,1]^{100}$). L'hash di un vettore viene calcolato considerandolo 
 come un numero binario di $k'$ bit, dove l'$i$-esimo bit $h_i$ dell'hash specifica:
 \begin{itemize}
-    \item $h_i = 1$: il vettore $v$ è posizionato sopra L'iperpiano definito dalla 
+    \item $h_i = 1$: il vettore $v$ si trova sopra L'iperpiano definito dalla 
     norma $n_i$
-    \item $h_i = 0$: il vettore $v$ è posizionato sotto L'iperpiano definito dalla 
+    \item $h_i = 0$: il vettore $v$ si trova sotto L'iperpiano definito dalla 
     norma $n_i$
 \end{itemize}
 
@@ -78,6 +80,157 @@ funzione di hash è stato riportato nel listato \ref{list:funzione_hash}.
     L'hash viene calcolato solo sulle componenti del vettore e non sui metadati.
 \end{nota}
 
-La complessità della funzione di hash è $\mathcal{O}(k'\cdot n)$
+La complessità temporale della funzione di hash calcolata un un particolare $v\in V$,
+è $\mathcal{O}(k' \cdot |v|)$ dove 
+$|v|$ è il numero delle componenti di $v\in D$, dai requisiti della challenge 
+costante a $100$, perciò si può anche approssimare a $\mathcal{O}(k')$ che, dal momento 
+che anche $k'$ è costante e piccolo allora si più approssimare a $\mathcal{O}(1)$.
 
-\section{Costruzione della hash table}
+\section{Costruzione di LSH}
+
+La struttura dati deve contenere tutti i bucket e il mapping, per comodità bidirezionale,
+ciascun vettore $v\in D$ con il suo hash associato.
+
+La costruzione della struttura si articola in tre passi:
+\begin{itemize}
+    \item calcolo dell'hash per ogni vettore del dataset
+    \item creazione dei bucket e inserimento dei vettori
+    \item ordinamento dei vettori nei bucket
+\end{itemize}
+
+Il calcolo dell'hash viene effettuato per ogni vettore e si salva il risultato 
+all'interno di un array $v_h$:
+
+$$v_h[i] = h(v_i)$$
+
+Successivamente si costruiscono i bucket $M_h$, a livello implementativo ciascun bucket 
+è una \texttt{unordered\_map}, che coincide con 
+
+$$M_h = \{v\in D : h = h(v)\}$$
+
+\begin{nota}
+    La scelta di utilizzare \texttt{unordered\_map} piuttosto che \texttt{map} è dovuta ai tempi di 
+    accesso e ricerca degli elementi:
+    \begin{itemize}
+        \item \texttt{unordered\_map}: il tempo di accesso usando l'hash è costante 
+        nel caso medio e lineare nel caso peggiore, inoltre il tempo di ottenimento dell'hash 
+        dato un vettore è costante nel caso medio e lineare nel caso peggiore. \cite{unsorted_map_index}\cite{unsorted_map_find}
+        \item \texttt{map}: il tmepo di accesso usando l'hash è logaritmico nella dimensione 
+        del container, mentre il tempo di ottenimento dell'hash dato un vettore è
+        logaritmico. \cite{map_index}\cite{map_find}
+    \end{itemize}
+\end{nota}
+
+Per ultimo si effettua un ordinamento dei vettori nei singoli bucket, più precisamente
+si ordina prima per categoria, timestamp e successivamente per le componenti dei vettori.
+
+I tempi di costruzione della struttura coincidono con $\mathcal{O}(|D|\cdot 1)$
+per il mapping vettore-hash, $\mathcal{O}(|D|\cdot |D|)$ ($\Theta(|D|)$) per l'inserimento 
+dei vettori nei bucket e $\mathcal{O}(|D|\log |D|)$ per l'ordinamento dei vettori 
+nei singoli bucket, in totale ne caso peggiore si ha $\mathcal{O}(|D|\cdot |D|)$.
+
+Parlando invece dello spazio occupato, la struttura ha una complessità spaziale 
+limitata perché non si salvano completamente i vettori in ciascuna sottostuttura,
+bensì si salvano i loro indici di posizione del dataset, in aggiunta gli hash non 
+sono altro che interi. Quindi il vettore di mapping vettori-hash $v_h$ alla fine 
+contiene un totale $|D|$ interi, mentre l'unsorted map conterrà sempre gli indici 
+dei vettori, in totale $|D|$, e tutti gli hash, quindi al massimo $2^{k'} = 2^ {14}$ 
+interi, infine complessivamente si ha un totale di al massimo $10^7 + 2^14$ interi 
+da salvare ($\approx 38 Mb$).
+
+Il problema di questa soluzione è la Recall che è risultata bassa fin da subito, 
+in fatti uno dei problemi e allo stesso tempo pregi di questo metodo è che la ricerca 
+dei vettori più vicini si effettua solo nel bucket in cui cade il vettore di query.
+Questo permette di ridurre il numero di distanze calcolate per ogni query, ma non 
+considera anche vettori vicini alla query che fanno parte di bucket adiacenti.
+
+\begin{esempio}
+    Se la query è di tipo $1$, quindi si deve filtrare per categoria, c'è il rischio 
+    che in un particolare bucket non ci siano abbastanza vettori della stessa categoria
+\end{esempio}
+
+\begin{esempio}
+    Possiamo aver problemi anche nel caso in cui la query sia di tipo $0$, quindi si 
+    deve filtrare per metadati, e cade nello spazio vicino ad un iperpiano che limita il bucket, 
+    questo comporta che in fase di ricerca si consideranno solo i vettori di quel 
+    bucket e non quelli del bucket adiacente che ha in comune lo stesso iperpiano. 
+\end{esempio}
+
+Per risolvere i problemi è stato pensato di generare nuovi mapping randomici (\textbf{LSH con hash table multiple})
+
+\section{LSH con hash table multiple}
+
+Precedentemente è stato introdotto LSH composta da una hash table che mappa i vettori 
+in bucket identificati da un hash.
+
+L'idea di LSH con hash table multiple è di creare un totale di $M$ hash table ognuna con un
+inizializzazione tramite iperpiani il più differente possibile dalle altre. In questo 
+modo è possibile suddividere l'intero spazio dei vettori in $M$ modi differenti,
+cosicché in fase di ricerca, al posto che cercare in una hash table, si cerca 
+in $M$ hash table parallelamente. In questo modo si può risolvere il problema di 
+cercare i vettori vicini anche nei bucket adiacenti, perché si spera che i bucket 
+in cui cade la query per ciascuna hashtable sia il più differente possibile dagli 
+altri. $M$ è stato scelto attraverso una gridsearch che verrà illustrata successivamente.
+
+La differenza di partizione dello spazio di ciascuna hashtable dipende interamente 
+da come vengono generati gli iperpiani di separazione, dal momento che si estraggono 
+da una distribuzione uniforme si ha già una buona variabilità e questo permette di avere 
+una maggior variabilità anche nelle hash table, portando a dei miglioramenti in termini di 
+Recall.
+
+Bisogna però menzionare il fatto che le diverse hash table partizionano lo stesso 
+spazio geometrico, quindi in fase di ricerca può capitare che la query venga confrontata 
+più volte con gli stessi vettori perché questi, ess endo vicini, possono capitare 
+negli stessi bucket della query in hashtable differenti.
+
+Visto che l'introduzione di hash table multiple può portare a confronti multipli 
+tra la query e gli stessi vettori, per ridurre i tempi di ricerca e aumentare 
+la recall sulle query di tipo $1$ e di tipo $3$ è stato pensato di risolverlo 
+definendo \textbf{LSH Forest}.
+
+\section{LSH Forest}
+L'approccio di LSH Forest è di velocizzare le query che filtrano sulla categoria,
+ovvero quelle di tipo $1$ e $3$. Per fare ciò è stato pensato di definire un LSH
+con hash table multiple generale sull'intero dataset per le query di tipo $0$ e $2$, 
+inoltre una LSH con hash table multiple per ogni categoria che contiene almeno $2000$ 
+vettori, in questo modo si riduce il calcolo delle distanze. La scelta di creare 
+una LSH dedicata solo per le categorie che superano la cardinalità dei $2000$ vettori 
+è dovuta dal fatto che il tempo necessario per crearla è maggiore dei benefici 
+che porta nella ricerca, quindi si preferisce evitare di crearla.
+
+L'unico problema che rimane da risolvere in fase di costruzione di LSH Forest è 
+indentificare i vettori della stessa categoria nel dataset, per fare ciò è bastato 
+ordinare il dataset dei vettori secondo la categoria, il timestamp ed infine 
+le componenti di ciascun vettore. Questo richiede $\mathcal{O}(|D|\log |D|)$ di 
+complessità, ma non aggiunge complessità alla costruzione delle LSH per ogni categoria 
+dal momento che i vettori della stessa categoria sono tutti continui. Questa 
+fase di ordinamento velocizza l'ordinamento dei vettori nei bucket e la ricerca 
+per filtrando per il timestamp. L'ordinamento dei vettori del bucket non è detto 
+che venga preservato perché la costruzione è parallelizzata, perciò l'ordinamento 
+non è assicurato.
+
+L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato
+
+\begin{algorithm}
+    \SetAlgoLined
+    \KwData{dataset $D$}
+    \KwResult{LSH Forest $LSHF$}
+
+    \Begin{
+        $sort(D)$\;
+        
+        \For{$i=1$ \KwTo $k'$}{
+            $partial = n_i \cdot v$\;
+            $h = h << 1$\;
+            \If{$partial \ge 0$}{
+                $h= h+1$\;
+            }
+        }
+    }
+    \caption{Pseudocodice della costruzione di LSH Forest}
+    \label{list:costruzione_lsh_forest}
+\end{algorithm}
+
+\section{Ricerca in LSH Forest}
+La ricerca nella struttura cambia in base alla tipologia di query che si deve 
+cercare.

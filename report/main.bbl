@@ -16,5 +16,42 @@
   {}
 \endgroup
 
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global}
+    \entry{map_find}{misc}{}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://en.cppreference.com/w/cpp/container/map/find}}
+      \field{note}{Accessed: 17/05/2024}
+      \field{title}{Map access using find}
+    \endentry
+    \entry{map_index}{misc}{}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://en.cppreference.com/w/cpp/container/map/operator_at}}
+      \field{note}{Accessed: 17/05/2024}
+      \field{title}{Map access using key}
+    \endentry
+    \entry{unsorted_map_find}{misc}{}
+      \field{sortinit}{U}
+      \field{sortinithash}{6901a00e45705986ee5e7ca9fd39adca}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://en.cppreference.com/w/cpp/container/unordered_map/find}}
+      \field{note}{Accessed: 17/05/2024}
+      \field{title}{Unsorted map access using find}
+    \endentry
+    \entry{unsorted_map_index}{misc}{}
+      \field{sortinit}{U}
+      \field{sortinithash}{6901a00e45705986ee5e7ca9fd39adca}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://en.cppreference.com/w/cpp/container/unordered_map/operator_at}}
+      \field{note}{Accessed: 17/05/2024}
+      \field{title}{Unsorted map access using key}
+    \endentry
+  \enddatalist
+\endrefsection
 \endinput
 
