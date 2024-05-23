@@ -115,7 +115,7 @@ $$M_h = \{v\in D : h = h(v)\}$$
         \item \texttt{unordered\_map}: il tempo di accesso usando l'hash è costante 
         nel caso medio e lineare nel caso peggiore, inoltre il tempo di ottenimento dell'hash 
         dato un vettore è costante nel caso medio e lineare nel caso peggiore. \cite{unsorted_map_index}\cite{unsorted_map_find}
-        \item \texttt{map}: il tmepo di accesso usando l'hash è logaritmico nella dimensione 
+        \item \texttt{map}: il tempo di accesso usando l'hash è logaritmico nella dimensione 
         del container, mentre il tempo di ottenimento dell'hash dato un vettore è
         logaritmico. \cite{map_index}\cite{map_find}
     \end{itemize}
@@ -135,7 +135,7 @@ bensì si salvano i loro indici di posizione del dataset, in aggiunta gli hash n
 sono altro che interi. Quindi il vettore di mapping vettori-hash $v_h$ alla fine 
 contiene un totale $|D|$ interi, mentre l'unsorted map conterrà sempre gli indici 
 dei vettori, in totale $|D|$, e tutti gli hash, quindi al massimo $2^{k'} = 2^ {14}$ 
-interi, infine complessivamente si ha un totale di al massimo $10^7 + 2^14$ interi 
+interi, infine complessivamente si ha un totale di al massimo $10^7 + 2^{14}$ interi 
 da salvare ($\approx 38 Mb$).
 
 Il problema di questa soluzione è la Recall che è risultata bassa fin da subito, 
@@ -150,7 +150,7 @@ considera anche vettori vicini alla query che fanno parte di bucket adiacenti.
 \end{esempio}
 
 \begin{esempio}
-    Possiamo aver problemi anche nel caso in cui la query sia di tipo $0$, quindi si 
+    Possiamo aver problemi anche nel caso in cui la query sia di tipo $0$, quindi non si 
     deve filtrare per metadati, e cade nello spazio vicino ad un iperpiano che limita il bucket, 
     questo comporta che in fase di ricerca si consideranno solo i vettori di quel 
     bucket e non quelli del bucket adiacente che ha in comune lo stesso iperpiano. 
@@ -209,28 +209,219 @@ per filtrando per il timestamp. L'ordinamento dei vettori del bucket non è dett
 che venga preservato perché la costruzione è parallelizzata, perciò l'ordinamento 
 non è assicurato.
 
-L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato
+L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{list:costruzione_lsh_forest}.
 
-\begin{algorithm}
+\newpage
+
+\begin{algorithm} [!h]
     \SetAlgoLined
     \KwData{dataset $D$}
     \KwResult{LSH Forest $LSHF$}
-
+    
     \Begin{
         $sort(D)$\;
-        
-        \For{$i=1$ \KwTo $k'$}{
-            $partial = n_i \cdot v$\;
-            $h = h << 1$\;
-            \If{$partial \ge 0$}{
-                $h= h+1$\;
+        $c\_map = index(D)$\;
+        $LSHF.general = createLsh(D,c\_map[c].start,c\_map[c].end)$\;
+        \For{$\forall c\in C$}{
+            \If{$c\_map[c].end - c\_map[c].start > 2000$}{
+                $lsh = createLsh(D,c\_map[c].start,c\_map[c].end)$\;
+            }{
+                $lsh = Null$\;
             }
+            $LSHF.mapped[c] = lsh$\;
         }
     }
-    \caption{Pseudocodice della costruzione di LSH Forest}
+
+    
+    \SetKwFunction{FLsh}{createLsh}
+    \SetKwProg{Fn}{Function}{:}{}
+    \Fn{\FLsh{$D$, $start\_idx\_cat$, $end\_idx\_cat$}}{
+        \Begin{
+            $lsh$ is object\;
+            $length =end\_idx\_cat - start\_idx\_cat$\;
+            \For{$i=1$ \KwTo $NHashTable$}{
+                $hp = generateHyperplanes(length)$\;
+                $lsh.hashtable[i].hp = hp$\;
+                $hashes$ is array\;
+                \For{$j=1$ \KwTo $|length|$}{
+                    \For{$k=1$ \KwTo $|hp|$}{
+                        $hashes[j] = hash(hp[k], D[start\_idx\_cat + j])$\;
+                    }
+                }
+                $lsh.hashtable[i].hashes = hashes$\;
+                \For{$j=1$ \KwTo $|D|$}{
+                    $lsh.hashtable[i].buckets[hashes[j]].push(start\_idx\_cat + j)$\;
+                }
+
+                \For{$j=1$ \KwTo $|hp|$}{
+                    $sort(lsh.hashtable[i].buckets[j])$\;
+                }
+            }
+            \Return{$lsh$}
+        }
+    }
+
+    \caption{Pseudocodice della costruzione di LSH Forest. La funzione $index$ genera 
+    una mappa che associa ad ogni categoria la posizione di inizio e di fine del 
+    gruppo di vettori che afferisce alla stessa categoria. La funzione 
+    $generateHyperplanes$ ritorna l'array delle norme degli iperpiani generate 
+    randomicamente.}
     \label{list:costruzione_lsh_forest}
 \end{algorithm}
 
 \section{Ricerca in LSH Forest}
+
 La ricerca nella struttura cambia in base alla tipologia di query che si deve 
-cercare.
+cercare:
+\begin{itemize}
+    \item query senza filtraggio e query con il filtraggio sul timestamp: la ricerca 
+    si effettua solo nell'LSH generale contenente tutti i vettori.
+    \item query con il filtraggio sulla categoria e query con il filtraggio sulla 
+    categoria e timestamp: la ricerca si effettua in modo esaustivo nel dataset per quelle 
+    categorie con meno di $2000$ vettori, altrimenti per le altre si ricerca 
+    nella LSH della categoria. 
+\end{itemize}
+
+Per ogni query si produce un Minheap contenente le $100$ migliori coppie 
+$(idx_v, d(v,q))$, ovvero indice del vettore $v$ nel dataset e distanza tra il vettore
+e la query. Il Minheap deve ordinare rispetto la distanza.
+
+La ricerca di una \textbf{query senza filtraggio o query con filtraggio sul timestamp} 
+si effettua nell'LSH generale costruita sull'intero dataset. Più precisamente la 
+query senza filtraggio si ricerca nel seguente modo, per ogni hashtable 
+delle $20$ si estraggono i vettori a distanza minima dalla query e poi si combinano 
+i risultati. Più precisamente, per ogni $i$-esima hashtable:
+\begin{itemize}
+    \item si calcola $h_i(q)$
+    \item si cerca il bucket di vettori che sono mappati con il medesimo hash 
+    di $h_i(q)$
+    \item si calcolano le distanze tra i vettori del bucket e la query e si inseriscono
+    nel Minheap
+\end{itemize}
+Per il caso delle query con filtraggio sul timestamp si effettuano i seguenti passi,
+per ogni $i$-esima hashtable:
+\begin{itemize}
+    \item si calcola $h_i(q)$
+    \item si cerca il bucket di vettori che sono mappati con il medesimo hash 
+    di $h_i(q)$
+    \item si effettua una ricerca dicotomica nel bucket degli indici di due vettori: quello con 
+    il minimo timestamp che è maggiore di $q.l$ e quello col massimo timestamp che 
+    è minore di $q.r$. In questo modo si trova il intervallo di vettori nel bucket 
+    che hanno timestamp compreso tra $[l,r]$.
+    \item si calcolano le distanze tra i vettori del bucket e la query e si inseriscono
+    nel Minheap
+\end{itemize}
+
+La ricerca di una \textbf{query con filtraggio solo sulla categoria o sulla categoria e timestamp}, 
+per categorie piccole $|c|\le 2000$, viene effettuata in modo esaustivo direttamente nel dataset,
+sfruttando il suo ordinamento e l'indicizzazione della $c\_map$ costruita 
+prima di creare $LSHForest$. 
+Più precisamente, dal momento che il dataset viene ordinato, da $c\_map[c]$
+si ottiene $[idx_l, idx_r]$, l'intervallo vettori afferenti alla stessa categoria della query. 
+Se la query filtra solo per categoria si calcolano le distanze tra la query e tutti 
+i vettori della regione, popolando di conseguenza il minheap. 
+Nel caso in cui la query filtra anche per timestamp, 
+dal momento che la regione è anche ordinata per timestamp, allora si effettua 
+una ricerca dicotomica degli indici di due vettori: quello con il minimo timestamp che è 
+maggiore di $q.l$ e quello col massimo timestamp che è minore di $q.r$.
+In questo modo si ottiene un intervallo 
+di indici dei vettori nel dataset che hanno timestamp incluso 
+nell'intervallo specificato dalla query. Infine si calcolano tutte le distanze 
+tra i vettori dell'intervallo e la query, popolando alla fine il minheap.
+
+Per le medesime query, ma sulle categorie più grandi $|c|> 200$ allora la ricerca 
+si effettua direttamente nelle LSH dedicate della categoria con lo stesso algoritmo 
+spiegato per la ricerca delle query senza filtraggio o query con filtraggio sul timestamp.
+
+Lo pseudocodice è mostrato nel listato \ref{list:ricerca_lsh_forest}.
+
+
+
+\begin{algorithm} [!h]
+    \SetAlgoLined
+    \KwData{dataset $D$, $LSHF$ e query $q$}
+    \KwResult{vettori $K \subseteq D$}
+    
+    \Begin{
+        \Switch{query.type}{
+            \Case{$query.type == 0 \lor query.type == 2$}{
+                \Return{$searchLsh(LSHF.general, D, q)$}
+            }
+            \Case{$query.type == 1\lor query.type == 3$}{
+                \If{$LSHF.mapped[c].hashtable != null$}{
+                    \Return{$searchLsh(LSHF.mapped[c],D, q)$}
+                }\Else{
+                    \Return{$ExaustiveSearch(D, q)$}
+                }
+            }
+        }
+    }
+
+    \SetKwFunction{FLsh}{searchLsh}
+    \SetKwProg{Fn}{Function}{:}{}
+    \Fn{\FLsh{$LSH$,$D$, $q$}}{
+        \Begin{
+            $results$ is a Minheap\;
+            \Switch{$q.type$}{
+                \Case{$q.type == 2 \lor q.type == 3$}{
+                    \For{$i=1$ \KwTo $NHashTable$}{
+                        $h_q = hash(LSH.hashtable[i],q)$\;
+                        $bucket = LSH.hashtable[i].bucket[h_q]$\;
+                        $[idx_l, idx_r] = dicotomicSearch(D, bucket, q.l, q.r)$\;
+
+                        \For{$v\in D[idx_l:idx_r]$}{
+                            \If{$\lnot results.has(v)$}{
+                                $results.insert((idx(v), distance(v,q)))$\;
+                            }                            
+                        }
+                        \Return{$lsh$}
+                    }
+
+                }
+                \Case{$q.type == 0 \lor q.type == 1$}{
+                    \For{$i=1$ \KwTo $NHashTable$}{
+                        $h_q = hash(LSH.hashtable[i],q)$\;
+                        $bucket = LSH.hashtable[i].bucket[h_q]$\;
+                        $[idx_l, idx_r] = dicotomicSearch(D, bucket, q.l, q.r)$\;
+
+                        \For{$idx\in bucket$}{
+                            \If{$\lnot results.has(v)$}{
+                                $results.insert((idx, distance(D[idx],q)))$\;
+                            }              
+                        }
+                        \Return{$lsh$}
+                    }
+
+                }
+            }
+            
+        }
+    }
+
+    \caption{Pseudocodice per la ricerca della query in LSH Forest.}
+    \label{list:ricerca_lsh_forest}
+\end{algorithm}
+
+La complessità della ricerca varia in base alle query che si devono cercare e dalla 
+composizione del dataset:
+\begin{itemize}
+    \item \textbf{query senza filtraggio}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
+    trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio) e 
+    si calcolano un totale di $\mathcal{O}(|b|)$ ($|b|$ numero di vettori nel bucket). 
+    Questo ripetutto per tutte le $20$, che a livello asintotico rimane $\mathcal{O}(|D|)$
+    o nel caso medio $\Theta(|b|)$.
+    \item \textbf{query con filtraggio sul timestamp}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
+    trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio),
+    ricerca dicotomica dei due vettori nel bucket $\mathcal{O}(\log(|b|))$ ($|b|$ numero di vettori nel bucket) 
+    e, supponendo che l'intervallo di timestamp sia grande $|t|\le |b|$ vettori, 
+    si calcolano un totale di $\mathcal{O}(|t|)$. 
+    Questo ripetutto per tutte le $20$, che a livello asintotico rimane $\mathcal{O}(|D|)$
+    o nel caso medio $\Theta(|t|)$.
+    \item \textbf{query con filtraggio solo sulla categoria} (categoria piccola): 
+    \item \textbf{query con filtraggio solo sulla categoria e sul timestamp} (categoria piccola): 
+    \item \textbf{query con filtraggio solo sulla categoria} (categoria grande): 
+    \item \textbf{query con filtraggio solo sulla categoria e sul timestamp} (categoria grande): 
+    
+    
+
+\end{itemize}
