@@ -72,7 +72,7 @@ funzione di hash è stato riportato nel listato \ref{list:funzione_hash}.
             }
         }
     }
-    \caption{Pseudocodice della funzione di hash}
+    \caption{Pseudocodice della funzione di hash.}
     \label{list:funzione_hash}
 \end{algorithm}
 
@@ -80,20 +80,23 @@ funzione di hash è stato riportato nel listato \ref{list:funzione_hash}.
     L'hash viene calcolato solo sulle componenti del vettore e non sui metadati.
 \end{nota}
 
-La complessità temporale della funzione di hash calcolata un un particolare $v\in V$,
+La complessità temporale della funzione di hash calcolata per un particolare $v\in V$,
 è $\mathcal{O}(k' \cdot |v|)$ dove 
-$|v|$ è il numero delle componenti di $v\in D$, dai requisiti della challenge 
-costante a $100$, perciò si può anche approssimare a $\mathcal{O}(k')$ che, dal momento 
-che anche $k'$ è costante e piccolo allora si più approssimare a $\mathcal{O}(1)$.
+$|v|$ è il numero delle componenti di $v\in D$ che dai requisiti della challenge 
+costante a $100$, perciò si può anche approssimare a $\mathcal{O}(k')$, ma essendo 
+che anche $k'$ è costante allora si piò approssimare a $\mathcal{O}(1)$.
 
 \section{Costruzione di LSH}
 
-La struttura dati deve contenere tutti i bucket e il mapping, per comodità bidirezionale,
-ciascun vettore $v\in D$ con il suo hash associato.
+La struttura dati di LSH dovrà contenere l'hash table dei vettori e le norme degli 
+iperpiani generati.
+Nella realtà viene salvato anche il mapping inverso dal vettore del dataset al 
+suo hash associato.
 
 La costruzione della struttura si articola in tre passi:
 \begin{itemize}
-    \item calcolo dell'hash per ogni vettore del dataset
+    \item calcolo dell'hash per ogni vettore del dataset e salvataggio del mapping 
+    vettore-hash
     \item creazione dei bucket e inserimento dei vettori
     \item ordinamento dei vettori nei bucket
 \end{itemize}
@@ -104,7 +107,7 @@ all'interno di un array $v_h$:
 $$v_h[i] = h(v_i)$$
 
 Successivamente si costruiscono i bucket $M_h$, a livello implementativo ciascun bucket 
-è una \texttt{unordered\_map}, che coincide con 
+è una \texttt{unordered\_map}, che coincidono con 
 
 $$M_h = \{v\in D : h = h(v)\}$$
 
@@ -127,7 +130,6 @@ si ordina prima per categoria, timestamp e successivamente per le componenti dei
 I tempi di costruzione della struttura coincidono con $\mathcal{O}(|D|\cdot 1)$
 per il mapping vettore-hash, $\mathcal{O}(|D|\cdot |D|)$ ($\Theta(|D|)$) per l'inserimento 
 dei vettori nei bucket e $\mathcal{O}(|D|\log |D|)$ per l'ordinamento dei vettori 
-nei singoli bucket, in totale ne caso peggiore si ha $\mathcal{O}(|D|\cdot |D|)$.
 
 Parlando invece dello spazio occupato, la struttura ha una complessità spaziale 
 limitata perché non si salvano completamente i vettori in ciascuna sottostuttura,
@@ -161,7 +163,7 @@ Per risolvere i problemi è stato pensato di generare nuovi mapping randomici (\
 \section{LSH con hash table multiple}
 
 Precedentemente è stato introdotto LSH composta da una hash table che mappa i vettori 
-in bucket identificati da un hash.
+in bucket identificati dal loro hash.
 
 L'idea di LSH con hash table multiple è di creare un totale di $M$ hash table ognuna con un
 inizializzazione tramite iperpiani il più differente possibile dalle altre. In questo 
@@ -169,10 +171,10 @@ modo è possibile suddividere l'intero spazio dei vettori in $M$ modi differenti
 cosicché in fase di ricerca, al posto che cercare in una hash table, si cerca 
 in $M$ hash table parallelamente. In questo modo si può risolvere il problema di 
 cercare i vettori vicini anche nei bucket adiacenti, perché si spera che i bucket 
-in cui cade la query per ciascuna hashtable sia il più differente possibile dagli 
+in cui cade la query per ciascuna hash table sia il più differente possibile dagli 
 altri. $M$ è stato scelto attraverso una gridsearch che verrà illustrata successivamente.
 
-La differenza di partizione dello spazio di ciascuna hashtable dipende interamente 
+La differenza di partizione dello spazio di ciascuna hash table dipende interamente 
 da come vengono generati gli iperpiani di separazione, dal momento che si estraggono 
 da una distribuzione uniforme si ha già una buona variabilità e questo permette di avere 
 una maggior variabilità anche nelle hash table, portando a dei miglioramenti in termini di 
@@ -180,8 +182,13 @@ Recall.
 
 Bisogna però menzionare il fatto che le diverse hash table partizionano lo stesso 
 spazio geometrico, quindi in fase di ricerca può capitare che la query venga confrontata 
-più volte con gli stessi vettori perché questi, ess endo vicini, possono capitare 
-negli stessi bucket della query in hashtable differenti.
+più volte con gli stessi vettori perché questi, essendo vicini, possono capitare 
+negli stessi bucket della query in hash table differenti.
+
+Quindi introducendo $M$ hash table multiple, significa che si effettueranno $M$ 
+diverse separazioni dello spazio dei vettori del dataset, perciò si avranno 
+$M$ diversi insiemi di norme e perciò il calcolo dell'hash per ciascuna hash table 
+si basa sull'insieme di norme associate alla medesima hash table.
 
 Visto che l'introduzione di hash table multiple può portare a confronti multipli 
 tra la query e gli stessi vettori, per ridurre i tempi di ricerca e aumentare 
@@ -190,10 +197,10 @@ definendo \textbf{LSH Forest}.
 
 \section{LSH Forest}
 L'approccio di LSH Forest è di velocizzare le query che filtrano sulla categoria,
-ovvero quelle di tipo $1$ e $3$. Per fare ciò è stato pensato di definire un LSH
-con hash table multiple generale sull'intero dataset per le query di tipo $0$ e $2$, 
-inoltre una LSH con hash table multiple per ogni categoria che contiene almeno $2000$ 
-vettori, in questo modo si riduce il calcolo delle distanze. La scelta di creare 
+ovvero quelle di tipo $1$ e $3$. Per fare ciò è stato pensato di definire una \textbf{LSH
+con hash table multiple generale} sull'intero dataset per le query di tipo $0$ e $2$ e definire,
+per ogni categoria sufficientemente grande ($>2000$), una \textbf{LSH con hash table multiple}, in questo 
+modo si riduce il numero di distanze calcolate. La scelta di creare 
 una LSH dedicata solo per le categorie che superano la cardinalità dei $2000$ vettori 
 è dovuta dal fatto che il tempo necessario per crearla è maggiore dei benefici 
 che porta nella ricerca, quindi si preferisce evitare di crearla.
@@ -204,14 +211,22 @@ ordinare il dataset dei vettori secondo la categoria, il timestamp ed infine
 le componenti di ciascun vettore. Questo richiede $\mathcal{O}(|D|\log |D|)$ di 
 complessità, ma non aggiunge complessità alla costruzione delle LSH per ogni categoria 
 dal momento che i vettori della stessa categoria sono tutti continui. Questa 
-fase di ordinamento velocizza l'ordinamento dei vettori nei bucket e la ricerca 
-per filtrando per il timestamp. L'ordinamento dei vettori del bucket non è detto 
-che venga preservato perché la costruzione è parallelizzata, perciò l'ordinamento 
-non è assicurato.
+fase di ordinamento, inoltre, velocizza l'ordinamento dei vettori nei bucket e la ricerca 
+filtrando per il timestamp. L'ordinamento dei vettori del bucket non è detto 
+che venga preservato perché la costruzione è parallelizzata.
+
+Quindi ricapitolando la costruzione si articola nelle seguenti fasi:
+\begin{itemize}
+    \item \textbf{ordinamento del dataset} secondo la categoria, timestamp e componenti dei vettori.
+    \item \textbf{indicizzazione delle categorie}: creazione di una mappa che 
+    mappa ciascuna categoria ad una tupla che specifica gli indici di inizio 
+    del primo e dell'ultimo vettore nel dataset di quella categoria.
+    \item \textbf{creazione di LSH con hash table multiple} sull'intero dataset.
+    \item \textbf{creazione di una LSH con hash table multiple} per ogni categoria 
+    di dimensione maggiore di $2000$ vettori.
+\end{itemize}
 
 L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{list:costruzione_lsh_forest}.
-
-\newpage
 
 \begin{algorithm} [!h]
     \SetAlgoLined
@@ -221,7 +236,7 @@ L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{lis
     \Begin{
         $sort(D)$\;
         $c\_map = index(D)$\;
-        $LSHF.general = createLsh(D,c\_map[c].start,c\_map[c].end)$\;
+        $LSHF.general = createLsh(D,0,|D| - 1)$\;
         \For{$\forall c\in C$}{
             \If{$c\_map[c].end - c\_map[c].start > 2000$}{
                 $lsh = createLsh(D,c\_map[c].start,c\_map[c].end)$\;
@@ -240,7 +255,7 @@ L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{lis
             $lsh$ is object\;
             $length =end\_idx\_cat - start\_idx\_cat$\;
             \For{$i=1$ \KwTo $NHashTable$}{
-                $hp = generateHyperplanes(length)$\;
+                $hp = generateHyperplanes()$\;
                 $lsh.hashtable[i].hp = hp$\;
                 $hashes$ is array\;
                 \For{$j=1$ \KwTo $|length|$}{
@@ -269,6 +284,28 @@ L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{lis
     \label{list:costruzione_lsh_forest}
 \end{algorithm}
 
+La complessità di creazione di LSH Forest può essere riassunta in:
+\begin{itemize}
+    \item \textbf{ordinamento del dataset}: $\mathcal{O}(|D|\log |D|)$
+    \item \textbf{indicizzazione delle categorie}: $\mathcal{O}(|D|)$
+    \item \textbf{creazione di LSH con hash table multiple} generale: la generazione
+    di una hash table richiede $\mathcal{O}(k'\cdot |v|=1)$ per generare gli iperpiani
+    (dove $|v| = 100, k' = 14$), $\mathcal{O}(|D|\cdot 1)$ per calcolare l'hash per ogni vettore,
+    $\mathcal{O}(|D|)$ per inserire i vettori nei bucket e infine $\mathcal{O}(|D|\log |D|)$
+    per ordinare tutti i bucket. Queste operazioni si devono replicare per tutte le 
+    $M$ hash table quindi in totale si impiegherà $\mathcal{O}(M\cdot |D|\log |D|)$.
+    Da notare che i bucket potenzialmente sono già parzialmente ordinati quindi 
+    l'ordinamento a livello asintotico si avvicina a $\mathcal(|D|)$ e quindi 
+    potenzialmente la complessità della creazione di tutte le hash table è $\mathcal{O}(M\cdot |D|)$.
+    \item \textbf{creazione di una LSH con hash table multiple} per ogni categoria 
+    di dimensione maggiore di $2000$ vettori: per la creazione di ciascuna LSH 
+    è, come detto precedentemente, vicino a $\mathcal{O}(M\cdot |c|)$ dove $|c|$
+    è la dimensione della categoria.
+\end{itemize}
+
+In realtà la costruzione viene ottimizzata parallelizzando la costruzione delle 
+singole LSH.
+
 \section{Ricerca in LSH Forest}
 
 La ricerca nella struttura cambia in base alla tipologia di query che si deve 
@@ -288,9 +325,9 @@ e la query. Il Minheap deve ordinare rispetto la distanza.
 
 La ricerca di una \textbf{query senza filtraggio o query con filtraggio sul timestamp} 
 si effettua nell'LSH generale costruita sull'intero dataset. Più precisamente la 
-query senza filtraggio si ricerca nel seguente modo, per ogni hashtable 
+query senza filtraggio si ricerca nel seguente modo, per ogni hash table 
 delle $20$ si estraggono i vettori a distanza minima dalla query e poi si combinano 
-i risultati. Più precisamente, per ogni $i$-esima hashtable:
+i risultati. Più precisamente, per ogni $i$-esima hash table:
 \begin{itemize}
     \item si calcola $h_i(q)$
     \item si cerca il bucket di vettori che sono mappati con il medesimo hash 
@@ -299,7 +336,7 @@ i risultati. Più precisamente, per ogni $i$-esima hashtable:
     nel Minheap
 \end{itemize}
 Per il caso delle query con filtraggio sul timestamp si effettuano i seguenti passi,
-per ogni $i$-esima hashtable:
+per ogni $i$-esima hash table:
 \begin{itemize}
     \item si calcola $h_i(q)$
     \item si cerca il bucket di vettori che sono mappati con il medesimo hash 
@@ -364,7 +401,7 @@ Lo pseudocodice è mostrato nel listato \ref{list:ricerca_lsh_forest}.
             $results$ is a Minheap\;
             \Switch{$q.type$}{
                 \Case{$q.type == 2 \lor q.type == 3$}{
-                    \For{$i=1$ \KwTo $NHashTable$}{
+                    \For{$i=1$ \KwTo $Ns$}{
                         $h_q = hash(LSH.hashtable[i],q)$\;
                         $bucket = LSH.hashtable[i].bucket[h_q]$\;
                         $[idx_l, idx_r] = dicotomicSearch(D, bucket, q.l, q.r)$\;
@@ -408,20 +445,45 @@ composizione del dataset:
     \item \textbf{query senza filtraggio}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
     trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio) e 
     si calcolano un totale di $\mathcal{O}(|b|)$ ($|b|$ numero di vettori nel bucket). 
-    Questo ripetutto per tutte le $20$, che a livello asintotico rimane $\mathcal{O}(|D|)$
+    Questo ripetutto per tutte le $20$ che a livello asintotico rimane $\mathcal{O}(|D|)$
     o nel caso medio $\Theta(|b|)$.
     \item \textbf{query con filtraggio sul timestamp}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
     trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio),
     ricerca dicotomica dei due vettori nel bucket $\mathcal{O}(\log(|b|))$ ($|b|$ numero di vettori nel bucket) 
     e, supponendo che l'intervallo di timestamp sia grande $|t|\le |b|$ vettori, 
     si calcolano un totale di $\mathcal{O}(|t|)$. 
-    Questo ripetutto per tutte le $20$, che a livello asintotico rimane $\mathcal{O}(|D|)$
+    Questo ripetuto per tutte le $20$ che a livello asintotico rimane $\mathcal{O}(|D|)$
     o nel caso medio $\Theta(|t|)$.
     \item \textbf{query con filtraggio solo sulla categoria} (categoria piccola): 
+    si calcolano al massimo $\mathcal{O}(|c|)$ distanze, dove $|c|$ indica la dimensione 
+    della categoria che per definizione sono $|c|\le 2000$.
     \item \textbf{query con filtraggio solo sulla categoria e sul timestamp} (categoria piccola): 
-    \item \textbf{query con filtraggio solo sulla categoria} (categoria grande): 
+    si calcolano al massimo $\mathcal{O}(|t|)$ distanze, dove $|t|$ è il numero 
+    di vettori che hanno timestamp incluso nell'intervallo specificato dalla query,
+    nel caso peggiore $|t|=|c|$. 
+    \item \textbf{query con filtraggio solo sulla categoria} (categoria grande):
+    il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
+    trovare il bucket con lo stesso hash è $\mathcal{O}(|c|)$ (costante nel caso medio), con
+    $|c|$ dimensione della categoria, e 
+    si calcolano un totale di $\mathcal{O}(|b|)$ ($|b|$ numero di vettori nel bucket).
+    Questo ripetuto per tutte le $20$ che a livello asintotico rimane $\mathcal{O}(|c|)$
+    o nel caso medio $\Theta(|b|)$.
     \item \textbf{query con filtraggio solo sulla categoria e sul timestamp} (categoria grande): 
-    
-    
-
+    il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
+    trovare il bucket con lo stesso hash è $\mathcal{O}(|c|)$ (costante nel caso medio), con
+    $|c|$ dimensione della categoria, 
+    ricerca dicotomica dei due vettori nel bucket $\mathcal{O}(\log(|b|))$ ($|b|$ numero di vettori nel bucket) 
+    e, supponendo che l'intervallo di timestamp sia grande $|t|\le |b|$ vettori, 
+    si calcolano un totale di $\mathcal{O}(|t|)$.
 \end{itemize}
+
+La complessità di costruzione della soluzione, ovvero il riempimento del minheap,
+varia sempre in base alla categoria perché dipende interamente da quante distanze 
+sono state calcolate. Supponendo che per una generica query vengono calcolate un 
+totale di $d$ distanze, allora l'inserimento è $\mathcal{O}(d\cdot |MinHeap|)$, non è 
+$\mathcal{O}(d\cdot \log(|MinHeap|))$ perché il minheap viene genestito con un vettore dal 
+momento che la sua dimensione è limitata a $100$.
+
+La complessità viene attenuata parallelizzando la ricerca nella varie LSH e hash table.
+
+\section{Ottimizzazione degli iperparamentri}
