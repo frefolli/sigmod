@@ -27,14 +27,15 @@ che permetta di creare dei bucket di buona qualità.
 La funzione di hash che è stata definita si basa su \textbf{Random Projection}(RP),
 esattamente lo stesso algoritmo di riduzione di dimensionalità. 
 
-L'idea è di definire $k' = \lceil \log_2{\sqrt{|D|}} + 2\rceil$ iperpiani randomici che suddividono
+L'idea è di definire $k' = \lceil \log_2{\sqrt{|D|}} + 2\rceil (= 14)$  iperpiani randomici che suddividono
 lo spazio dei vettori del dataset in $2^{k'}$ regioni, ad ogni regione si associa 
 un hash e tutti i vettori che cadono afferiscono alla stessa regione produrranno 
 una collisione, quindi verranno inseriti nello stesso bucket.
 
 \begin{nota}
-La scelta del valore $k'$ è stata effettuata con una gridsearch degli iperparamentri 
-che sarà illustrata nelle sezioni successive.
+    La formula per ottenere $k'$ è stata scelta in modo arbitrario basandosi sulle 
+    sugli studi empirici e suoi risultati ottenuti in termini di Recall e tempi
+    di esecuzione.
 \end{nota}
 
 Ogni singolo $i$-esimo iperpiano è stato definito dal suo vettore norma $n_i$,
@@ -487,3 +488,34 @@ momento che la sua dimensione è limitata a $100$.
 La complessità viene attenuata parallelizzando la ricerca nella varie LSH e hash table.
 
 \section{Ottimizzazione degli iperparamentri}
+L'ottimizzazione
+
+\section{Considerazioni}
+LSH Forest è stato l'unico metodo che ci ha permesso di produrre una soluzione 
+conforme ai limiti di $20$ minuti della challenge con Recall maggiore rispetto
+agli altri metodi ($\sim 0.4983$ sulla piattaforma di consegna). 
+
+La motivazione per cui la recall è così bassa è dovuta principalmente dalla suddivisione 
+dello spazio geometrico e dalla ricerca. Attulmente si effettuano $20$ suddisioni
+dello spazio che non sono sufficientemente differenti, questo significa che in 
+fase di ricerca, i bucket di ogni suddivisione in cui cade la query non hanno molta 
+variabilità.
+
+Si potrebbe migliorare questo aspetto andando cambiare il metodo di generazione 
+degli iperpiani, in modo dale che ogni suddivisione dello spazio sia il più differente 
+possibile, permettendo quindi di esplorare uno spazio più ampio di vettori 
+sempre idealmente vicini alla query e riduciendo il calcolo di distanze duplicate 
+calcolate già in altre suddivisioni. 
+
+Un'altra soluzione potrebbe essere quella di effettuare una sola suddivisione del
+piano geometrico, quindi una sola hashtable per LSH, e risolvere la riduzione della 
+Recall sviluppando un modo per ricavare i bucket vicini a quello dove cade la query.
+Il problema però non è così banale, perché richiede di calcolare in fase di ricerca, per ogni query,
+$N$ hash vicini che significherebbe calcolare un totale di $\mathcal{O}(h)$ 
+distanze, dove $h$ è il numero totale di hash che suddividono lo spazio che nel 
+caso peggiore $h= 2^{k'}$ ($k'$ numero di iperpiani). In realtà 
+si potrebbero precalcolare in fase di creazione che si traduce in $\mathcal{O}(h\cdot h)$
+che nel caso peggiore sarebbe $ \mathcal{O}(2^{k'}\cdot 2^{k'})$. Attualmente 
+$k'=\lceil \log_2\sqrt{|D|}+2\rceil$ che coincide a $14$ per $|D|= 10^7$, ma in realtà,
+effettuando una sola suddivisione dello spazio, i tempi si riducono e quindi 
+si può pensare anche di ridurre $k'$.
