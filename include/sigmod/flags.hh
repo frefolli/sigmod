@@ -11,8 +11,8 @@
 //#define COMPARE_SOLUTIONS
 
 /* Crafting of solutions and their comparison stops at min(queryset.length, TOT_ELEMENTS) */
-// #define TOT_ELEMENTS 40000
-// #define STOP_AFTER_TOT_ELEMENTS
+#define TOT_ELEMENTS 4000
+#define STOP_AFTER_TOT_ELEMENTS
 
 /* Apply dimensional reduction before indexing */
 //#define ENABLE_DIM_REDUCTION
@@ -74,17 +74,20 @@
 #define ACCURATE_RECALL
 
 // Enable Locality Sensitive Hashing
-#define ENABLE_LSH_FOREST
-
+//#define ENABLE_LSH_FOREST
+/*
 #define LSH_FOREST_TRESHOLD 2000
+*/
 
-#define LSH_TABLES 20
+//#define LSH_TABLES 20
 
-#define LSH_K(width) std::ceil(std::log2(width) + 2)
+//#define LSH_K(width) std::ceil(std::log2(width) + 2)
 
-#define LSH_WIDTH(length) std::sqrt(length)
+//#define LSH_WIDTH(length) std::sqrt(length)
 
-// #include <sigmod/custom.hh>
+//#define K(length) LSH_K(LSH_WIDTH(length))
+
+#include <sigmod/custom.hh>
 
 // Translate Indexes
 #define TRANSLATE_INDEXES
