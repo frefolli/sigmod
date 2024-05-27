@@ -58,7 +58,7 @@ def grid_search():
     cum = {}
     LSH_TABLES = [1, 5, 10, 15, 20, 25, 30, 35]
     LSH_FOREST_TRESHOLD = [0, 500, 1000, 2000, 5000, 7000, 10000, 15000]
-    for dx in range(len(LSH_FOREST_TRESHOLD)):
+    for dx in range(len(LSH_TABLES)):
         craft_header({
             'LSH_TABLES': "%s" % LSH_TABLES[dx]
             #'LSH_TABLES': "%s"  % LSH_TABLES[dx],
