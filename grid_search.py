@@ -60,15 +60,15 @@ def grid_search():
     LSH_FOREST_TRESHOLD = [0, 500, 1000, 2000, 5000, 7000, 10000, 15000]
     for dx in range(len(LSH_FOREST_TRESHOLD)):
         craft_header({
-            'LSH_FOREST_TRESHOLD': "%s" % LSH_FOREST_TRESHOLD[dx]
+            'LSH_TABLES': "%s" % LSH_TABLES[dx]
             #'LSH_TABLES': "%s"  % LSH_TABLES[dx],
             #'LSH_WIDTH(width)': "%s" % 
         })
-        out = 'output-10m-lsh-forest-treshold-%s.txt' % LSH_FOREST_TRESHOLD[dx]
+        out = 'output-10m-lsh-tables-%s.txt' % LSH_FOREST_TRESHOLD[dx]
         execute_script('contest-10m', out)
         inc = extract_data(out)
-        inc['LSH_FOREST_TRESHOLD'] = LSH_FOREST_TRESHOLD[dx]
+        inc['LSH_TABLES'] = LSH_FOREST_TRESHOLD[dx]
         cum = aggregate(cum, inc)
-    save_df(cum, "plots/LSH_FOREST_TRESHOLD.csv")
+    save_df(cum, "plots/LSH_TABLES.csv")
 
 grid_search()
