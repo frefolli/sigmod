@@ -71,4 +71,4 @@ def grid_search():
         cum = aggregate(cum, inc)
     save_df(cum, "plots/LSH_FOREST_TRESHOLD.csv")
 
-exaustive()
+grid_search()
