@@ -49,7 +49,7 @@
  * If used in combo with ENABLE_BALL_FOREST, ENABLE_KD_FOREST ...,
  * it also compares those solutions against this and print a Recall
  * */
-#define ENABLE_EXAUSTIVE
+//#define ENABLE_EXAUSTIVE
 
 /* Prints mismatch information during such comparisons */
 // #define SHOW_MISMATCH_IN_COMPARISON
@@ -74,16 +74,16 @@
 #define ACCURATE_RECALL
 
 // Enable Locality Sensitive Hashing
-//#define ENABLE_LSH_FOREST
+#define ENABLE_LSH_FOREST
 /*
 #define LSH_FOREST_TRESHOLD 2000
 */
 
-//#define LSH_TABLES 20
+#define LSH_TABLES 20
 
-//#define LSH_K(width) std::ceil(std::log2(width) + 2)
+#define LSH_K(width) std::ceil(std::log2(width) + 2)
 
-//#define LSH_WIDTH(length) std::sqrt(length)
+#define LSH_WIDTH(length) std::sqrt(length)
 
 //#define K(length) LSH_K(LSH_WIDTH(length))
 
