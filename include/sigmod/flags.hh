@@ -77,7 +77,7 @@
 #define ENABLE_LSH_FOREST
 
 
-#define LSH_FOREST_TRESHOLD 2000
+//#define LSH_FOREST_TRESHOLD 2000
 
 // #define LSH_TABLES 20
 #define LSH_K(width) std::ceil(std::log2(width) + 2)
