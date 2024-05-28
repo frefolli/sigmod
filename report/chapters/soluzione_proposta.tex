@@ -500,6 +500,15 @@ Si è limitati alla ricerca delle prime $4000$ query perché per ogni algoritmo 
 stimare la Recall, perciò serve un'esecuzione dell'algoritmo esaustivo sulle stesse 
 query e per ridurre il tempo d'esecuzione è stato limitato il numero di query. 
 
+Più precisamente 
+Dai risultati ottenuti, il parametro LSH_FOREST_TRESHOLD che specifa la dimensione 
+della categoria sotto alla quale non genera la struttura LSH dedicata non è 
+particolarmente signficativo. Ovvero solo quando assume valori abbastanza grandi 
+si nota un aumento della Recall e conseguentemente un aumento dei tempi di esecuzione.
+
+Al contrario, il parametro che specifica il numero di hash table è nettamente significativo
+
+
 
 \section{Considerazioni}
 LSH Forest è stato l'unico metodo che ci ha permesso di produrre una soluzione 
