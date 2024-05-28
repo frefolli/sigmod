@@ -494,6 +494,12 @@ quanto variano i tempi di costruzione della hash table, tempi di ricerca e valor
 di Recall. I risultati sono stati rappresentati all'interno di un grafico visibile 
 nella figura.
 
+Lo studio armonizzato è stato realizzato eseguento LSH Forest con diversi parametri 
+sul dataset d'esempio da $10^7$ vettori e limitando la ricerca a $4000$.
+Si è limitati alla ricerca delle prime $4000$ query perché per ogni algoritmo bisogna 
+stimare la Recall, perciò serve un'esecuzione dell'algoritmo esaustivo sulle stesse 
+query e per ridurre il tempo d'esecuzione è stato limitato il numero di query. 
+
 
 \section{Considerazioni}
 LSH Forest è stato l'unico metodo che ci ha permesso di produrre una soluzione 
