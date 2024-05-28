@@ -5,6 +5,8 @@ import pandas as pd
 import os
 
 def execute_script(input_, output_):
+    cmd = "make clean"
+    subprocess.call(cmd, shell=True)
     cmd = "make -j3 %s > %s" % (input_, output_)
     subprocess.call(cmd, shell=True)
 
