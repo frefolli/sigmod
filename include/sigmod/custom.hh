@@ -1,4 +1,4 @@
 #ifndef CUSTOM_HH
 #define CUSTOM_HH
-#define LSH_FOREST_TRESHOLD 15000
+#define LSH_TABLES 35
 #endif
