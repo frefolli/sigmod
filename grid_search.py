@@ -64,8 +64,8 @@ def grid_search():
             #'LSH_TABLES': "%s"  % LSH_TABLES[dx],
             #'LSH_WIDTH(width)': "%s" % 
         })
-        out = 'output-10m-lsh-tables-%s.txt' % LSH_TABLES[dx]
-        execute_script('contest-10m', out)
+        out = 'output-run-lsh-tables-%s.txt' % LSH_TABLES[dx]
+        execute_script('run', out)
         inc = extract_data(out)
         inc['LSH_TABLES'] = LSH_TABLES[dx]
         cum = aggregate(cum, inc)
