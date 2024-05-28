@@ -66,8 +66,8 @@ def grid_search():
             #'LSH_TABLES': "%s"  % LSH_TABLES[dx],
             #'LSH_WIDTH(width)': "%s" % 
         })
-        out = 'output-run-LSH_FOREST_TRESHOLD-%s.txt' % LSH_FOREST_TRESHOLD[dx]
-        execute_script('run', out)
+        out = 'output-contest-10m-LSH_FOREST_TRESHOLD-%s.txt' % LSH_FOREST_TRESHOLD[dx]
+        execute_script('contest-10m', out)
         inc = extract_data(out)
         inc['LSH_FOREST_TRESHOLD'] = LSH_FOREST_TRESHOLD[dx]
         cum = aggregate(cum, inc)
