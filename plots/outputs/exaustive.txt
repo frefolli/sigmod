@@ -1,0 +1,41 @@
+./builddir/main.exe contest-data-release-1m.bin contest-queries-release-1m.bin
+max_threads := 32
+thread_num := 1
+# TIME | Read database, length = 1000000 | el. 209 ms
+# TIME | Read query_set, length = 10000 | el. 2 ms
+# TIME | Indexes Database | el. 736 ms
+# TIME | Built LSH Forest :: General | el. 1658 ms
+# TIME | Built Map for C = 0, len = 220.887 K | el. 338 ms
+# TIME | Built Map for C = 2, len = 79.630 K | el. 146 ms
+# TIME | Built Map for C = 4, len = 56.789 K | el. 93 ms
+# TIME | Built Map for C = 5, len = 382.760 K | el. 667 ms
+# TIME | Built Map for C = 6, len = 33.278 K | el. 61 ms
+# TIME | Built Map for C = 7, len = 39.940 K | el. 70 ms
+# TIME | Built Map for C = 9, len = 9.216 K | el. 27 ms
+# TIME | Built Map for C = 11, len = 40.345 K | el. 69 ms
+# TIME | Built Map for C = 12, len = 2.435 K | el. 6 ms
+# TIME | Built Map for C = 14, len = 20.434 K | el. 43 ms
+# TIME | Built Map for C = 16, len = 16.778 K | el. 37 ms
+# TIME | Built Map for C = 17, len = 9.483 K | el. 19 ms
+# TIME | Built Map for C = 18, len = 5.476 K | el. 13 ms
+# TIME | Built Map for C = 20, len = 4.025 K | el. 8 ms
+# TIME | Built Map for C = 22, len = 2.891 K | el. 7 ms
+# TIME | Built Map for C = 24, len = 8.347 K | el. 17 ms
+# TIME | Built Map for C = 25, len = 3.163 K | el. 7 ms
+# TIME | Built Map for C = 26, len = 3.245 K | el. 7 ms
+# TIME | Built Map for C = 38, len = 3.933 K | el. 8 ms
+# TIME | Built LSH Forest :: Mapped | el. 0 ms
+# TIME | Built LSH Forest | el. 0 ms
+# TIME | Used LSH Forest | el. 18643 ms
+# TIME | Used Exaustive | el. 549407 ms
+# DEBUG | Tot. queries type 0 := 0, executed in 0 ms/q
+# DEBUG | Tot. queries type 1 := 0, executed in 0 ms/q
+# DEBUG | Tot. queries type 2 := 0, executed in 0 ms/q
+# DEBUG | Tot. queries type 3 := 0, executed in 0 ms/q
+# DEBUG | Recall(LSH Forest) := 0.504087
+# TIME | Compared LSH Forest to Exaustive | el. 34 ms
+# TIME | Wrote LSH Forest Solution | el. 3 ms
+# TIME | Freed Exaustive Solution | el. 0 ms
+# TIME | Freed LSH Forest | el. 86 ms
+# TIME | Freed DB&QS | el. 1 ms
+# ETA (ms): 572437

@@ -16,7 +16,7 @@ def extract_data(in_):
         file = ifstream.read()
         ss = re.findall("[0-9]+ ms", file)
         build_time = int(ss[3].split(' ')[0])
-        run_time = int(ss[-10].split(' ')[0])
+        run_time = int(ss[-11].split(' ')[0])
         
         ss = re.findall(":= [0-9]+\\.[0-9]+", file)
         recall = float(ss[0].split(' ')[1])
@@ -67,12 +67,12 @@ def grid_search():
             'LSH_TABLES': "%s" % lt,
             'LSH_FOREST_TRESHOLD': "%s"  % lft
         })
-        out = 'output-contest-10m-COMB-%s-%s.txt' % (lt, lft)
+        out = 'plots/outputs/output-contest-10m-COMB-%s-%s.txt' % (lt, lft)
         execute_script('contest-10m', out)
         inc = extract_data(out)
         inc['LSH_TABLES'] = lt
         inc['LSH_FOREST_TRESHOLD'] = lft
         cum = aggregate(cum, inc)
-    save_df(cum, "plots/LSH_COMB.csv")
+    save_df(cum, "plots/LSH_COMB_CORRETTO.csv")
 
 grid_search()
