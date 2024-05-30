@@ -173,13 +173,14 @@ cosicché in fase di ricerca, al posto che cercare in una hash table, si cerca
 in $M$ hash table parallelamente. In questo modo si può risolvere il problema di 
 cercare i vettori vicini anche nei bucket adiacenti, perché si spera che i bucket 
 in cui cade la query per ciascuna hash table sia il più differente possibile dagli 
-altri. $M$ è stato scelto attraverso una gridsearch che verrà illustrata successivamente.
+altri. $M$ è stato scelto attraverso uno studio sull'impatto dei parametri sulle 
+sullemetriche di tempo e recall.
 
 La differenza di partizione dello spazio di ciascuna hash table dipende interamente 
 da come vengono generati gli iperpiani di separazione, dal momento che si estraggono 
 da una distribuzione uniforme si ha già una buona variabilità e questo permette di avere 
 una maggior variabilità anche nelle hash table, portando a dei miglioramenti in termini di 
-Recall.
+recall.
 
 Bisogna però menzionare il fatto che le diverse hash table partizionano lo stesso 
 spazio geometrico, quindi in fase di ricerca può capitare che la query venga confrontata 
@@ -193,8 +194,8 @@ si basa sull'insieme di norme associate alla medesima hash table.
 
 Visto che l'introduzione di hash table multiple può portare a confronti multipli 
 tra la query e gli stessi vettori, per ridurre i tempi di ricerca e aumentare 
-la recall sulle query di tipo $1$ e di tipo $3$ è stato pensato di risolverlo 
-definendo \textbf{LSH Forest}.
+la recall sulle query di tipo $1$ e di tipo $3$ è stato pensato di definire una 
+\textbf{LSH Forest}.
 
 \section{LSH Forest}
 L'approccio di LSH Forest è di velocizzare le query che filtrano sulla categoria,
@@ -487,55 +488,114 @@ momento che la sua dimensione è limitata a $100$.
 
 La complessità viene attenuata parallelizzando la ricerca nella varie LSH e hash table.
 
-\section{Ottimizzazione degli iperparamentri}
-L'ottimizzazione degli iperparametri è stata effettuata mediante uno studio 
-armonizzato dei parametri, più precisamente si è studiato al variare di un parametro
-quanto variano i tempi di costruzione della hash table, tempi di ricerca e valori 
-di Recall. I risultati sono stati rappresentati all'interno di un grafico visibile 
-nella figura.
+\section{Sensitività dei parametri}
+Gli unici parametri dell'LSH Forest sono:
+\begin{itemize}
+    \item \textbf{LSH\_TABLES}: numero di hash table per la singola LSH.
+    \item \textbf{LSH\_FOREST\_THRESHOLD}: numero massimo della dimensione della categoria per la
+    quale non si crea la LSH dedicata.
+\end{itemize} 
 
-Lo studio armonizzato è stato realizzato eseguento LSH Forest con diversi parametri 
-sul dataset d'esempio da $10^7$ vettori e limitando la ricerca a $4000$.
-Si è limitati alla ricerca delle prime $4000$ query perché per ogni algoritmo bisogna 
-stimare la Recall, perciò serve un'esecuzione dell'algoritmo esaustivo sulle stesse 
-query e per ridurre il tempo d'esecuzione è stato limitato il numero di query. 
+Quindi è stato necessario valutare come variano i tempi di esecuzione e la recall
+al variare dei parametri. Di conseguenza è stato pensato di lanciare diverse 
+esecuzioni di LSH Forest sul dataset d'esempio di $10^7$ vettori e limitando la ricerca delle query alle 
+prime $4000$. Ciascuna esecuzione è stata lanciata con i seguenti intervalli di valori.
+\begin{equation}
+    \begin{array}{c}
+        LSH\_TABLES \in \{1, 5, 10, 15, 20, 25, 30, 35\}\\
+        LSH\_FOREST\_THRESHOLD \in \{0, 500, 1000, 2000, 5000, 7000, 10000, 15000\}
+    \end{array}
+\end{equation}
 
-Più precisamente 
-Dai risultati ottenuti, il parametro LSH_FOREST_TRESHOLD che specifa la dimensione 
-della categoria sotto alla quale non genera la struttura LSH dedicata non è 
-particolarmente signficativo. Ovvero solo quando assume valori abbastanza grandi 
-si nota un aumento della Recall e conseguentemente un aumento dei tempi di esecuzione.
+Per ogni esecuzione sono state salvate le seguenti metriche:
+\begin{itemize}
+    \item \textbf{build time}: tempo di costruzione della LSH generica sull'interno 
+    dataset. le LSH dedicate per categoria sono state ignorate dal momento che il tempo maggiore nella costruzione 
+    dipende da quella generale. Di conseguenza non si potrà visualizzare la variazione 
+    del tempo di costruzione dell'LSH Forest in base al numero di LSH.
+    \item \textbf{run time}: tempo di ricerca delle $4000$ query nella struttura.
+    \item \textbf{recall}: confronto della soluzione ottenuta dalla ricerca con 
+    la soluzioen dell'algoritmo esaustivo.
+\end{itemize}
 
-Al contrario, il parametro che specifica il numero di hash table è nettamente significativo
+I risultati sono stati rappresentati all'interno di un grafico visibile nella figura 
+\ref{fig:sensitivity}.
+
+La prima osservazione che si evince dai grafici è che il parametro più significativo è LSH\_TABLES,
+infatti più hash tables sono presenti in una LSH, maggiore è il tempo di costruzione 
+e il run time con un conseguente aumento della recall, in accordo con quanto detto
+e auspicato in precedenza.
+
+LSH\_FOREST\_THRESHOLD non impatta significativamente nella recall 
+ma, bensì, impatta maggiormente sulla memoria, aspetto che non è stato curato dal 
+momento che non sono stati rilevati problemi di saturazione.
+
+\begin{figure}[!h]
+    \centering
+    \begin{subfigure}{.5\textwidth}
+      \centering
+      \includegraphics[width=.8\linewidth]{img/build_time.png}
+      \caption{Building time della LSH generale}
+      \label{fig:build_time}
+    \end{subfigure}%
+    \begin{subfigure}{.5\textwidth}
+      \centering
+      \includegraphics[width=.8\linewidth]{img/run_time.png}
+      \caption{Run time}
+      \label{fig:run_time}
+    \end{subfigure}
+    \begin{subfigure}{.5\textwidth}
+      \centering
+      \includegraphics[width=.8\linewidth]{img/recall.png}
+      \caption{Recall@4000}
+      \label{fig:recall}
+    \end{subfigure}
+    \caption{Analisi di sensitività dei parametri, i tempi di costruzione non 
+    variano al variare di LSH\_FOREST\_THRESHOLD dal momento che viene solo tracciato 
+    il tempo di costruzione della LSH generale.}
+    \label{fig:sensitivity}
+\end{figure}
+
+Dal momento che la Recall e il run time non vengono impattate notevolmente dal
+parametro LSH\_FOREST\_THRESHOLD, risulta insignificativo evitare di creare una 
+LSH dedicata per categoria. Nella soluzione consegnata è stato settato il 
+parametro a $2000$.
+
+Al contrario il parametro LSH\_TABLES è stato deciso in base ai vincoli di tempo 
+richiesti dalla challenge, è stato scelto il valore $20$, ovvero il valore con la 
+recall maggiore che permettesse di rispettare i vincoli di tempo. 
+
 
 
 
 \section{Considerazioni}
 LSH Forest è stato l'unico metodo che ci ha permesso di produrre una soluzione 
-conforme ai limiti di $20$ minuti della challenge con Recall maggiore rispetto
+conforme ai limiti di $20$ minuti della challenge con recall maggiore rispetto
 agli altri metodi ($\sim 0.4983$ sulla piattaforma di consegna). 
 
 La motivazione per cui la recall è così bassa è dovuta principalmente dalla suddivisione 
-dello spazio geometrico e dalla ricerca. Attulmente si effettuano $20$ suddisioni
+dello spazio geometrico e dalla ricerca. Attualmente si effettuano $20$ suddisioni
 dello spazio che non sono sufficientemente differenti, questo significa che in 
 fase di ricerca, i bucket di ogni suddivisione in cui cade la query non hanno molta 
 variabilità.
 
 Si potrebbe migliorare questo aspetto andando cambiare il metodo di generazione 
-degli iperpiani, in modo dale che ogni suddivisione dello spazio sia il più differente 
+degli iperpiani, in modo tale che ogni suddivisione dello spazio sia il più differente 
 possibile, permettendo quindi di esplorare uno spazio più ampio di vettori 
-sempre idealmente vicini alla query e riduciendo il calcolo di distanze duplicate 
+sempre idealmente vicini alla query e riducendo il calcolo di distanze 
 calcolate già in altre suddivisioni. 
 
 Un'altra soluzione potrebbe essere quella di effettuare una sola suddivisione del
-piano geometrico, quindi una sola hashtable per LSH, e risolvere la riduzione della 
-Recall sviluppando un modo per ricavare i bucket vicini a quello dove cade la query.
+piano geometrico, quindi avere una sola hash table per LSH, e risolvere la riduzione della 
+recall sviluppando un modo per ricavare i bucket vicini a quello dove cade la query
+in tempi ragionevoi.
 Il problema però non è così banale, perché richiede di calcolare in fase di ricerca, per ogni query,
 $N$ hash vicini che significherebbe calcolare un totale di $\mathcal{O}(h)$ 
 distanze, dove $h$ è il numero totale di hash che suddividono lo spazio che nel 
 caso peggiore $h= 2^{k'}$ ($k'$ numero di iperpiani). In realtà 
 si potrebbero precalcolare in fase di creazione che si traduce in $\mathcal{O}(h\cdot h)$
 che nel caso peggiore sarebbe $ \mathcal{O}(2^{k'}\cdot 2^{k'})$. Attualmente 
-$k'=\lceil \log_2\sqrt{|D|}+2\rceil$ che coincide a $14$ per $|D|= 10^7$, ma in realtà,
+$k'=\lceil \log_2\sqrt{|D|}+2\rceil$ che coincide a $14$ per $|D|= 10^7$ quindi 
+i tempi sono elevati. In realtà,
 effettuando una sola suddivisione dello spazio, i tempi si riducono e quindi 
-si può pensare anche di ridurre $k'$.
+si può pensare anche di ridurre il valore di $k'$.
