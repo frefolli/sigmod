@@ -38,18 +38,18 @@ Quindi la ricerca si effettua in base ai casi, $\forall q\in Q$:
 \begin{itemize}
     \item $type(q) = 0$ (query senza filtraggio): si cerca $S_q$ ($S_q \subseteq D$ 
     e $|S_q| = 100$) tale che 
-    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in D - S_q$$  
-    \item $type(q) = 1$ (query filtrando sulla categoria): si cerca $S_q$ ($S_q \subseteq \{x| x\in D, c(x) = c(q)\}$ 
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in D \setminus S_q$$  
+    \item $type(q) = 1$ (query filtrando sulla categoria): si cerca $S_q$ ($S_q \subseteq \{x| x\in D \setminus S_q, c(x) = c(q)\}$ 
     e $|S_q| = 100$) tale che 
-    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D, c(x) = c(q)\}$$  
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D \setminus S_q, c(x) = c(q)\}$$  
     \item $type(q) = 2$ (query filtrando sull'intervallo di timestamp): si cerca 
     $S_q$ ($S_q \subseteq \{x| x\in D, t(x) \in timestamp(q)\}$ 
     e $|S_q| = 100$) tale che 
-    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D, t(x) \in timestamp(q)\}$$  
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D \setminus S_q, t(x) \in timestamp(q)\}$$  
     \item $type(q) = 3$ (query filtrando sull'intervallo di timestamp e sulla categoria): si cerca 
     $S_q$ ($S_q \subseteq \{x| x\in D, t(x) \in timestamp(q),  c(x) = c(q)\}$ 
     e $|S_q| = 100$) tale che 
-    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D, t(x) \in timestamp(q), c(x) = c(q)\}$$  
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D \setminus S_q, t(x) \in timestamp(q), c(x) = c(q)\}$$  
 \end{itemize}
 Dove $d$ è la distanza euclidea applicata alle $100$ componenti dei vettori.
  
