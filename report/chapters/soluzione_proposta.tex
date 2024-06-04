@@ -126,7 +126,7 @@ $$M_h = \{v\in D : h = h(v)\}$$
 \end{nota}
 
 Per ultimo si effettua un ordinamento dei vettori nei singoli bucket, più precisamente
-si ordina prima per categoria, timestamp e successivamente per le componenti dei vettori.
+si ordina prima timestamp e successivamente per le componenti dei vettori.
 
 I tempi di costruzione della struttura coincidono con $\mathcal{O}(|D|\cdot 1)$
 per il mapping vettore-hash, $\mathcal{O}(|D|\cdot |D|)$ ($\Theta(|D|)$) per l'inserimento 
@@ -148,12 +148,13 @@ Questo permette di ridurre il numero di distanze calcolate per ogni query, ma no
 considera anche vettori vicini alla query che fanno parte di bucket adiacenti.
 
 \begin{esempio}
-    Se la query è di tipo $1$, quindi si deve filtrare per categoria, c'è il rischio 
-    che in un particolare bucket non ci siano abbastanza vettori della stessa categoria
+    Se i dati sono molto densi in alcune regioni del piano e sparsi in altre c'\`e la possibilit\`a
+    che un gruppo denso di punti sia diviso in pi\`u bucket limitando la nostra capacit\`a di leggere tutti
+    i vettori "realmente" vicini a quello di query.
 \end{esempio}
 
 \begin{esempio}
-    Possiamo aver problemi anche nel caso in cui la query sia di tipo $0$, quindi non si 
+    Possiamo aver problemi anche nel caso generale in cui la query sia di tipo $0$, quindi non si 
     deve filtrare per metadati, e cade nello spazio vicino ad un iperpiano che limita il bucket, 
     questo comporta che in fase di ricerca si consideranno solo i vettori di quel 
     bucket e non quelli del bucket adiacente che ha in comune lo stesso iperpiano. 
@@ -170,11 +171,9 @@ L'idea di LSH con hash table multiple è di creare un totale di $M$ hash table o
 inizializzazione tramite iperpiani il più differente possibile dalle altre. In questo 
 modo è possibile suddividere l'intero spazio dei vettori in $M$ modi differenti,
 cosicché in fase di ricerca, al posto che cercare in una hash table, si cerca 
-in $M$ hash table parallelamente. In questo modo si può risolvere il problema di 
-cercare i vettori vicini anche nei bucket adiacenti, perché si spera che i bucket 
-in cui cade la query per ciascuna hash table sia il più differente possibile dagli 
-altri. $M$ è stato scelto attraverso uno studio sull'impatto dei parametri sulle 
-sullemetriche di tempo e recall.
+in $M$ hash table parallelamente. In questo modo si può considerare anche alcuni vettori che ricadrebbero in bucket vicini,
+perché si spera che i bucket in cui cade la query per ciascuna hash table siano composti da vettori diversi.
+$M$ è stato scelto attraverso uno studio sull'impatto dei parametri sulle sulle metriche di tempo (di costruzione e ricerca) e recall.
 
 La differenza di partizione dello spazio di ciascuna hash table dipende interamente 
 da come vengono generati gli iperpiani di separazione, dal momento che si estraggono 
@@ -196,6 +195,13 @@ Visto che l'introduzione di hash table multiple può portare a confronti multipl
 tra la query e gli stessi vettori, per ridurre i tempi di ricerca e aumentare 
 la recall sulle query di tipo $1$ e di tipo $3$ è stato pensato di definire una 
 \textbf{LSH Forest}.
+
+\section{Esplorazione dei Bucket Adiacenti}
+
+Si \`e anche pensato alla possibilit\`a di identificare a runtime i bucket adiacenti a quello della query per esplorarli e migliorare la recall, come alternativa ad avere pi\`u hash tables.
+Questa operazione pu\`o essere fatta semplicemente considerando la \textbf{distanza di hamming} di due hash: con $HD = 1$ i due hash differiranno del posizionamento rispetto ad un iperpiano, di conseguenza esplorando tutti gli hash con questa distanzia stiamo visitando gli spazi adiacenti. Questo corrisponde ad effetturare uno xor dell'hash con $k$ bitmask del tipo $0^i10^j$, con $i + j + 1 = k$.
+Il problema principale di questa strategia non \`e nella sua implementazione quanto nel fatto che rappresenta un'ennesima euristica basata sulla fortuna: se un query viene mappato in un bucket con pochi vettori e poi esplorando gli adiacenti ci imbattessimo in un bucket con molti vettori andremmo a peggiorare notevolmente l'esecuzione senza avere la certezza di trovare pi\`u vicini.
+Sperimentalmente si \`e rilevato che l'aumento di recall \`e relativamente insignificante e che viceversa l'aumento dei tempi di ricerca peggiora nel complesso la qualit\`a della soluzione.
 
 \section{LSH Forest}
 L'approccio di LSH Forest è di velocizzare le query che filtrano sulla categoria,
@@ -221,7 +227,7 @@ Quindi ricapitolando la costruzione si articola nelle seguenti fasi:
 \begin{itemize}
     \item \textbf{ordinamento del dataset} secondo la categoria, timestamp e componenti dei vettori.
     \item \textbf{indicizzazione delle categorie}: creazione di una mappa che 
-    mappa ciascuna categoria ad una tupla che specifica gli indici di inizio 
+    associa a ciascuna categoria una tupla che specifica gli indici 
     del primo e dell'ultimo vettore nel dataset di quella categoria.
     \item \textbf{creazione di LSH con hash table multiple} sull'intero dataset.
     \item \textbf{creazione di una LSH con hash table multiple} per ogni categoria 
@@ -584,18 +590,3 @@ degli iperpiani, in modo tale che ogni suddivisione dello spazio sia il più dif
 possibile, permettendo quindi di esplorare uno spazio più ampio di vettori 
 sempre idealmente vicini alla query e riducendo il calcolo di distanze 
 calcolate già in altre suddivisioni. 
-
-Un'altra soluzione potrebbe essere quella di effettuare una sola suddivisione del
-piano geometrico, quindi avere una sola hash table per LSH, e risolvere la riduzione della 
-recall sviluppando un modo per ricavare i bucket vicini a quello dove cade la query
-in tempi ragionevoi.
-Il problema però non è così banale, perché richiede di calcolare in fase di ricerca, per ogni query,
-$N$ hash vicini che significherebbe calcolare un totale di $\mathcal{O}(h)$ 
-distanze, dove $h$ è il numero totale di hash che suddividono lo spazio che nel 
-caso peggiore $h= 2^{k'}$ ($k'$ numero di iperpiani). In realtà 
-si potrebbero precalcolare in fase di creazione che si traduce in $\mathcal{O}(h\cdot h)$
-che nel caso peggiore sarebbe $ \mathcal{O}(2^{k'}\cdot 2^{k'})$. Attualmente 
-$k'=\lceil \log_2\sqrt{|D|}+2\rceil$ che coincide a $14$ per $|D|= 10^7$ quindi 
-i tempi sono elevati. In realtà,
-effettuando una sola suddivisione dello spazio, i tempi si riducono e quindi 
-si può pensare anche di ridurre il valore di $k'$.
