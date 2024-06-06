@@ -1,3 +1,215 @@
 \chapter{Soluzione vincente}
 La soluzione vincente si basa su HSNW, più precisamente viene costruita una 
-struttura di indicizzazione 
+struttura di indicizzazione ibrida composta da un HSNW per delle
+
+\section{Creazione della struttura di indicizzazione}
+Per prima cosa vene letto tutto il dataset e viene salvato
+all'interno di $3$ array:
+\begin{itemize}
+    \item base\_vecs: array contenente i coefficienti di tutti i vettori del dataset
+    di dimensioen $10^7\cdot 100$.
+    \item base\_labels: array contente le labels di tutti i vettori, ovvero un 
+    vettore di $10^7$ elementi.
+    \item base\_labels: array contente le labels di tutti i vettori, ovvero un 
+    vettore di $10^7$ elementi.
+\end{itemize} 
+
+La posizione $i$ indica $i$-esimo vettore nel dataset.
+
+Successivamente si creano degli array di appoggio che specificano l'ordinamento 
+del dataset rispetto a diversi criteri di ordinamento:
+\begin{itemize}
+    \item sorted\_base\_ids: vettore contenente gli indici dei vettori ordinati 
+    per categoria crescente e successivamente per timestamps. Quindi per ogni $i\le j\in \mathbb{N}$,
+    allora il numero della categoria associato al vettore $sorted\_base\_ids[i]$
+    è minore rispetto al numero della categoria del vettore $sorted\_base\_ids[j]$,
+    in caso di categorie uguali allora si ordina per timestamps.
+    \item sorted\_base\_ids\_by\_time: vettore contenente gli indici dei vettori ordinati 
+    per timestamps spostando i spostando tutti i vettori della categoria più grande all'inizio 
+    del vettore. In questo modo all'inizio del vettore si avranno solo vettori 
+    ordinati per timestamps della categoria più grande, successivamente si hanno 
+    tutti gli altri vettori ordinati per timestamp. 
+    \item sorted\_base\_ids\_by\_full\_time: vettore contenente gli indici dei vettori ordinati 
+    per timestamps.
+\end{itemize}
+
+\begin{nota}
+    L'ordinamento dei vettori della categoria più grande in sorted\_base\_ids\_by\_time 
+    viene replicato dal vettore sorted\_base\_ids perché in caso ci fossero vettori 
+    della categoria più grande con lo stesso timestap allora questi possono avere 
+    un ordinamento diverso tra i due indici.
+\end{nota}
+
+In aggiunta viene creata una $c\_map$, ovvero una mappa delle categorie ovvero 
+un array di coppie ordinate:
+\begin{equation}
+    category\_map[c] = \langle i, dimensione\_categoria\_c\rangle
+\end{equation} 
+dove $i = sorted\_base\_ids[v]$ con $v$ ultimo vettore della categoria $c$, 
+mentre $dimensione\_categoria\_c$ specifica il numero di vettori presenti nella 
+categoria $c$. Da notare che la coppia viene aggiunta all'array solo quando $c$ 
+ha almeno $450000$ vettori.
+
+Successivamente si costruisce una $t\_map$, ovvero una mappa dei timestamp ovvero 
+un array di coppie ordinate:
+\begin{equation}
+    t\_map[i] = \langle l, dimensione\_intervallo\rangle
+\end{equation} 
+dove $i$ specifica l'intervallo di timestamp $[0.1*i, 0.1*(i+1)]$, $l= timestamps\_by\_full\_time[v]$
+dove $v$ è il primo vettore con il timestamp nell'intervallo cercato, mentre 
+$dimensione\_intervallo$ il numero di vettori nell'intervallo.
+
+In seguito viene letto il query set e viene salvato all'interno di due array:
+\begin{itemize}
+    \item query\_vecs: array contente le componenti dei vettori di query ovvero 
+    $10^6 \cdot 100$.
+    \item query\_metas: array contente i metadati delle query, ovvero la tipologia,
+    la categoria e l'intervallo di timestamp.
+    $10^6 \cdot 4$.
+\end{itemize}
+
+Successivamente si creano degli array di appoggio:
+\begin{itemize}
+    \item sorted\_ids: vettore degli indici dei delle query ordinate per tipo, 
+    categoria, lower bound e upper bound dell'intervallo di timestamp
+    \item category\_query: mappa che associa per ogni categoria un vettore di 
+    indici di query che afferiscono a quella categoria.
+\end{itemize}
+
+Da notare che la $c\_map$, $category\_query$ e $t\_map$ sono tutte mappe implementate 
+come \texttt{unordered\_map}.
+
+Dopo la lettura ordinata del dataset e del queryset, è stata creata la struttura 
+di indicizzazione sul dataset. Più precisamente è stato creato un HSNW per i vettori 
+afferenti alla categoria più grande, uno per i vettori afferenti a categorie che 
+contengono almento $500000$ vettori e uno per ogni intervallo di timestamp della 
+$t\_map$. 
+
+\subsection{Creazione di HNSW}
+Sfruttano l'implementazione di HNSW della libreria \href{https://github.com/zilliztech/pyglass/tree/master}{pyglass}
+unito ad un processo di quantizzazione dei vettori.
+
+HNSW è una struttura dati basata su grafi metrici a livelli che permette di navigare
+lo spazio dei vettori navigado attraverso vettori vicini. Ogni livello è una 
+rappresentazione dello spazio gentrico tramite un grafo metrico. Nel grafo ogni nodo rappresenta 
+un vettore e si hanno degli archi diretti che rappresentano la relazione di vicinanza,
+ovvero, dato un nodo ogni suo arco uscente porta ai $M$ nodi più vicini di quel nodo. La relazione 
+di vicinanza è diretta perché nel caso dell'arco $(a,b)$, non è detto che il nodo 
+$b$ abbia nei $M$ nodi più vicini il nodo $a$.
+
+Ogni livello rappresenta il livello di approssimazione dello spazio geometrico, 
+più il livello è alto allora maggiore è l'approssimazione, più il livello è basso 
+e più precisa sarà la rappresentazione dello spazio. Dato un livello $l$, il livello 
+successivo $l+1$ è un grafo composto da almeno gli stessi nodi del grafo sul livello 
+precedente con l'aggiunta di più nodi vicini. Questo permette di navigare 
+lo spazio velocemente nel livello più alto non passando per tutti i punti perché 
+ogni nodo di un livello rappresenta una \textbf{Voronoi Cell} dello spazio grande 
+quanto la specificità del livello. 
+
+Dato un insieme di vettori $V$, la costruzione di un generico HNSW  è un processo 
+iterativo, in cui si inserisce ciascun vettore uno alla volta. L'inserimento di 
+un vettore $q\in V$ nella struttura si articola nelle seguenti fasi:
+\begin{itemize}
+    \item \textbf{inizializzazione}: si seglie un nodo $ep$ di entry point nel livello massimo
+    e si seleziona il livello $l$ a partire dal quale si inserice il vettore $v$.
+    Più precisamente $l = \lfloor-\ln (U[0,1])\cdot m_l\rfloor$ e si inserirà $q$ 
+    in tutti i livelli da $l$ a $0$. $m_l$ è la costante di normalizzazione che 
+    limita $l\in [0, L_{max}]$, dove $L_{max}$ è il livello massimo della struttura.
+    \item \textbf{prima fase}: a partire dal livello $L_{max}$, si naviga il grafo 
+    a partire dal nodo $ep$ fino a quando non si trova il nodo $w$ più vicino a
+    $q$ (algoritmo greedy), successivamente si effettua la stessa operazione 
+    su livello $L_{max} - 1$ utilizzando come nodo di entry point il nodo $w$ fino 
+    a quando non si trova l'entry point $w$ del livello $l$.
+    \item \textbf{seconda fase}: a partire dal livello $l$ si cercano i $W$ nodi 
+    più vicini a $q$ a partire dall'ultimo entry point trovato al termine della fase precedente ($|W| = efConstruction$).
+    Successivamente si usa un'euristica che calcola dall'insieme dei $W$ nodi
+    l'insieme $N$ degli $M$ nodi più vicini a $q$ sempre sullo stesso layer $l$. 
+    Si creano degli edge bidirezionali tra i nodi $N$ e $q$. Successivamente si 
+    sistemano i collegamenti tra i vicini in modo che ogni nodo rispetti il vincolo 
+    di avere al massimo $M_{max}$ collegamenti, questo viene implementato rimuovendo 
+    degli edge tra due nodi nel vicinato di $q$. Infine si reitera il procedimento 
+    dal livello $l$ al livello $0$.
+\end{itemize}
+
+Per la costruzione della struttura si richiedono i seguenti parametri:
+\begin{itemize}
+    \item $M_{max}$: numero massimo di edge uscenti da ogni nodo per un livello, questo 
+    potrebbe coincidere con $M$.
+    \item $L_{max}$: livello massimo della struttura.
+    \item $efConstruction$: specifica il numero dei nodi candidati ad essere i vicini 
+    del vettore $v$. Questo parametro permette di variare la recall e il tempo di 
+    costruzione della struttura.
+\end{itemize} 
+
+La libreria implementa la costruzione scegliendo dei nodi di entry point dal livello 
+massimo in modo randomico e l'inserimento dei nodi viene parallelizzato sfruttando 
+i lock. In aggiunta la libreria non lavora direttamente sui vettori nativi, bensì
+applica una quantizzazione scalare simmetrica a $8$ bit in modo tale da ridurre la dimensione 
+dei vettori a $112 B$ e sfruttare le operazioni vettoriali del processore per velocizzare 
+il calcolo delle distanze.
+
+I parametri di costruzione specificati dagli autori sono $M = 28$ e $efConstruction = 200$.
+
+% TODO: QUANTI LIVELLI HA IL GRAFO? forse 1/ln(M)
+% TODO: COME LO COSTRUISCE PARALLELAMENTE?
+
+\subsection{Ricerca nella struttura}
+La ricerca di una query $q$ in un generico HNSW richiede il parametro $K$ che specifica i numero 
+di vicini alla query, il parametro $ef$ che è il numero di candidati vicini da considerare.
+
+La ricerca si articola nel scegliere un entry point nel livello massimo randomico, 
+si cerca il miglio vicino nel livello e lo si usa come entry point per il livello 
+successivo. Si reitera fino a quando si trova l'entry point del livello $0$. 
+
+Infine sul livello $0$ si cerca $ef$ migliori vicini e si estraggono i migliori $K$.
+\section{Ricerca nella struttura di indicizzazione}
+
+La ricerca 
+
+- selezionata i vettori codificati in base alla tipologia di query
+- se < 500000 oppure query tipo 3 < 800000 allora fa bruteforce e ricerca le migliori $140$ codifiche a $112 B$
+più vicine a quella di query e poi seleziona le $100$ migliori rispetto ai valori 
+nativi
+- per tipo 1 > 500000 e tipo 3 > 800000  effetua una ricerca in HNSW $K= \lceil1800+(2500-1800)/(maxc_size - minc_size)dim_cat\rceil$
+ $K= \lceil1800+(2800-1800)/(maxc_size - minc_size)dim_cat\rceil$
+ Seleziona i migliori $150$ vettori che rispettano il filtro, infine estraggo i 
+ migliori $100$.
+
+- per tipo 0 oltre alla ricerca in brute force, ricerca nei grafi dei timestamp.
+ Più precisamente si ottengono $150$ candidati per ciascuna query dalla ricerca 
+ parallela nei grafi di ciascun timestamp. Più precisamente per ciascun grafo di 
+ timestamp si cercano $450$ vicini alla query, dai quali si estraggono solo i primi 
+ $150$ per ogni grafo e, infine, si aggregano i risultati in un pool 
+ di candidati per ogni query grande $150$ vettori preferendo sempre i più vicini.
+ (nota nella parte di bruteforce cerca un solo vicino, forse è un errore che hanno 
+ lasciato)
+
+ Avendo $10$ sottointervalli di timestamp si ottengono un totale di $150*10$ candidati 
+ e si aggregano scegliendo i migliori $100$.
+ 
+- tipo 2: se quelli selezionati rispetto al filtro sono > 500000 e > 800000 allora 
+ seleziona la strategia di ricerca in base alla copertura di $[l,r]$ sulle $10$ 
+ suddivisioni del timestamp, data una suddivisione $[l',r']$:
+    - se il numero di vettori selezionati in precedenza è < 2000000 e $[l,r]$ copre 
+    tutto $[l',r']$ allora si cerca direttamente nel grafo metrico dell'intervallo $[l',r']$ (ricerca FULL),
+    se [l,r] copre fino ad un massimo del $50\%$ della suddivisione [l',r'] allora 
+    ricerca in bruteforce in quell'intervallo. Altrimenti fai ricerca MEDIUM
+    - se il numero di vettori selezionati in precedenza è >= 2000000 fai la stessa 
+    cosa di sopra ma abbassando la threshold di bruteforce a  $20\%$
+
+  Effettua la ricerca della query rispetto alle strategie definite prima:
+    - bruteforce: i migliori 140 vettori nel sottointervallo [l',r'] intersecato [l,r]
+    e li mette nel pool di candidati.
+    - MEDIUM: se l'insieme dei vettori da confrontare è < 3000000 allora si estraggono 
+    dal sottointervallo [l',r'] i vicini $1180$ dalla query, se sono in totale <= 6000000 e >=  3000000
+    allora si estraggono dal sottointervallo [l',r'] i vicini $780$ dalla query, 
+    se sono in totale > 6000000 allora si estraggono dal sottointervallo [l',r'] i vicini $680$ dalla query.
+    e di questi se ne estraggono $150$
+    - FULL: se l'insieme dei vettori da confrontare è < 3000000 allora si estraggono 
+    dal sottointervallo [l',r'] i vicini $780$ dalla query, se sono in totale <= 6000000 e >=  3000000
+    allora si estraggono dal sottointervallo [l',r'] i vicini $630$ dalla query, 
+    se sono in totale > 6000000 allora si estraggono dal sottointervallo [l',r'] i vicini $480$ dalla query.
+    e di questi se ne estraggono $150$
+  
+  In questo modo se $[l,r]$ include in totale $5$ sotto intervalli contigui [l',r']
+  allora si ottengono $150*5$ e infine si scelgono i migliori $100$.
