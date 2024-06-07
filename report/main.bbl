@@ -19,6 +19,45 @@
 
 \refsection{0}
   \datalist[entry]{nty/global//global/global}
+    \entry{exp_decay}{misc}{}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://it.wikipedia.org/wiki/Distribuzione_esponenziale}}
+      \field{note}{Accessed: 07/06/2024}
+      \field{title}{Distribuzione esponenziale}
+    \endentry
+    \entry{hnsw}{misc}{}
+      \name{author}{2}{}{%
+        {{hash=1761d9a54a91e198bbbb1ab8c90b87cf}{%
+           family={Malkov},
+           familyi={M\bibinitperiod},
+           given={Yu.\bibnamedelimi A.},
+           giveni={Y\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=0ab161f0ecfa8c1f0510bd561839d6ac}{%
+           family={Yashunin},
+           familyi={Y\bibinitperiod},
+           given={D.\bibnamedelimi A.},
+           giveni={D\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \strng{namehash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{fullhash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{bibnamehash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{authorbibnamehash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{authornamehash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{authorfullhash}{41f677ba5b31db2db6a749a416e76e0e}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.DS}
+      \field{eprinttype}{arXiv}
+      \field{title}{Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs}
+      \field{year}{2018}
+      \verb{eprint}
+      \verb 1603.09320
+      \endverb
+    \endentry
     \entry{map_find}{misc}{}
       \field{sortinit}{M}
       \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
