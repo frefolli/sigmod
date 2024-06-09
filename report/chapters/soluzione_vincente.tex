@@ -258,11 +258,12 @@ La ricerca nella struttura a grafo ibrida si articola nelle seguenti fasi:
         \item il primo che ordina per label e timestamp
         \item il secondo che ordina per timestamp
     \end{itemize}
-    \item codifica tutte le query
+    \item calcola le codifiche di tutte le query per calcolare le distanze in modo 
+    più efficiente.
     \item si calcola la selettività di ciascuna query del tipo $1,2,3$, ovvero 
     si calcolano il numero totale di candidati che rispettano i criteri di filtraggio 
     per ciascuna query. Questo è stato implementato in tempo costante mediante la 
-    $t_map$, la $c_map$ e i due ordinamenti dei vettori effettuati in precedenza rispetto 
+    $t\_map$, la $c\_map$ e i due ordinamenti dei vettori effettuati in precedenza rispetto 
     la categoria e rispetto il timestamp. 
     \item se la query di tipo $1,2$ seleziona un numero di vettori 
     inferiore a $500000$ o se la query di tipo $3$ seleziona un numero di vettori 
@@ -274,7 +275,7 @@ La ricerca nella struttura a grafo ibrida si articola nelle seguenti fasi:
     calcolando le distanze sulle versioni di dimensione $100$.
     \item se la query di tipo $1$ seleziona un numero di vettori 
     superiore a $500000$ o se la query di tipo $3$ seleziona un numero di vettori 
-    superior e a$800000$ allora si effettua una ricerca nel grafo metrico HNSW 
+    superiore a $800000$ allora si effettua una ricerca nel grafo metrico HNSW 
     dedicato alla categoria della query. I parametri della ricerca nell'HNSW sono
     rispettivamente:
     \begin{itemize}
@@ -303,34 +304,63 @@ La ricerca nella struttura a grafo ibrida si articola nelle seguenti fasi:
     \item se la query è di tipo $2$ e seleziona un numero di vettori 
     superiore a $500000$ allora si applica una stategia di ricerca in base alla 
     copertura dell'intervallo di timpestamp della query $[l,r]$ rispetto ai $10$ sottointervalli
-    di timestamp indicizzati. Per un generico sottointervallo $[l',r']$ di timestamp indicizzato:
+    di timestamp indicizzati. Più precisamente:
     \begin{itemize}
-        \item se $[l,r]$ non copre $[l',r']$ allora si ignora il sottointervallo.
-        \item se $[l,r] = [l',r']$ allora tutti i vettori selezionati dalla query
-        sono all'interno di $[l',r']$ e quindi si effettua una ricerca nell'HNSW 
-        del sottointervallo $[l',r']$ con i seguenti parametri:
+        \item se la query seleziona meno di $2000000$ di vettori allora per un 
+        generico sottointervallo $[l',r']$ di timestamp indicizzato:
         \begin{itemize}
-            \item se la query seleziona un numero totale di vettori inferiore a $3000000$: $M=780$ e $K=150$
-            \item se la query seleziona un numero totale di vettori superiore a $3000000$ 
-            ma inferiore a  $6000000$: $M=630$ e $K=150$
-            \item se la query seleziona un numero totale di vettori superiore a $6000000$: $M=480$ e $K=150$
+            \item se $[l,r]$ non copre $[l',r']$ allora si ignora il sottointervallo.
+            \item se $[l,r] = [l',r'] \lor  [l',r'] \subseteq [l,r]$ allora 
+            tutti i vettori del sottointervallo solo potenziali candidati, 
+            quindi si effettua una ricerca nell'HNSW
+            utilizzando parametri $M=780$ e $K=150$.
+            Infine dei $150$ vicini alla query estratti, si scelgono i migliori $100$ 
+            nello spazio originale.
+            \item se $[l',r'] \cap [l,r] \ne \emptyset, [l',r'] \not \subseteq [l,r]$ 
+            allora si hanno diverse strategie in base alla percentuale di vettori in $[l',r']$ 
+            selezionati dalla query:
+            \begin{itemize}
+                \item se in $[l',r']$ la query seleziona fino al $50\%$ dei vettori,
+                si effettua una ricerca esaustiva delle $140$ migliori codifiche 
+                più vicine alla codifica della query nella regione $[l,r] \cap [l',r']$.
+                \item se in $[l',r']$ la query seleziona almeno $50\%$ dei vettori,
+                si ricerca nell'HNSW con parametri $M=1180$ e $K=140$
+            \end{itemize} 
         \end{itemize}
-        Infine dei $150$ vicini alla query estratti, si scelgono i migliori $100$ 
-        nello spazio originale.
-        \item si hanno due casi:
+        \item se la query seleziona almeno $2000000$ allora:
         \begin{itemize}
-            \item se $[l,r]$ copre una superficie massima del $50\%$ del sottointervallo
-            indicizzato $ [l',r']$ allora si effettua una ricerca esaustiva delle $140$ 
-            migliori codifiche più vicine alla codifica della query nella regione $[l,r] \cap [l',r']$.
-            \item Se $[l,r]$ copre una superficie superiore al $50\%$ del sottointervallo
-            indicizzato $ [l',r']$ allora effettua nell'HNSW di $ [l',r']$ con i parametri 
-            specificati al punto precedente.
-        \end{itemize} 
-        Infine, si selezionano i migliori $100$ vettori più vicini alla query nello 
-        spazio originale dall'insieme dei candidati estratti.
-        \item altrimenti se $[l,r]$ copre una superficie massima del $50\%$ il numero di vettori selezionati in precedenza è >= 2000000 fai la stessa 
-        cosa di sopra ma abbassando la threshold di bruteforce a  $20\%$
-    \end{itemize}
+            \item se $[l',r'] \not \subseteq [l,r]$ allora si ignora il sottointervallo.
+            \item se $[l,r] = [l',r'] \lor  [l',r'] \subseteq [l,r]$ allora 
+            tutti i vettori del sottointervallo solo potenziali candidati e si 
+            hanno diverse strategie in base al numero di vettori selezionati nel 
+            dataset dalla query allora variano i parametri di ricerca:
+            \begin{itemize}
+                \item se la query seleziona fino a $3000000$ allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=140$ e $M=1180$
+                \item se la query seleziona da $3000000$ a $6000000$ allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=140$ e $M=780$
+                \item se la query seleziona sopra $6000000$ allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=140$ e $M=680$
+            \end{itemize}
+            Infine dei $140$ vicini alla query estratti, si scelgono i migliori $100$ 
+            nello spazio originale.
+            \item se $[l',r'] \cap [l,r] \ne \emptyset, [l',r'] \not \subseteq [l,r]$ 
+            allora si hanno diverse strategie sempre in base al numero di vettori 
+            selezionati dalla query nel dataset:
+            \begin{itemize}
+                \item se la query seleziona fino a $3000000$ allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=140$ e $M=780$
+                \item se la query seleziona da $3000000$ a $6000000$ allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=140$ e $M=680$
+                \item se la query seleziona sopra $6000000$ allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=140$ e $M=480$
+            \end{itemize}
+        \end{itemize}
+    \end{itemize} 
+    Quindi per ogni query che specifica un filtraggio sull'intervallo $[l,r]$ allora 
+    si scompone l'intervallo in tanti sottointervalli $[l',r']_i$ contigui dai quali 
+    si estraggono per ognuno $140$ vettori migliori secondo le codifiche, infine 
+    si aggregano e si prendono solo i $100$ migliori. 
 \end{itemize}
 
 
