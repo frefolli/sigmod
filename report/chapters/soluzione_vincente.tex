@@ -316,13 +316,13 @@ i $100$ migliori vettori nello spazio originale.
 La \textbf{terza strategia} di ricerca è per le query di tipo $3$ che ha una selettività 
 maggiore di $800000$ vettori. In questo caso la strategia è identica alla seconda 
 ma con i seguenti parametri di ricerca nell'HNSW.(\textbf{RICERCA FILTRATA (OVVIAMENTE NON SI CAPISCE NULLA)}) 
-$$K = 140 \qquad M= \lceil1800+(1000)/(maxc\_size - minc\_size)dim\_cat\rceil$$
+$$K = 150 \qquad M= \lceil1800+(1000)/(maxc\_size - minc\_size)dim\_cat\rceil$$
 
 La \textbf{quarta strategia} di ricerca è per le query di tipo $0$. In questo caso 
 si effettua una ricerca parallela nei $10$ HNSW dei sotto-intervalli di timestamp 
 usando per ognuna i seguenti parametri:
-$$M=450 \qquad K=140$$
-In questo modo si ottengono $140\cdot 10$ vicini alla query nello spazio delle 
+$$M=450 \qquad K=150$$
+In questo modo si ottengono $150\cdot 10$ vicini alla query nello spazio delle 
 codifiche, successivamente si raffinano i risultati estraendo i migliori $100$ 
 vettori rispetto allo spazio originale.
 
@@ -341,17 +341,17 @@ In particolare in base alla selettività della query variano i parametri di rice
         di query.
         \item $[l,r] = [l',r'] \lor  [l',r'] \subseteq [l,r]$: tutti i vettori 
         del sottointervallo solo potenziali candidati, quindi si effettua una ricerca nell'HNSW
-        utilizzando parametri $M=780$ e $K=140$.
+        utilizzando parametri $M=780$ e $K=150$.
         \item $[l',r'] \cap [l,r] \ne \emptyset, [l',r'] \not \subseteq [l,r]$: 
         solo una parte dei vettori sono dei potenziali candidati, quindi in base 
         all'ampiezza di $[l',r'] \cap [l,r]$ si hanno diverse strategie:
         \begin{itemize}
             \item se l'intersezione è inferiore al $50\%$ di $[l',r']$ allora si effettua una 
-            ricerca esaustiva delle $140$ codifiche più vicine alla codifica del 
+            ricerca esaustiva delle $150$ codifiche più vicine alla codifica del 
             vettore di query. Per fare ciò si sfrutta la $t_map$ e 
             l'ordinamento delle codifiche rispetto il timestamp.
             \item se l'intersezione è superiore al $50\%$ di $[l',r']$ allora si effettua una 
-            ricerca nell'HNSW del sottointervallo $[l',r']$ con i parametri $M=1180$ e $K=140$.
+            ricerca nell'HNSW del sottointervallo $[l',r']$ con i parametri $M=1180$ e $K=150$.
         \end{itemize}
     \end{itemize}
     \item se la query ha una selettività superiore a $2000000$ di vettori, allora 
@@ -364,24 +364,24 @@ In particolare in base alla selettività della query variano i parametri di rice
         \item se $[l,r] = [l',r'] \lor  [l',r'] \subseteq [l,r]$:
         \begin{itemize}
             \item se la query seleziona fino a $3000000$ vettori allora ricerca 
-            nell'HNSW di $[l',r']$ con $K=140$ e $M=1180$
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=1180$
             \item se la query seleziona da $3000000$ a $6000000$ vettori allora ricerca 
-            nell'HNSW di $[l',r']$ con $K=140$ e $M=780$
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=780$
             \item se la query seleziona sopra $6000000$ vettori allora ricerca 
-            nell'HNSW di $[l',r']$ con $K=140$ e $M=680$
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=680$
         \end{itemize}
         \item se $[l',r'] \cap [l,r] \ne \emptyset, [l',r'] \not \subseteq [l,r]$:
         \begin{itemize}
             \item se la query seleziona fino a $3000000$ vettori allora ricerca 
-            nell'HNSW di $[l',r']$ con $K=140$ e $M=780$
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=780$
             \item se la query seleziona da $3000000$ a $6000000$ vettori allora ricerca 
-            nell'HNSW di $[l',r']$ con $K=140$ e $M=680$
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=680$
             \item se la query seleziona sopra $6000000$ vettori allora ricerca 
-            nell'HNSW di $[l',r']$ con $K=140$ e $M=480$
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=480$
         \end{itemize}
     \end{itemize}
 \end{itemize}
-Quindi alla fine si producono un totale di $140$ vettori per ogni sottointervallo
+Quindi alla fine si producono un totale di $150$ vettori per ogni sottointervallo
 $[l',r']$ con intersezione non nulla con l'intervallo di query e, in conclusione, 
 si raffina il risultato estraendo i migliori $100$ vettori più vicini alla query 
 nello spazio originale.   
