@@ -217,16 +217,7 @@ Dopo la lettura ordinata del dataset e del queryset, è stata creata la struttur
 di indicizzazione sul dataset. Più precisamente è stato creato un HSNW per i vettori 
 afferenti alla categoria più grande, uno per i vettori afferenti a categorie che 
 contengono almento $500000$ vettori e uno per ogni intervallo di timestamp della 
-$t\_map$. 
-
-Gli autori sfruttano l'implementazione di HNSW della libreria 
-\href{https://github.com/zilliztech/pyglass/tree/master}{pyglass}. 
-La libreria implementa la costruzione scegliendo dei nodi di entry point dal livello 
-massimo in modo randomico e l'inserimento dei nodi viene parallelizzato sfruttando 
-i lock. In aggiunta la libreria non lavora direttamente sui vettori nativi, bensì
-applica una quantizzazione scalare simmetrica a $8$ bit in modo tale da ridurre la dimensione 
-dei vettori ad un totale di $112 B$ (rispetto ai $400 B$ iniziali) per sfruttare le operazioni vettoriali 
-del processore, velocizzando il calcolo delle distanze.
+$t\_map$.
 
 La struttura di indicizzazione definita dagli autori è composta da:
 \begin{itemize}
@@ -243,11 +234,20 @@ La struttura di indicizzazione definita dagli autori è composta da:
     \item un grafo HNSW per ogni intervallo di timestamp, in totale $10$.
 \end{itemize}
 
-I parametri di costruzione degli HNSW specificati dagli autori sono $M = 28$ e 
-$efConstruction = 200$.
+\subsection{Implementazione di HNSW}
 
-% TODO: QUANTI LIVELLI HA CIASCUN GRAFO? (forse 1/ln(M))
-% TODO: COME LO COSTRUISCE PARALLELAMENTE?
+\paragraph{Il Wrapper}
+
+I parametri di costruzione degli HNSW specificati dagli autori sono $M = 28$ e 
+$efConstruction = 200$. Essi hanno sfruttato l'implementazione di HNSW della libreria 
+\href{https://github.com/zilliztech/pyglass/tree/master}{pyglass} creando un wrapper per le strutture definite dalla libreria.
+Questo wrapper applica una quantizzazione scalare simmetrica a $8$ bit ai dati in ingresso (in modo tale da ridurre la dimensione 
+dei vettori ad un totale di $112 B$ rispetto ai $400 B$ iniziali) per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
+Quindi aggiunge i punti sequenzialmente ma sfruttando la parallelizzazione: questo grazie alla presenza e uso di lock all'interno dell'implementazione dell'HNSW di \textit{pyglass}.
+Il primo punto inserito \`e per\`o escluso dalla parallelizzazione, altrimenti eseguendo in parallelo verrebberp aggiungiunti fino a 32 nodi come entry point.
+Dopo aver inserito tutti i dati, il wrapper costruisce un grafo che copia sostanzialmente il Layer 0 dell'HNSW e tracciando oltre agli indici dei nodi puntati dagli archi anche il timestamp di ogni nodo bersaglio. Questo grafo contiene anche un \textbf{Initializer} utilizzato in fase di ricerca per inizializzare il pool di candidati nodi vicini.
+
+\paragraph{La Libreria}
 
 \section{Ricerca nella struttura di indicizzazione}
 
