@@ -90,7 +90,7 @@ un vettore $q\in V$ nella struttura si articola nelle seguenti fasi:
     La ricerca avviene nel seguente modo:
     \begin{itemize}
         \item si tiene traccia dei nodi già visitati, dei nodi vicini a $q$. Inizialimente 
-        entrambi gli insimemi sono vuoti.
+        entrambi gli insiemi sono vuoti.
         \item si parte dal nodo $ep$, si aggiunge $ep$ all'insieme dei nodi vicini a $q$,
         si guardano tutti i vicini e si calcola la distanza da ciascun vicino a $q$,
         si sceglie il vicino a distanza minima e ci si sposta in quel nodo, si 
@@ -236,18 +236,32 @@ La struttura di indicizzazione definita dagli autori è composta da:
 
 \subsection{Implementazione di HNSW}
 
+\paragraph{Configurazione}
+
+I parametri di costruzione degli HNSW specificati dagli autori sono $M = 28$ e $efConstruction = 200$.
+In generale il numero di massimo di layer ottenibili nell'HNSW scala come $\frac 1 {log(M)}$, ovvero con una probabilit\`a molto piccola (si richiama la sezione d'introduzione su HNSW: la frazione \`e moltiplicata per una variabile uniforme $x \; : \; [0,1]$) verr\`a estratto un layer superiore allo zero. Con questa configurazione di parametri ci si pu\`o aspettare asintoticamente un numero molto basso di layer.
+
 \paragraph{Il Wrapper}
 
-I parametri di costruzione degli HNSW specificati dagli autori sono $M = 28$ e 
-$efConstruction = 200$. Essi hanno sfruttato l'implementazione di HNSW della libreria 
-\href{https://github.com/zilliztech/pyglass/tree/master}{pyglass} creando un wrapper per le strutture definite dalla libreria.
+Gli autori della soluzione hanno sfruttato l'implementazione di HNSW della libreria \href{https://github.com/zilliztech/pyglass/tree/master}{pyglass} creando un wrapper per le strutture definite dalla libreria.
 Questo wrapper applica una quantizzazione scalare simmetrica a $8$ bit ai dati in ingresso (in modo tale da ridurre la dimensione 
 dei vettori ad un totale di $112 B$ rispetto ai $400 B$ iniziali) per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
 Quindi aggiunge i punti sequenzialmente ma sfruttando la parallelizzazione: questo grazie alla presenza e uso di lock all'interno dell'implementazione dell'HNSW di \textit{pyglass}.
 Il primo punto inserito \`e per\`o escluso dalla parallelizzazione, altrimenti eseguendo in parallelo verrebberp aggiungiunti fino a 32 nodi come entry point.
-Dopo aver inserito tutti i dati, il wrapper costruisce un grafo che copia sostanzialmente il Layer 0 dell'HNSW e tracciando oltre agli indici dei nodi puntati dagli archi anche il timestamp di ogni nodo bersaglio. Questo grafo contiene anche un \textbf{Initializer} utilizzato in fase di ricerca per inizializzare il pool di candidati nodi vicini.
+Dopo aver inserito tutti i dati, il wrapper costruisce un grafo che copia sostanzialmente il Layer 0 dell'HNSW, tracciando oltre agli indici dei nodi puntati dagli archi il timestamp di ogni nodo bersaglio.
+Questo grafo contiene anche un \textbf{Initializer} utilizzato in fase di ricerca per inizializzare il pool di candidati nodi vicini.
 
 \paragraph{La Libreria}
+
+L'algoritmo di inserimento dei punti implementato dalla libreria ricalca essenzialmente gli algoritmi presentati nella sezione precedente e presentati dal paper ufficiale di HNSW, tuttavia applica una serie di ottimizzazioni che lo rendono pi\`u veloce di una implementazione naive.
+
+Per cominciare, la fase iniziale di ricerca per l'entry point pi\`u vicino viene effettuata tramite una variante della ricerca su Layer che non tiene traccia di tutti i nodi identificati e che sono candidati ma solo del pi\`u vicino, quindi ogni iterazione all'interno di un livello tiene conto solo dell'euristicamente "migliore" vicino.
+Questo ha l'effetto di velocizzare quella fase a discapito della previsione, ragion per cui nella fase successiva si tiene traccia di una coda di candidati per evitare di perdere informazioni.
+
+Nella funzione di ricerca su layer vera e propria invece tra gli accorgimenti troviamo delle istruzioni Streaming SIMD Extension che permettono all'hardware di precaricare le pagine con i dati da usare nella Cache, il che velocizza i tempi di accesso in maniera sensibile.
+Inoltre nella fase di aggiornamento dei collegamenti in un layer si ritarda l'inserimento dell'arco inverso dal vicino i-esimo al punto che si sta inserendo e si sfrutta l'euristica di selezione di migliori M vicini dalla lista dei candidati (in questo caso il vicinato del vicino e il punto in inserimento).
+
+Infine il fatto di inserire parallelamente i punti permette ad ogni sottoricerca di considerare meno punti e questo snellisce di poco l'aggiunta di nuovi nodi al grafo.
 
 \section{Ricerca nella struttura di indicizzazione}
 
@@ -340,8 +354,8 @@ La ricerca nella struttura a grafo ibrida si articola nelle seguenti fasi:
 - se < 500000 oppure query tipo 3 < 800000 allora fa bruteforce e ricerca le migliori $140$ codifiche a $112 B$
 più vicine a quella di query e poi seleziona le $100$ migliori rispetto ai valori 
 nativi
-- per tipo 1 > 500000 e tipo 3 > 800000  effetua una ricerca in HNSW $K= \lceil1800+(2500-1800)/(maxc_size - minc_size)dim_cat\rceil$
- $K= \lceil1800+(2800-1800)/(maxc_size - minc_size)dim_cat\rceil$
+- per tipo 1 $> 500000$ e tipo 3 $> 800000$  effetua una ricerca in HNSW $K= \lceil1800+(2500-1800)/(maxc\_size - minc\_size)dim\_cat\rceil$
+ $K= \lceil1800+(2800-1800)/(maxc\_size - minc\_size)dim\_cat\rceil$
  Seleziona i migliori $150$ vettori che rispettano il filtro, infine estraggo i 
  migliori $100$.
 
@@ -357,7 +371,7 @@ nativi
  Avendo $10$ sottointervalli di timestamp si ottengono un totale di $150*10$ candidati 
  e si aggregano scegliendo i migliori $100$.
  
-- tipo 2: se quelli selezionati rispetto al filtro sono > 500000 e > 800000 allora 
+- tipo 2: se quelli selezionati rispetto al filtro sono $> 500000$ e $> 800000$ allora 
  seleziona la strategia di ricerca in base alla copertura di $[l,r]$ sulle $10$ 
  suddivisioni del timestamp, data una suddivisione $[l',r']$:
     - se il numero di vettori selezionati in precedenza è < 2000000 e $[l,r]$ copre 

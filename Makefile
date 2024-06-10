@@ -102,3 +102,5 @@ contest-1m: builddir/main.exe
 contest-10m: builddir/main.exe
 	./builddir/main.exe contest-data-release-10m.bin contest-queries-release-10m.bin
 
+report/main.pdf: report/main.tex report/chapters/*.tex report/img/*
+	make -C report
