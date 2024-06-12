@@ -90,7 +90,7 @@ un vettore $q\in V$ nella struttura si articola nelle seguenti fasi:
     La ricerca avviene nel seguente modo:
     \begin{itemize}
         \item si tiene traccia dei nodi già visitati, dei nodi vicini a $q$. Inizialimente 
-        entrambi gli insimemi sono vuoti.
+        entrambi gli insiemi sono vuoti.
         \item si parte dal nodo $ep$, si aggiunge $ep$ all'insieme dei nodi vicini a $q$,
         si guardano tutti i vicini e si calcola la distanza da ciascun vicino a $q$,
         si sceglie il vicino a distanza minima e ci si sposta in quel nodo, si 
@@ -230,36 +230,51 @@ che specificano l'ordinamento delle condifiche:
     codifica dei vettori del dataset secondo l'ordinamento per timestamp.
 \end{itemize}
 
-Gli autori sfruttano l'implementazione di HNSW della libreria 
-\href{https://github.com/zilliztech/pyglass/tree/master}{pyglass}. 
-La libreria implementa la costruzione scegliendo dei nodi di entry point dal livello 
-massimo in modo randomico e l'inserimento dei nodi viene parallelizzato sfruttando 
-i lock. In aggiunta la libreria non lavora direttamente sui vettori nativi, bensì
-applica una quantizzazione scalare simmetrica a $8$ bit in modo tale da ridurre la dimensione 
-dei vettori ad un totale di $112 B$ (rispetto ai $400 B$ iniziali) per sfruttare le operazioni vettoriali 
-del processore, velocizzando il calcolo delle distanze.
+%La struttura di indicizzazione definita dagli autori è composta da:
+%\begin{itemize}
+%    \item \texttt{base\_vecs}
+%    \item \texttt{base\_labels}
+%    \item \texttt{sorted\_base\_ids}
+%    \item \texttt{sorted\_base\_ids\_by\_time} 
+%    \item \texttt{sorted\_base\_ids\_by\_full\_time}
+%    \item \texttt{sorted\_both}
+%    \item \texttt{sorted\_timestamp}
+%    \item \texttt{c\_map}
+%    \item \texttt{t\_map}
+%    \item un grafo HNSW per la categoria più grande.
+%    \item un grafo HNSW per ogni categoria più grande di $500000$ vettori.
+%    \item un grafo HNSW per ogni intervallo di timestamp, in totale $10$.
+%\end{itemize}
 
-La struttura di indicizzazione definita dagli autori è composta da:
-\begin{itemize}
-    \item \texttt{base\_vecs}
-    \item \texttt{base\_labels}
-    \item \texttt{sorted\_base\_ids}
-    \item \texttt{sorted\_base\_ids\_by\_time} 
-    \item \texttt{sorted\_base\_ids\_by\_full\_time}
-    \item \texttt{sorted\_both}
-    \item \texttt{sorted\_timestamp}
-    \item \texttt{c\_map}
-    \item \texttt{t\_map}
-    \item un grafo HNSW per la categoria più grande.
-    \item un grafo HNSW per ogni categoria più grande di $500000$ vettori.
-    \item un grafo HNSW per ogni intervallo di timestamp, in totale $10$.
-\end{itemize}
+\subsection{Implementazione di HNSW}
 
-I parametri di costruzione degli HNSW specificati dagli autori sono $M = 28$ e 
-$efConstruction = 200$.
+\paragraph{Configurazione}
 
-% TODO: QUANTI LIVELLI HA CIASCUN GRAFO? (forse 1/ln(M))
-% TODO: COME LO COSTRUISCE PARALLELAMENTE?
+Vengono costruiti un grafo HNSW per la categoria $C_b$ pi\`u grande, uno per ogni categoria $C_i \ne C_b$ con $|C_i| > 500000$ e infine uno per ogni intervallo di timestamp nella $t_map$.
+I parametri di costruzione degli HNSW specificati dagli autori sono $M = 28$ e $efConstruction = 200$.
+In generale il numero di massimo di layer ottenibili nell'HNSW scala come $\frac 1 {log(M)}$, ovvero con una probabilit\`a molto piccola (si richiama la sezione d'introduzione su HNSW: la frazione \`e moltiplicata per una variabile uniforme $x \; : \; [0,1]$) verr\`a estratto un layer superiore allo zero. Con questa configurazione di parametri ci si pu\`o aspettare asintoticamente un numero molto basso di layer.
+
+\paragraph{Il Wrapper}
+
+Gli autori della soluzione hanno sfruttato l'implementazione di HNSW della libreria \href{https://github.com/zilliztech/pyglass/tree/master}{pyglass} creando un wrapper per le strutture definite dalla libreria.
+Questo wrapper applica una quantizzazione scalare simmetrica a $8$ bit ai dati in ingresso (in modo tale da ridurre la dimensione 
+dei vettori ad un totale di $112 B$ rispetto ai $400 B$ iniziali) per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
+Quindi aggiunge i punti sequenzialmente ma sfruttando la parallelizzazione: questo grazie alla presenza e uso di lock all'interno dell'implementazione dell'HNSW di \textit{pyglass}.
+Il primo punto inserito \`e per\`o escluso dalla parallelizzazione, altrimenti eseguendo in parallelo verrebberp aggiungiunti fino a 32 nodi come entry point.
+Dopo aver inserito tutti i dati, il wrapper costruisce un grafo che copia sostanzialmente il Layer 0 dell'HNSW, tracciando oltre agli indici dei nodi puntati dagli archi il timestamp di ogni nodo bersaglio.
+Questo grafo contiene anche un \textbf{Initializer} utilizzato in fase di ricerca per inizializzare il pool di candidati nodi vicini.
+
+\paragraph{La Libreria}
+
+L'algoritmo di inserimento dei punti implementato dalla libreria ricalca essenzialmente gli algoritmi presentati nella sezione precedente e presentati dal paper ufficiale di HNSW, tuttavia applica una serie di ottimizzazioni che lo rendono pi\`u veloce di una implementazione naive.
+
+Per cominciare, la fase iniziale di ricerca per l'entry point pi\`u vicino viene effettuata tramite una variante della ricerca su Layer che non tiene traccia di tutti i nodi identificati e che sono candidati ma solo del pi\`u vicino, quindi ogni iterazione all'interno di un livello tiene conto solo dell'euristicamente "migliore" vicino.
+Questo ha l'effetto di velocizzare quella fase a discapito della previsione, ragion per cui nella fase successiva si tiene traccia di una coda di candidati per evitare di perdere informazioni.
+
+Nella funzione di ricerca su layer vera e propria invece tra gli accorgimenti troviamo delle istruzioni Streaming SIMD Extension che permettono all'hardware di precaricare le pagine con i dati da usare nella Cache, il che velocizza i tempi di accesso in maniera sensibile.
+Inoltre nella fase di aggiornamento dei collegamenti in un layer si ritarda l'inserimento dell'arco inverso dal vicino i-esimo al punto che si sta inserendo e si sfrutta l'euristica di selezione di migliori M vicini dalla lista dei candidati (in questo caso il vicinato del vicino e il punto in inserimento).
+
+Infine il fatto di inserire parallelamente i punti permette ad ogni sottoricerca di considerare meno punti e questo snellisce di poco l'aggiunta di nuovi nodi al grafo.
 
 \section{Ricerca nella struttura di indicizzazione}
 
@@ -381,6 +396,7 @@ In particolare in base alla selettività della query variano i parametri di rice
         \end{itemize}
     \end{itemize}
 \end{itemize}
+
 Quindi alla fine si producono un totale di $150$ vettori per ogni sottointervallo
 $[l',r']$ con intersezione non nulla con l'intervallo di query e, in conclusione, 
 si raffina il risultato estraendo i migliori $100$ vettori più vicini alla query 
