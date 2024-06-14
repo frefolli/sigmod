@@ -213,11 +213,16 @@ Successivamente si creano degli array di appoggio:
 Da notare che la $c\_map$, $category\_query$ e $t\_map$ sono tutte mappe implementate 
 come \texttt{unordered\_map}.
 
-Dopo la lettura ordinata del dataset e del queryset, è stata creata la struttura 
-di indicizzazione sul dataset. Più precisamente è stato creato un HSNW per i vettori 
+Dopo la lettura ordinata del dataset e del queryset, è stato applicato un passo di 
+\textbf{quantizzazione scalare simmetrica} in modo da ridurre lo spazio occupato dalle componenti, 
+più precisamente si riduce da $400B$ a $112B$, trasformando tutte le combonenti in 
+un byte. Ogni vettore occupa $112B$ perché $100B$ sono per le $100$ componenti e $12B$
+per l'allineamento a $32B$.
+
+In senguito è stato creato un HSNW per i vettori 
 afferenti alla categoria più grande, uno per i vettori afferenti a categorie che 
 contengono almento $500000$ vettori e uno per ogni intervallo di timestamp della 
-$t\_map$. 
+$t\_map$. Gli HNSW vengono costruiti sulle codifiche dei vettori.
 
 In aggiunta, vengono calcolate tutte le codifiche della quantizzazione scalare 
 di tutti i vettori del dataset. Inoltre, si creano due vettori di ordinamento 
@@ -250,7 +255,7 @@ che specificano l'ordinamento delle condifiche:
 
 \paragraph{Configurazione}
 
-Vengono costruiti un grafo HNSW per la categoria $C_b$ pi\`u grande, uno per ogni categoria $C_i \ne C_b$ con $|C_i| > 500000$ e infine uno per ogni intervallo di timestamp nella $t_map$.
+Vengono costruiti un grafo HNSW per la categoria $C_b$ pi\`u grande, uno per ogni categoria $C_i \ne C_b$ con $|C_i| > 500000$ e infine uno per ogni intervallo di timestamp nella $t\_map$.
 I parametri di costruzione degli HNSW specificati dagli autori sono $M = 28$ e $efConstruction = 200$.
 In generale il numero di massimo di layer ottenibili nell'HNSW scala come $\frac 1 {log(M)}$, ovvero con una probabilit\`a molto piccola (si richiama la sezione d'introduzione su HNSW: la frazione \`e moltiplicata per una variabile uniforme $x \; : \; [0,1]$) verr\`a estratto un layer superiore allo zero. Con questa configurazione di parametri ci si pu\`o aspettare asintoticamente un numero molto basso di layer.
 
@@ -260,7 +265,7 @@ Gli autori della soluzione hanno sfruttato l'implementazione di HNSW della libre
 Questo wrapper applica una quantizzazione scalare simmetrica a $8$ bit ai dati in ingresso (in modo tale da ridurre la dimensione 
 dei vettori ad un totale di $112 B$ rispetto ai $400 B$ iniziali) per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
 Quindi aggiunge i punti sequenzialmente ma sfruttando la parallelizzazione: questo grazie alla presenza e uso di lock all'interno dell'implementazione dell'HNSW di \textit{pyglass}.
-Il primo punto inserito \`e per\`o escluso dalla parallelizzazione, altrimenti eseguendo in parallelo verrebberp aggiungiunti fino a 32 nodi come entry point.
+Il primo punto inserito \`e per\`o escluso dalla parallelizzazione, altrimenti eseguendo in parallelo verrebbero aggiungiunti fino a 32 nodi come entry point.
 Dopo aver inserito tutti i dati, il wrapper costruisce un grafo che copia sostanzialmente il Layer 0 dell'HNSW, tracciando oltre agli indici dei nodi puntati dagli archi il timestamp di ogni nodo bersaglio.
 Questo grafo contiene anche un \textbf{Initializer} utilizzato in fase di ricerca per inizializzare il pool di candidati nodi vicini.
 

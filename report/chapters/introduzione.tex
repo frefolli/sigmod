@@ -84,15 +84,16 @@ e dei metodi sviluppati sui dataset con una grandezza minore.
 
 Visto che EN è proibitivo, è stata effettuata una ricerca sulla letteratura 
 relativa all'argomento. Da questa ricerca sono stati estratti diversi approci, 
-un primo approccio si basa sull'uso di alberi metrici come \textbf{KD-tree}, \textbf{MVP-tree}, \textbf{VP-tree} e \textbf{Ball-tree} 
+un primo approccio si basa sull'uso di alberi metrici come \textbf{KD-tree} \cite{kd_tree}, \textbf{MVP-tree}
+\cite{mvp_tree1} \cite{mvp_tree2}, \textbf{VP-tree} \cite{vp_tree} e \textbf{Ball-tree} \cite{ball_tree}
 che funzionano bene per vettori che hanno una dimensione ridotta, ma esplodono 
 di complessità quando vengono eseguiti su dimensioni elevate come nell'attuale 
 caso in esame. Perciò è stato pensato di applicare i metodi dopo aver applicato 
 un algoritmo di riduzione di dimensionalità con l'obiettivo di ridurre 
 i tempi di esecuzione.
 
-Sono stati testati gli algoritmi di riduzione come \textbf{Principal Component Analysis} (PCA) 
-e \textbf{Random Projection} (RP). PCA è stato immediatamente scartato dal momento che 
+Sono stati testati gli algoritmi di riduzione come \textbf{Principal Component Analysis} (PCA) \cite{pca}
+e \textbf{Random Projection} (RP) \cite{rp}. PCA è stato immediatamente scartato dal momento che 
 calcolando la matrice di correlazione sul dataset $D$ si è ottenuta un'assenza 
 di correlazione tra le componenti che preannuncia una spiegazione di variabilità 
 di dati uniforme tra tutti gli autovettori della matrice di correlazione, comportando 
@@ -102,7 +103,7 @@ dimensionalità a $90$ componenti per preservare la recall sopra il $90\%$, ma
 senza significativi miglioramenti nei tempi di esecuzione degli alberi metrici.
 
 Successivamente è stato tentato l'approccio dei grafi metrici come \textbf{Hierarchical 
-Navigable Small World Graphs} (HNSW). A livello teorico permette di ridurre i tempi
+Navigable Small World Graphs} (HNSW) \cite{hnsw}. A livello teorico permette di ridurre i tempi
 di ricerca (infatti la complessità è $\mathcal{O}(log |D|)$), il problema è 
 che la costruzione della struttura è risutata troppo pesante e non è stato trovato 
 un modo per migliorare i tempi. Il problema principale della costruzione è 
@@ -110,7 +111,7 @@ il fatto che alla fine si va a calcolare un totale di $\mathcal{O}(|D|\cdot |D|)
 distanze che a livello di tempo è risultato proibitivo.
 
 Successivamente è stato tentato l'approccio della quantizzazione dei vettori con 
-la \textbf{Product Quantization} (PQ) e gli \textbf{Inverted File Index} (IVF). Il problema di questi 
+la \textbf{Product Quantization} (PQ) \cite{pq} e gli \textbf{Inverted File Index} (IVF)\cite{pq}. Il problema di questi 
 due approcci è che richiedono troppo tempo per costruire l'indice dal momento che 
 PQ nasconde $M(=10)$ Kmeans ($K=256$ cluster l'uno) che eseguiti in parallelo si 
 è riusciti a mantenere contenuti i tempi di costruzione, ma con una Recall troppo 
