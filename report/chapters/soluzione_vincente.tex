@@ -254,6 +254,14 @@ che specificano l'ordinamento delle condifiche:
 %    \item un grafo HNSW per ogni intervallo di timestamp, in totale $10$.
 %\end{itemize}
 
+\subsection{Quantizzazione Scalare Simmetrica}
+
+Per poter ridurre i dati di dimensionalit\`a quello che si fa \`e identificare un $\alpha$ che sia pari al valore pi\`u grande all'interno dei vettori (indipendentemente da quale dimensione afferisca) e utilizzarlo per effettuare una sorta di normalizzazione:
+ogni vettore viene diviso per questo valore $\alpha$, quindi compresso nell'intervallo $[-1,1]$ (i valori eccedenti gli estremi vengono riassegnati all'estremo che superano, ex: $-5 \rightarrow 5$) e infine scalato moltiplicandolo per il valore $127$.
+
+La quantizzazione \`e detta simmetrica perch\`e ogni float a $32bit$ viene compresso in un valore intero a $8bit$ nell'intervallo $[-127, 127]$.
+Vice versa nella quantizzazione asimmetrica (implementata ma non utilizzata dagli autori) i valori sarebbero compressi nell'intervallo $[0, 255]$.
+
 \subsection{Implementazione di HNSW}
 
 \paragraph{Configurazione}
@@ -265,7 +273,7 @@ In generale il numero di massimo di layer ottenibili nell'HNSW scala come $\frac
 \paragraph{Il Wrapper}
 
 Gli autori della soluzione hanno sfruttato l'implementazione di HNSW della libreria \href{https://github.com/zilliztech/pyglass/tree/master}{pyglass} creando un wrapper per le strutture definite dalla libreria.
-Questo wrapper applica una quantizzazione scalare simmetrica a $8$ bit (descritta precedentemente) per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
+Questo wrapper applica la quantizzazione scalare simmetrica a $8$ bit descritta precedentemente per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
 Quindi aggiunge i punti sequenzialmente ma sfruttando la parallelizzazione: questo grazie alla presenza e uso di lock all'interno dell'implementazione dell'HNSW di \textit{pyglass}.
 Il primo punto inserito \`e per\`o escluso dalla parallelizzazione, altrimenti eseguendo in parallelo verrebbero aggiungiunti fino a 32 nodi come entry point.
 Dopo aver inserito tutti i dati, il wrapper costruisce un grafo che copia sostanzialmente il Layer 0 dell'HNSW, tracciando oltre agli indici dei nodi puntati dagli archi il timestamp di ogni nodo bersaglio.
@@ -282,6 +290,9 @@ Nella funzione di ricerca su layer vera e propria invece tra gli accorgimenti tr
 Inoltre nella fase di aggiornamento dei collegamenti in un layer si ritarda l'inserimento dell'arco inverso dal vicino i-esimo al punto che si sta inserendo e si sfrutta l'euristica di selezione di migliori M vicini dalla lista dei candidati (in questo caso il vicinato del vicino e il punto in inserimento).
 
 Infine il fatto di inserire parallelamente i punti permette ad ogni sottoricerca di considerare meno punti e questo snellisce di poco l'aggiunta di nuovi nodi al grafo.
+Questo \`e possibile solo tramite l'utilizzo di un lock per ogni lista di adiacenza, un lock per la tabella degli identificatori interni all'HNSW e un lock "globale" per la definizione dell'entry point e del massimo livello nel grafo gerarchico.
+Quando un thread deve leggere o scrivere dati da uno di questi punti, acquisisce il lock e lo mantiene fino al termine dell'operazione locale, quindi lo rilascia in modo che gli altri 31 thread possano procedere concorrentemente.
+Euristicamente visto che c'\`e variabilit\`a sul vicinato del punto in inserimento e sul livello in cui si parte, la costruzione rimane concorrente invece che regredire a sequenziale.
 
 \section{Ricerca nella struttura di indicizzazione}
 
