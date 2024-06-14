@@ -216,8 +216,11 @@ come \texttt{unordered\_map}.
 Dopo la lettura ordinata del dataset e del queryset, è stato applicato un passo di 
 \textbf{quantizzazione scalare simmetrica} in modo da ridurre lo spazio occupato dalle componenti, 
 più precisamente si riduce da $400B$ a $112B$, trasformando tutte le combonenti in 
-un byte. Ogni vettore occupa $112B$ perché $100B$ sono per le $100$ componenti e $12B$
-per l'allineamento a $32B$.
+un byte. Ogni vettore occupa $112B$ perché $100B$ sono per le $100$ componenti mentre i restanti $12B$
+sono posti a zero e servono ad un duplice scopo: avere un'allineamento a $32bits$/$64bits$ per questioni
+di indirizzamento (altrimenti non ci sono assicurazioni su come compilatore intende allineare la memoria),
+e avere contemporaneamente un allineamento a $16B$ per poter sfruttare le operazioni del \textbf{SSE} (estensione SIMD
+che permette di operare in parallelo su registri a $128bits$).
 
 In senguito è stato creato un HSNW per i vettori 
 afferenti alla categoria più grande, uno per i vettori afferenti a categorie che 
@@ -262,8 +265,7 @@ In generale il numero di massimo di layer ottenibili nell'HNSW scala come $\frac
 \paragraph{Il Wrapper}
 
 Gli autori della soluzione hanno sfruttato l'implementazione di HNSW della libreria \href{https://github.com/zilliztech/pyglass/tree/master}{pyglass} creando un wrapper per le strutture definite dalla libreria.
-Questo wrapper applica una quantizzazione scalare simmetrica a $8$ bit ai dati in ingresso (in modo tale da ridurre la dimensione 
-dei vettori ad un totale di $112 B$ rispetto ai $400 B$ iniziali) per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
+Questo wrapper applica una quantizzazione scalare simmetrica a $8$ bit (descritta precedentemente) per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
 Quindi aggiunge i punti sequenzialmente ma sfruttando la parallelizzazione: questo grazie alla presenza e uso di lock all'interno dell'implementazione dell'HNSW di \textit{pyglass}.
 Il primo punto inserito \`e per\`o escluso dalla parallelizzazione, altrimenti eseguendo in parallelo verrebbero aggiungiunti fino a 32 nodi come entry point.
 Dopo aver inserito tutti i dati, il wrapper costruisce un grafo che copia sostanzialmente il Layer 0 dell'HNSW, tracciando oltre agli indici dei nodi puntati dagli archi il timestamp di ogni nodo bersaglio.
