@@ -1,5 +1,6 @@
 #ifndef QUANTIZATION_HH
 #define QUANTIZATION_HH
+/** @file quantization.hh */
 
 #include <sigmod/database.hh>
 #include <sigmod/debug.hh>

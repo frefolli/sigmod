@@ -1,5 +1,6 @@
 #ifndef FLAGS_HH
 #define FLAGS_HH
+/** @file flags.hh */
 
 /* Scoreboard::add always checks if an input Candidate could be already in the collection */
 //#define SCOREBOARD_ALWAYS_CHECK_DUPLICATES

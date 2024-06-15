@@ -1,5 +1,6 @@
 #ifndef STATS_HH
 #define STATS_HH
+/** @file stats.hh */
 
 #include <string>
 #include <unordered_map>

@@ -1,5 +1,6 @@
 #ifndef CONFIG_HH
 #define CONFIG_HH
+/** @file config.hh */
 
 #include <cstdint>
 

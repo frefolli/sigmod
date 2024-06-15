@@ -1,5 +1,6 @@
 #ifndef DATABASE_HH
 #define DATABASE_HH
+/** @file database.hh */
 
 #include <sigmod/record.hh>
 #include <sigmod/c_map.hh>

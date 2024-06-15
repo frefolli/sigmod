@@ -1,5 +1,6 @@
 #ifndef THREAD_POOL_HH
 #define THREAD_POOL_HH
+/** @file thread_pool.hh */
 #include <vector>
 #include <unordered_map>
 #include <iostream>

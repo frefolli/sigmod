@@ -1,5 +1,6 @@
 #ifndef MEMORY_HH
 #define MEMORY_HH
+/** @file memory.hh */
 #include <sigmod/debug.hh>
 
 template<typename T>

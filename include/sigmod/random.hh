@@ -1,5 +1,6 @@
 #ifndef RANDOM_HH
 #define RANDOM_HH
+/** @file random.hh */
 
 #include <sigmod/config.hh>
 #include <sigmod/database.hh>

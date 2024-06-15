@@ -1,5 +1,6 @@
 #ifndef LSH_HH
 #define LSH_HH
+/** @file lsh.hh */
 
 #include <sigmod/database.hh>
 #include <sigmod/scoreboard.hh>

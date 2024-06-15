@@ -1,5 +1,6 @@
 #ifndef VP_TREE_HH
 #define VP_TREE_HH
+/** @file vp_tree.hh */
 
 #include <sigmod/database.hh>
 #include <sigmod/query.hh>
