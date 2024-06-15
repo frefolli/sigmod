@@ -71,4 +71,4 @@ Our strategy was based on Locality Sensitive Hashing with the addition of an ext
 
 We eventually got to ship "successfully" a solution to the Sigmod platform achieving the 17th Position. Not good, not bad, just cool. (still better than Milano Statale btw)
 
-![leaderboard](doc/leaderboard.png)
+![leaderboard](doc/images/leaderboard.png)
