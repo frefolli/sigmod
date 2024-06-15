@@ -1,0 +1,56 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["master"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v3
+      - name: Compile Doxygen
+        uses: mattnotmitt/doxygen-action@v1.9.5
+        with:
+            working-directory: 'doc'
+            doxyfile-path: './Doxygen.in'
+            enable-latex: true
+      - name: Compile Latex
+        uses: xu-cheng/latex-action@v2
+        with:
+          root_file: |
+            report/main.tex
+          work_in_root_file_dir: true
+      - name: Create Static Dist Directory
+        run: |
+          ./static.sh
+      - name: Configure Pages
+        uses: actions/configure-pages@v2
+      - name: Zip and Upload Artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: './static/'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
