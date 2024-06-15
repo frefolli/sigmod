@@ -1,5 +1,6 @@
 #ifndef IVF_INDEX_HH
 #define IVF_INDEX_HH
+/** @file ivf_index.hh */
 
 #include <sigmod/quantization.hh>
 #include <sigmod/memory.hh>

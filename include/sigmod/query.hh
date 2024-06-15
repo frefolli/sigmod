@@ -1,5 +1,6 @@
 #ifndef QUERY_HH
 #define QUERY_HH
+/** @file query.hh */
 
 #include <ostream>
 #include <sigmod/config.hh>

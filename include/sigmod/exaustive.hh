@@ -1,5 +1,6 @@
 #ifndef EXAUSTIVE_HH
 #define EXAUSTIVE_HH
+/** @file exaustive.hh */
 
 #include <sigmod/database.hh>
 #include <sigmod/query.hh>

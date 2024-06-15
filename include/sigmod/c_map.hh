@@ -1,5 +1,6 @@
 #ifndef C_MAP_HH
 #define C_MAP_HH
+/** @file c_map.hh */
 
 #include <sigmod/config.hh>
 #include <unordered_map>

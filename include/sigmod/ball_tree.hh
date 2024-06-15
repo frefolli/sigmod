@@ -1,5 +1,6 @@
 #ifndef BALL_TREE_HH
 #define BALL_TREE_HH
+/** @file ball_tree.hh */
 
 #include <sigmod/database.hh>
 #include <sigmod/query.hh>

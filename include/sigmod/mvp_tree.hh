@@ -1,5 +1,6 @@
 #ifndef MVP_TREE_HH
 #define MVP_TREE_HH
+/** @file mvp_tree.hh */
 
 // actual dependencies
 #include <sigmod/config.hh>

@@ -1,5 +1,6 @@
 #ifndef ND_TREE_HH
 #define ND_TREE_HH
+/** @file nd_tree.hh */
 
 #include <sigmod/config.hh>
 #include <sigmod/record.hh>

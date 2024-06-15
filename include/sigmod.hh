@@ -1,5 +1,6 @@
 #ifndef SIGMOD_HH
 #define SIGMOD_HH
+/** @file sigmod.hh */
 
 #include <sigmod/config.hh>
 #include <sigmod/database.hh>

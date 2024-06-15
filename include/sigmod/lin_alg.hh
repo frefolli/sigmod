@@ -1,5 +1,6 @@
 #ifndef LIN_ALG_HH
 #define LIN_ALG_HH
+/** @file lin_alg.hh */
 
 #include <sigmod/config.hh>
 

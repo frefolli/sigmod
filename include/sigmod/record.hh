@@ -1,5 +1,6 @@
 #ifndef RECORD_HH
 #define RECORD_HH
+/** @file record.hh */
 
 #include <ostream>
 #include <sigmod/config.hh>

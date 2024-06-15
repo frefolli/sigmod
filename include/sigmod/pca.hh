@@ -1,5 +1,6 @@
 #ifndef PCA_HH
 #define PCA_HH
+/** @file pca.hh */
 
 #include <sigmod/statistical_indeces.hh>
 
