@@ -5,7 +5,7 @@ per una variante del KNN problem (con $K=100$) per un dataset $D$ di dimensione
 $10^7$ vettori e un insieme di query $Q$ di dimensione $4\cdot 10^6$. Ciascun 
 vettore del dataset possiede dei metadati che specificano la sua categoria e il
 suo timestamp. Dal momento che si hanno dei metadati associati ai vettori, si 
-identificano anche $4$ tipologie, ognuna specifica dei filtri da applicare sui 
+identificano anche $4$ tipologie di query, ognuna specifica dei filtri da applicare sui 
 metadati del dataset:
 \begin{itemize}
     \item Query tipo $0$: non si applicano filtri sui metadati.
@@ -13,14 +13,14 @@ metadati del dataset:
     solo i vettori che hanno la stessa categoria del vettore di query.
     \item Query tipo $2$: si filtra rispetto all'intervallo di timestamp specificato della query,
     si considerano solo i vettori che hanno il timestamp compreso nell'intervallo 
-    specificato dal vettore di query.
+    specificato dalla query.
     \item query tipo $3$: si applicano entrambi i filtri della tipologia $1$ e $2$.
 \end{itemize}
 
-I vettori di query e del dataset, oltre ai metadati, hanno associato anche le $100$ 
-componenti su cui calcolare il concetto di vicinanza.
+Le query, di conseguenza, avranno associato la tipologia, i metatati per filtrare 
+in accordo con la tipolgia ed, infine, le $100$ componenti.
 
-Il codice della risoluzione verrà testato in una macchina virtuale con $32$ Thread,
+Il codice della risoluzione viene valutato in una macchina virtuale con $32$ Thread,
 $64Gb$ di RAM e $64Gb$ di spazio. Si ha inoltre un tempo massimo di esecuzione 
 di $20$ minuti.
 
@@ -45,15 +45,15 @@ Quindi la ricerca si effettua in base ai casi, $\forall q\in Q$:
     \item $type(q) = 2$ (query filtrando sull'intervallo di timestamp): si cerca 
     $S_q$ ($S_q \subseteq \{x| x\in D, t(x) \in timestamp(q)\}$ 
     e $|S_q| = 100$) tale che 
-    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D \setminus S_q, t(x) \in timestamp(q)\}$$  
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D \setminus S_q, t(x) \in bound(q)\}$$  
     \item $type(q) = 3$ (query filtrando sull'intervallo di timestamp e sulla categoria): si cerca 
-    $S_q$ ($S_q \subseteq \{x| x\in D, t(x) \in timestamp(q),  c(x) = c(q)\}$ 
+    $S_q$ ($S_q \subseteq \{x| x\in D, t(x) \in bound(q),  c(x) = c(q)\}$ 
     e $|S_q| = 100$) tale che 
-    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D \setminus S_q, t(x) \in timestamp(q), c(x) = c(q)\}$$  
+    $$\forall s \in S_q, d(s, q) \le d(x, q) \forall x \in \{x| x\in D \setminus S_q, t(x) \in bound(q), c(x) = c(q)\}$$  
 \end{itemize}
 Dove $d$ è la distanza euclidea applicata alle $100$ componenti dei vettori.
  
-La soluzione finale $\mathcal{S}$ coinciderà con $ \mathcal{S} = \bigcup_{q\in Q} S_q$.
+La soluzione finale $\mathcal{S}$ coinciderà con $ \mathcal{S} =\{S_q| \forall q \in Q\}$.
 
 \section{Approcci tentati}
 Un modo per risolvere questo problema è adottare l'approccio naive esaustivo (EN), ovvero 
@@ -62,7 +62,7 @@ A livello di complessità è insostenibile, infatti supponento nel caso peggiore
 di avere solo query del tipo $0$, significa che si calcoleranno un totale di 
 $\mathcal{O}(|Q| \cdot |D|)$ distanze, con l'aggiunta della complessità di creazione
 della soluzione. La creazione della soluzione può essere trattata mediante l'ausilio 
-di un max-heap, contenente le coppie vettore database e distanza vettore-2-query ($D\times \mathbb{R}_+$),
+di un max-heap, contenente le coppie vettore database e distanza vettore-query ($D\times \mathbb{R}_+$),
 la dimensione può essere considerata fissa a $K(=100)$, questo significa che l'inserimento 
 della singola coppia comporta una complessità $\mathcal{O}(K)$. Dal momento che 
 si tenterà di inserire $\mathcal{O}(|D|)$ coppie allora la costruzione della 
@@ -98,29 +98,29 @@ calcolando la matrice di correlazione sul dataset $D$ si è ottenuta un'assenza
 di correlazione tra le componenti che preannuncia una spiegazione di variabilità 
 di dati uniforme tra tutti gli autovettori della matrice di correlazione, comportando 
 una mancanza di componenti con maggior information gain. Perciò è stato provato 
-un approccio alternativo con Random Projection (RP) che ha permesso di ridurre la 
+un approccio alternativo con RP che ha permesso di ridurre la 
 dimensionalità a $90$ componenti per preservare la recall sopra il $90\%$, ma 
-senza significativi miglioramenti nei tempi di esecuzione degli alberi metrici.
+ciò non ha permesso di rendere utilizzabili gli alberi metrici a causa gli eccessivi 
+tempi di costruzione e ricerca.
 
-Successivamente è stato tentato l'approccio dei grafi metrici come \textbf{Hierarchical 
+Successivamente è stato tentato l'approccio dei grafi metrici con \textbf{Hierarchical 
 Navigable Small World Graphs} (HNSW) \cite{hnsw}. A livello teorico permette di ridurre i tempi
 di ricerca (infatti la complessità è $\mathcal{O}(log |D|)$), il problema è 
-che la costruzione della struttura è risutata troppo pesante e non è stato trovato 
+che la costruzione della struttura è risultata troppo pesante e non è stato trovato 
 un modo per migliorare i tempi. Il problema principale della costruzione è 
 il fatto che alla fine si va a calcolare un totale di $\mathcal{O}(|D|\cdot |D|)$
-distanze che a livello di tempo è risultato proibitivo.
+distanze che a livello di tempo è risultato proibitivo, sopprattuto perché 
+iterativamente si deve aggiungere un vettore alla volta, rendendo complesso parallelizzare 
+la costruzione.
 
 Successivamente è stato tentato l'approccio della quantizzazione dei vettori con 
 la \textbf{Product Quantization} (PQ) \cite{pq} e gli \textbf{Inverted File Index} (IVF)\cite{pq}. Il problema di questi 
 due approcci è che richiedono troppo tempo per costruire l'indice dal momento che 
-PQ nasconde $M(=10)$ Kmeans ($K=256$ cluster l'uno) che eseguiti in parallelo si 
-è riusciti a mantenere contenuti i tempi di costruzione, ma con una Recall troppo 
-bassa ($\sim 0.6$). Invece, IVF nasconde prima un Kmeans con più di $1024$ cluster 
-e poi una PQ con $M(=10)$ Kmeans ($256$ cluster l'uno), ottenendo una recall simile 
-a PQ, ma con tempi maggiorati a confronto. 
-
-Per ridurre i tempi è necessario ridurre i centroidi comportando un aumento dell'errore 
-di quantizzazioen dei vettori e peggiorando, di conseguenza, la Recall.
+entrambi i metodi nascondono diverse esecuzioni di Kmeans parzialmente parallelizzabili
+e per questo non è stato possibile utilizzarli per via dei tempi di costruzione 
+proibitivi. Per rendere questi approcci utilizzabili bisognava ridurre notevolmente 
+il numero di centroidi comportando un aumento dell'errore di quantizzazioen dei 
+vettori e peggiorando, di conseguenza, la Recall.
 
 Infine è stata trovato l'approccio finale basato su $LSH$ che ha permesso, attraverso 
 una fase di fine-tuning dei parametri, di raggiungere un compromesso tra tempi di 

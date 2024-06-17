@@ -18,19 +18,20 @@ In questo modo la ricerca si articola in:
 \end{itemize} 
 
 Questo approccio permette di ridurre il numero di distanze calcolate, dal momento 
-che si confrontano solo la query con i vettori nel bucket. Il problema è trovare 
+che si confrontano solo la query con i vettori in un solo bucket. Il problema è trovare 
 un approccio per costruire una funzione di hash che sia veloce da calcolare e 
 che permetta di creare dei bucket di buona qualità.
 
 \section{Costruzione della funzione di hash}
 
-La funzione di hash che è stata definita si basa su \textbf{Random Projection}(RP),
+L'approccio per costruire la funzione di hash si è basato su \textbf{Random Projection}(RP),
 esattamente lo stesso algoritmo di riduzione di dimensionalità. 
 
 L'idea è di definire $k' = \lceil \log_2{\sqrt{|D|}} + 2\rceil (= 14)$  iperpiani randomici che suddividono
 lo spazio dei vettori del dataset in $2^{k'}$ regioni, ad ogni regione si associa 
-un hash e tutti i vettori che cadono afferiscono alla stessa regione produrranno 
-una collisione, quindi verranno inseriti nello stesso bucket.
+un hash e tutti i vettori che afferiscono alla stessa regione verranno codificati 
+con l'hash della regiore e produrranno una collisione, quindi verranno inseriti 
+nello stesso bucket.
 
 \begin{nota}
     La formula per ottenere $k'$ è stata scelta in modo arbitrario basandosi sulle 
@@ -83,7 +84,7 @@ funzione di hash è stato riportato nel listato \ref{list:funzione_hash}.
 
 La complessità temporale della funzione di hash calcolata per un particolare $v\in V$,
 è $\mathcal{O}(k' \cdot |v|)$ dove 
-$|v|$ è il numero delle componenti di $v\in D$ che dai requisiti della challenge 
+$|v|$ è il numero delle componenti di $v\in D$ che dai requisiti della challenge è
 costante a $100$, perciò si può anche approssimare a $\mathcal{O}(k')$, ma essendo 
 che anche $k'$ è costante allora si piò approssimare a $\mathcal{O}(1)$.
 
@@ -150,14 +151,7 @@ considera anche vettori vicini alla query che fanno parte di bucket adiacenti.
 \begin{esempio}
     Se i dati sono molto densi in alcune regioni del piano e sparsi in altre c'\`e la possibilit\`a
     che un gruppo denso di punti sia diviso in pi\`u bucket limitando la nostra capacit\`a di leggere tutti
-    i vettori "realmente" vicini a quello di query.
-\end{esempio}
-
-\begin{esempio}
-    Possiamo aver problemi anche nel caso generale in cui la query sia di tipo $0$, quindi non si 
-    deve filtrare per metadati, e cade nello spazio vicino ad un iperpiano che limita il bucket, 
-    questo comporta che in fase di ricerca si consideranno solo i vettori di quel 
-    bucket e non quelli del bucket adiacente che ha in comune lo stesso iperpiano. 
+    i vettori "realmente" vicini a quella di query.
 \end{esempio}
 
 Per risolvere i problemi è stato pensato di generare nuovi mapping randomici (\textbf{LSH con hash table multiple})
@@ -173,7 +167,7 @@ modo è possibile suddividere l'intero spazio dei vettori in $M$ modi differenti
 cosicché in fase di ricerca, al posto che cercare in una hash table, si cerca 
 in $M$ hash table parallelamente. In questo modo si può considerare anche alcuni vettori che ricadrebbero in bucket vicini,
 perché si spera che i bucket in cui cade la query per ciascuna hash table siano composti da vettori diversi.
-$M$ è stato scelto attraverso uno studio sull'impatto dei parametri sulle sulle metriche di tempo (di costruzione e ricerca) e recall.
+$M$ è stato scelto attraverso uno studio sull'impatto dei parametri sul tempo (di costruzione e ricerca) e recall.
 
 La differenza di partizione dello spazio di ciascuna hash table dipende interamente 
 da come vengono generati gli iperpiani di separazione, dal momento che si estraggono 
@@ -200,8 +194,9 @@ la recall sulle query di tipo $1$ e di tipo $3$ è stato pensato di definire una
 
 Si \`e anche pensato alla possibilit\`a di identificare a runtime i bucket adiacenti a quello della query per esplorarli e migliorare la recall, come alternativa ad avere pi\`u hash tables.
 Questa operazione pu\`o essere fatta semplicemente considerando la \textbf{distanza di hamming} di due hash: con $HD = 1$ i due hash differiranno del posizionamento rispetto ad un iperpiano, di conseguenza esplorando tutti gli hash con questa distanzia stiamo visitando gli spazi adiacenti. Questo corrisponde ad effetturare uno xor dell'hash con $k$ bitmask del tipo $0^i10^j$, con $i + j + 1 = k$.
-Il problema principale di questa strategia non \`e nella sua implementazione quanto nel fatto che rappresenta un'ennesima euristica basata sulla fortuna: se un query viene mappato in un bucket con pochi vettori e poi esplorando gli adiacenti ci imbattessimo in un bucket con molti vettori andremmo a peggiorare notevolmente l'esecuzione senza avere la certezza di trovare pi\`u vicini.
-Sperimentalmente si \`e rilevato che l'aumento di recall \`e relativamente insignificante e che viceversa l'aumento dei tempi di ricerca peggiora nel complesso la qualit\`a della soluzione.
+Il problema principale di questa strategia non \`e nella sua implementazione quanto nel fatto che rappresenta un'ennesima euristica basata sulla fortuna: se una query viene mappata in un bucket con pochi vettori e poi esplorando gli adiacenti ci imbattessimo in un bucket con molti vettori andremmo a peggiorare notevolmente l'esecuzione senza avere la certezza di trovare pi\`u vicini.
+
+Sperimentalmente si `e rilevato che l’aumento della recall `e relativamente insignificante rispetto all'aumento dei tempi di ricerca.
 
 \section{LSH Forest}
 L'approccio di LSH Forest è di velocizzare le query che filtrano sulla categoria,
@@ -350,8 +345,8 @@ per ogni $i$-esima hash table:
     \item si cerca il bucket di vettori che sono mappati con il medesimo hash 
     di $h_i(q)$
     \item si effettua una ricerca dicotomica nel bucket degli indici di due vettori: quello con 
-    il minimo timestamp che è maggiore di $q.l$ e quello col massimo timestamp che 
-    è minore di $q.r$. In questo modo si trova il intervallo di vettori nel bucket 
+    il minimo timestamp che è maggiore di $l$ e quello col massimo timestamp che 
+    è minore di $r$, dove $[l,r] = bound(q)$. In questo modo si trova il intervallo di vettori nel bucket 
     che hanno timestamp compreso tra $[l,r]$.
     \item si calcolano le distanze tra i vettori del bucket e la query e si inseriscono
     nel Minheap
@@ -368,13 +363,13 @@ i vettori della regione, popolando di conseguenza il minheap.
 Nel caso in cui la query filtra anche per timestamp, 
 dal momento che la regione è anche ordinata per timestamp, allora si effettua 
 una ricerca dicotomica degli indici di due vettori: quello con il minimo timestamp che è 
-maggiore di $q.l$ e quello col massimo timestamp che è minore di $q.r$.
+maggiore di $l$ e quello col massimo timestamp che è minore di $r$, dove $[l,r] = bound(q)$.
 In questo modo si ottiene un intervallo 
 di indici dei vettori nel dataset che hanno timestamp incluso 
 nell'intervallo specificato dalla query. Infine si calcolano tutte le distanze 
 tra i vettori dell'intervallo e la query, popolando alla fine il minheap.
 
-Per le medesime query, ma sulle categorie più grandi $|c|> 200$ allora la ricerca 
+Per le medesime query, ma sulle categorie più grandi $|c|> 2000$ allora la ricerca 
 si effettua direttamente nelle LSH dedicate della categoria con lo stesso algoritmo 
 spiegato per la ricerca delle query senza filtraggio o query con filtraggio sul timestamp.
 
@@ -453,7 +448,7 @@ composizione del dataset:
     \item \textbf{query senza filtraggio}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
     trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio) e 
     si calcolano un totale di $\mathcal{O}(|b|)$ ($|b|$ numero di vettori nel bucket). 
-    Questo ripetutto per tutte le $20$ che a livello asintotico rimane $\mathcal{O}(|D|)$
+    Questo viene ripetutto per tutte le $20$ hash table che a livello asintotico rimane $\mathcal{O}(|D|)$
     o nel caso medio $\Theta(|b|)$.
     \item \textbf{query con filtraggio sul timestamp}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
     trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio),
@@ -473,8 +468,8 @@ composizione del dataset:
     il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
     trovare il bucket con lo stesso hash è $\mathcal{O}(|c|)$ (costante nel caso medio), con
     $|c|$ dimensione della categoria, e 
-    si calcolano un totale di $\mathcal{O}(|b|)$ ($|b|$ numero di vettori nel bucket).
-    Questo ripetuto per tutte le $20$ che a livello asintotico rimane $\mathcal{O}(|c|)$
+    si calcolano un totale di $\mathcal{O}(|b|)$ distanze ($|b|$ numero di vettori nel bucket).
+    Questo ripetuto per tutte le $20$ hash table che a livello asintotico rimane $\mathcal{O}(|c|)$
     o nel caso medio $\Theta(|b|)$.
     \item \textbf{query con filtraggio solo sulla categoria e sul timestamp} (categoria grande): 
     il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
