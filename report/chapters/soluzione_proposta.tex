@@ -565,9 +565,6 @@ Al contrario il parametro LSH\_TABLES è stato deciso in base ai vincoli di temp
 richiesti dalla challenge, è stato scelto il valore $20$, ovvero il valore con la 
 recall maggiore che permettesse di rispettare i vincoli di tempo. 
 
-
-
-
 \section{Considerazioni}
 LSH Forest è stato l'unico metodo che ci ha permesso di produrre una soluzione 
 conforme ai limiti di $20$ minuti della challenge con recall maggiore rispetto
@@ -584,3 +581,6 @@ degli iperpiani, in modo tale che ogni suddivisione dello spazio sia il più dif
 possibile, permettendo quindi di esplorare uno spazio più ampio di vettori 
 sempre idealmente vicini alla query e riducendo il calcolo di distanze 
 calcolate già in altre suddivisioni. 
+
+Il codice contenente l'implementazione in C++ della soluzione dispiegata e la presente relazione
+sono reperibili in un repository su Github: \href{https://github.com/frefolli/sigmod}{https://github.com/frefolli/sigmod}.

@@ -450,15 +450,16 @@ In particolare in base alla selettività della query variano i parametri di rice
 Quindi alla fine si producono un totale di $150$ vettori per ogni sottointervallo
 $[l',r']$ con intersezione non nulla con l'intervallo di query e, in conclusione, 
 si raffina il risultato estraendo i migliori $100$ vettori più vicini alla query 
-nello spazio originale.   
+nello spazio originale.
 
 \subsection{Considerazioni sulla ricerca}
 
-Dal momento che sono state definite diverse strategie di ricerca, questo rende 
-complicato la sua analisi di complessità di ricerca di una query.
+Dal momento che sono state definite diverse strategie di ricerca nidificate
+\`e piuttosto complicato la sua analisi di complessità di ricerca di una query,
+quindi il risultato mostrato in questa sezione \`e da intendersi come qualitativo.
 
-L'osservazione più naturale che nasce dopo aver visto per la prima volta la ricerca,
-è che la quantizzazione è l'elemento chiave. Infatti, calcolare la distanza sugli 
+L'osservazione più naturale che nasce dopo aver visto per la prima volta la ricerca
+è che la quantizzazione è l'elemento chiave. Infatti calcolare la distanza sugli 
 elementi quantizzazioni risulta nettamente più efficiente rispetto a calcolare la 
 distanza sugli elementi, questo permette quindi agli autori di effettuare ricerche 
 esaustive su numerosi elementi, cosa che noi non potevamo permetterci di fare.
@@ -473,16 +474,25 @@ alta selettività, in aggiunta mentre si effettua la ricerca nel grafo spesso ve
 applicata delle ottimizzazioni per scartare alcuni nodi evitando di calcolare 
 ulteriori distanze. 
 
+Alla luce di queste osservazioni si deriva che per una singola query
+nel caso migliore abbiamo una complessit\`a di $\mathcal{O}(\log |D|)$,
+mentre nel caso peggiore si riduce ad un semplice tempo sublineare
+$\mathcal{O}(|D|)$. Nonostante il tempo complessivo scali al massimo come
+$\mathcal{O}(|D| \times |Q|)$, se si assume una distribuzione uniforme del tipo di query
+e della dimensione della categoria e del range di timestamp, l'algoritmo usa una ricerca
+logaritmica per pi\`u della met\`a del tempo. Se si aggiunge l'uso della quantizzazione
+simmetrica e della parallelizzazione l'approccio presentato raggiunge velocit\`a impressionanti
+mantenendo al contempo un'eccellente accuratezza (pari al 100\%, dalla piattaforma Sigmod).
+
 %Tempi di ricerca:
 % - Per query di tipo 0
-%   Search HNSW on |D| nodes, with K=\Theta(KNN) and M=450
+%   Log(|D|)
 % - Per query di tipo 1
-%   <  500000 -> Exaustive on O(\frac {|D|} {20})
-%   >= 500000 -> Search HNSW on |D| nodes, with K=\Theta(KNN), and M=O(1800 + \frac {700 {dim}_c} {{max}_c - {min}_c})
+%   <  500000 -> O(\frac {|D|} {20}) -> D/20 = 500000
+%   >= 500000 -> Log(|D|)
 % - Per query di tipo 2
-%   <  500000 -> Exaustive on O(\frac {|D|} {20})
-%   >= 500000 && |Intersect| <  2000000 -> Search HNSW on O(|D|) nodes, with K=\Theta(KNN), and M=O(780)
-%   >= 500000 && |Intersect| >= 2000000 -> Search HNSW on O(|D|) nodes, with K=\Theta(KNN), and M=O(680)
+%   <  500000 -> O(\frac {|D|} {20}) -> D/20 = 500000
+%   >= 500000 -> Log(|D|)
 % - Per query di tipo 3
-%   <  500000 -> Exaustive on O(\frac {|D|} {12.5})
-%   >= 500000 -> Search HNSW on |D| nodes, with K=\Theta(KNN), and M=O(1800 + \frac {1000 {dim}_c} {{max}_c - {min}_c})
+%   <  500000 -> O(\frac {|D|} {12.5}) -> D/12.5 = 800000
+%   >= 500000 -> Log(|D|)
