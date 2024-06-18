@@ -388,7 +388,7 @@ Lo pseudocodice è mostrato nel listato \ref{list:ricerca_lsh_forest}.
                 \Return{$searchLsh(LSHF.general, D, q)$}
             }
             \Case{$query.type == 1\lor query.type == 3$}{
-                \If{$LSHF.mapped[c].hashtable != null$}{
+                \If{$LSHF.mapped[c].hashtable \ne null$}{
                     \Return{$searchLsh(LSHF.mapped[c],D, q)$}
                 }\Else{
                     \Return{$ExaustiveSearch(D, q)$}
@@ -422,7 +422,6 @@ Lo pseudocodice è mostrato nel listato \ref{list:ricerca_lsh_forest}.
                     \For{$i=1$ \KwTo $NHashTable$}{
                         $h_q = hash(LSH.hashtable[i],q)$\;
                         $bucket = LSH.hashtable[i].bucket[h_q]$\;
-                        $[idx_l, idx_r] = dicotomicSearch(D, bucket, q.l, q.r)$\;
 
                         \For{$idx\in bucket$}{
                             \If{$\lnot results.has(v)$}{
