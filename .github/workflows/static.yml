@@ -35,7 +35,6 @@ jobs:
         with:
             working-directory: 'doc'
             doxyfile-path: './Doxifile.in'
-            enable-latex: true
       - name: Compile Latex
         uses: xu-cheng/latex-action@v2
         with:
