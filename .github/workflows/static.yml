@@ -30,17 +30,17 @@ jobs:
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v3
-      - name: Compile Doxygen
-        uses: mattnotmitt/doxygen-action@v1.9.5
-        with:
-            working-directory: 'doc'
-            doxyfile-path: './Doxifile.in'
+      - name: Install Doxygen
+      - uses: ssciwr/doxygen-install@v1
       - name: Compile Latex
         uses: xu-cheng/latex-action@v2
         with:
           root_file: |
             report/main.tex
           work_in_root_file_dir: true
+      - name: Compile doxygen
+        run: |
+          make -C doc
       - name: Create Static Dist Directory
         run: |
           sh ./static.sh
