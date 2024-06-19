@@ -1,5 +1,6 @@
 #ifndef TWEAKS_HH
 #define TWEAKS_HH
+/** @file tweaks.hh */
 
 #include <sigmod/config.hh>
 

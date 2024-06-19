@@ -1,5 +1,6 @@
 #ifndef RANDOM_PROJECTION_HH
 #define RANDOM_PROJECTION_HH
+/** @file random_projection.hh */
 
 // Theory https://en.wikipedia.org/wiki/Random_projection
 

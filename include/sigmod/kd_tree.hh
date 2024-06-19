@@ -1,5 +1,6 @@
 #ifndef KD_TREE_HH
 #define KD_TREE_HH
+/** @file kd_tree.hh */
 
 #include <sigmod/config.hh>
 #include <sigmod/database.hh>

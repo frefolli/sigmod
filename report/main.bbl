@@ -1,0 +1,390 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global}
+    \entry{mvp_tree2}{inproceedings}{}
+      \name{author}{2}{}{%
+        {{hash=e1000852563ff4b524f30bd991dd8970}{%
+           family={Bozkaya},
+           familyi={B\bibinitperiod},
+           given={Tolga},
+           giveni={T\bibinitperiod}}}%
+        {{hash=ea7d3cc318d2e372519b435f9b42f10a}{%
+           family={Özsoyoglu},
+           familyi={Ö\bibinitperiod},
+           given={Z.\bibnamedelimi Meral},
+           giveni={Z\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \name{editor}{1}{}{%
+        {{hash=a443003351b2f79ee732d2b97a5fa129}{%
+           family={Peckham},
+           familyi={P\bibinitperiod},
+           given={Joan},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {{ACM} Press}%
+      }
+      \strng{namehash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{fullhash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{bibnamehash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{authorbibnamehash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{authornamehash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{authorfullhash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{editorbibnamehash}{a443003351b2f79ee732d2b97a5fa129}
+      \strng{editornamehash}{a443003351b2f79ee732d2b97a5fa129}
+      \strng{editorfullhash}{a443003351b2f79ee732d2b97a5fa129}
+      \field{extraname}{1}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{{SIGMOD} 1997, Proceedings {ACM} {SIGMOD} International Conference on Management of Data, May 13-15, 1997, Tucson, Arizona, {USA}}
+      \field{title}{Distance-Based Indexing for High-Dimensional Metric Spaces}
+      \field{year}{1997}
+      \field{pages}{357\bibrangedash 368}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1145/253260.253345
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/253260.253345
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/253260.253345
+      \endverb
+    \endentry
+    \entry{mvp_tree1}{article}{}
+      \name{author}{2}{}{%
+        {{hash=e1000852563ff4b524f30bd991dd8970}{%
+           family={Bozkaya},
+           familyi={B\bibinitperiod},
+           given={Tolga},
+           giveni={T\bibinitperiod}}}%
+        {{hash=ea7d3cc318d2e372519b435f9b42f10a}{%
+           family={Özsoyoglu},
+           familyi={Ö\bibinitperiod},
+           given={Z.\bibnamedelimi Meral},
+           giveni={Z\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \strng{namehash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{fullhash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{bibnamehash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{authorbibnamehash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{authornamehash}{10b252fc21bb5462b7030354c3a51f72}
+      \strng{authorfullhash}{10b252fc21bb5462b7030354c3a51f72}
+      \field{extraname}{2}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{{ACM} Trans. Database Syst.}
+      \field{number}{3}
+      \field{title}{Indexing Large Metric Spaces for Similarity Search Queries}
+      \field{volume}{24}
+      \field{year}{1999}
+      \field{pages}{361\bibrangedash 404}
+      \range{pages}{44}
+      \verb{doi}
+      \verb 10.1145/328939.328959
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/328939.328959
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/328939.328959
+      \endverb
+    \endentry
+    \entry{kd_tree}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=9edd92d042e0808ae26ec9cb32c4b8d2}{%
+           family={Brown},
+           familyi={B\bibinitperiod},
+           given={Russell\bibnamedelima A.},
+           giveni={R\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \strng{namehash}{9edd92d042e0808ae26ec9cb32c4b8d2}
+      \strng{fullhash}{9edd92d042e0808ae26ec9cb32c4b8d2}
+      \strng{bibnamehash}{9edd92d042e0808ae26ec9cb32c4b8d2}
+      \strng{authorbibnamehash}{9edd92d042e0808ae26ec9cb32c4b8d2}
+      \strng{authornamehash}{9edd92d042e0808ae26ec9cb32c4b8d2}
+      \strng{authorfullhash}{9edd92d042e0808ae26ec9cb32c4b8d2}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprinttype}{arXiv}
+      \field{title}{Building a Balanced k-d Tree in O(kn log n) Time}
+      \field{year}{2024}
+      \verb{eprint}
+      \verb 1410.5420
+      \endverb
+    \endentry
+    \entry{exp_decay}{misc}{}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://it.wikipedia.org/wiki/Distribuzione_esponenziale}}
+      \field{note}{Accessed: 07/06/2024}
+      \field{title}{Distribuzione esponenziale}
+    \endentry
+    \entry{pq}{article}{}
+      \name{author}{3}{}{%
+        {{hash=adf9e09506f0b971ad0e6f36839c7bf6}{%
+           family={Jégou},
+           familyi={J\bibinitperiod},
+           given={Herve},
+           giveni={H\bibinitperiod}}}%
+        {{hash=e9190eb3cfa416148f38314a0698d592}{%
+           family={Douze},
+           familyi={D\bibinitperiod},
+           given={Matthijs},
+           giveni={M\bibinitperiod}}}%
+        {{hash=58e4a9845eac42a4b0e5205cf0970fc0}{%
+           family={Schmid},
+           familyi={S\bibinitperiod},
+           given={Cordelia},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{e6448fb61dff48c0ae9535a259814146}
+      \strng{fullhash}{e6448fb61dff48c0ae9535a259814146}
+      \strng{bibnamehash}{e6448fb61dff48c0ae9535a259814146}
+      \strng{authorbibnamehash}{e6448fb61dff48c0ae9535a259814146}
+      \strng{authornamehash}{e6448fb61dff48c0ae9535a259814146}
+      \strng{authorfullhash}{e6448fb61dff48c0ae9535a259814146}
+      \field{sortinit}{J}
+      \field{sortinithash}{b2f54a9081ace9966a7cb9413811edb4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Pattern Analysis and Machine Intelligence}
+      \field{number}{1}
+      \field{title}{Product Quantization for Nearest Neighbor Search}
+      \field{volume}{33}
+      \field{year}{2011}
+      \field{pages}{117\bibrangedash 128}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1109/TPAMI.2010.57
+      \endverb
+      \keyw{Quantization;Nearest neighbor searches;Indexing;Neural networks;Euclidean distance;File systems;Scalability;Image databases;Permission;Electronic mail;High-dimensional indexing;image indexing;very large databases;approximate search.}
+    \endentry
+    \entry{ball_tree}{article}{}
+      \name{author}{3}{}{%
+        {{hash=df4100f4c9320162410d3ddcc9257d55}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Ting},
+           giveni={T\bibinitperiod}}}%
+        {{hash=e7235f20cee7d299f1ca6ba250cc615e}{%
+           family={Moore},
+           familyi={M\bibinitperiod},
+           given={Andrew\bibnamedelima W.},
+           giveni={A\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+        {{hash=d638a1db0477bd1657382f080ccb5b6f}{%
+           family={Gray},
+           familyi={G\bibinitperiod},
+           given={Alexander\bibnamedelima G.},
+           giveni={A\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
+      }
+      \strng{namehash}{34921de3fcdb8657e0c98e7a85ceef35}
+      \strng{fullhash}{34921de3fcdb8657e0c98e7a85ceef35}
+      \strng{bibnamehash}{34921de3fcdb8657e0c98e7a85ceef35}
+      \strng{authorbibnamehash}{34921de3fcdb8657e0c98e7a85ceef35}
+      \strng{authornamehash}{34921de3fcdb8657e0c98e7a85ceef35}
+      \strng{authorfullhash}{34921de3fcdb8657e0c98e7a85ceef35}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{J. Mach. Learn. Res.}
+      \field{title}{New Algorithms for Efficient High-Dimensional Nonparametric Classification}
+      \field{volume}{7}
+      \field{year}{2006}
+      \field{pages}{1135\bibrangedash 1158}
+      \range{pages}{24}
+      \verb{urlraw}
+      \verb http://jmlr.org/papers/v7/liu06a.html
+      \endverb
+      \verb{url}
+      \verb http://jmlr.org/papers/v7/liu06a.html
+      \endverb
+    \endentry
+    \entry{hnsw}{misc}{}
+      \name{author}{2}{}{%
+        {{hash=1761d9a54a91e198bbbb1ab8c90b87cf}{%
+           family={Malkov},
+           familyi={M\bibinitperiod},
+           given={Yu.\bibnamedelimi A.},
+           giveni={Y\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=0ab161f0ecfa8c1f0510bd561839d6ac}{%
+           family={Yashunin},
+           familyi={Y\bibinitperiod},
+           given={D.\bibnamedelimi A.},
+           giveni={D\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \strng{namehash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{fullhash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{bibnamehash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{authorbibnamehash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{authornamehash}{41f677ba5b31db2db6a749a416e76e0e}
+      \strng{authorfullhash}{41f677ba5b31db2db6a749a416e76e0e}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.DS}
+      \field{eprinttype}{arXiv}
+      \field{title}{Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs}
+      \field{year}{2018}
+      \verb{eprint}
+      \verb 1603.09320
+      \endverb
+    \endentry
+    \entry{map_find}{misc}{}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://en.cppreference.com/w/cpp/container/map/find}}
+      \field{note}{Accessed: 17/05/2024}
+      \field{title}{Map access using find}
+    \endentry
+    \entry{map_index}{misc}{}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://en.cppreference.com/w/cpp/container/map/operator_at}}
+      \field{note}{Accessed: 17/05/2024}
+      \field{title}{Map access using key}
+    \endentry
+    \entry{rp}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=d6a28c4dcaa2d1b4ebe55cb869d11e9d}{%
+           family={Nabil},
+           familyi={N\bibinitperiod},
+           given={Mahmoud},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{d6a28c4dcaa2d1b4ebe55cb869d11e9d}
+      \strng{fullhash}{d6a28c4dcaa2d1b4ebe55cb869d11e9d}
+      \strng{bibnamehash}{d6a28c4dcaa2d1b4ebe55cb869d11e9d}
+      \strng{authorbibnamehash}{d6a28c4dcaa2d1b4ebe55cb869d11e9d}
+      \strng{authornamehash}{d6a28c4dcaa2d1b4ebe55cb869d11e9d}
+      \strng{authorfullhash}{d6a28c4dcaa2d1b4ebe55cb869d11e9d}
+      \field{sortinit}{N}
+      \field{sortinithash}{22369a73d5f88983a108b63f07f37084}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.LG}
+      \field{eprinttype}{arXiv}
+      \field{title}{Random Projection and Its Applications}
+      \field{year}{2017}
+      \verb{eprint}
+      \verb 1710.03163
+      \endverb
+    \endentry
+    \entry{pca}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=8f128e70084608a2c29c497ebd794f87}{%
+           family={Shlens},
+           familyi={S\bibinitperiod},
+           given={Jonathon},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{8f128e70084608a2c29c497ebd794f87}
+      \strng{fullhash}{8f128e70084608a2c29c497ebd794f87}
+      \strng{bibnamehash}{8f128e70084608a2c29c497ebd794f87}
+      \strng{authorbibnamehash}{8f128e70084608a2c29c497ebd794f87}
+      \strng{authornamehash}{8f128e70084608a2c29c497ebd794f87}
+      \strng{authorfullhash}{8f128e70084608a2c29c497ebd794f87}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.LG}
+      \field{eprinttype}{arXiv}
+      \field{title}{A Tutorial on Principal Component Analysis}
+      \field{year}{2014}
+      \verb{eprint}
+      \verb 1404.1100
+      \endverb
+    \endentry
+    \entry{unsorted_map_find}{misc}{}
+      \field{sortinit}{U}
+      \field{sortinithash}{6901a00e45705986ee5e7ca9fd39adca}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://en.cppreference.com/w/cpp/container/unordered_map/find}}
+      \field{note}{Accessed: 17/05/2024}
+      \field{title}{Unsorted map access using find}
+    \endentry
+    \entry{unsorted_map_index}{misc}{}
+      \field{sortinit}{U}
+      \field{sortinithash}{6901a00e45705986ee5e7ca9fd39adca}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://en.cppreference.com/w/cpp/container/unordered_map/operator_at}}
+      \field{note}{Accessed: 17/05/2024}
+      \field{title}{Unsorted map access using key}
+    \endentry
+    \entry{vp_tree}{inproceedings}{}
+      \name{author}{1}{}{%
+        {{hash=ea925c5d7f1700742f142cfb49728da5}{%
+           family={Yianilos},
+           familyi={Y\bibinitperiod},
+           given={Peter\bibnamedelima N.},
+           giveni={P\bibinitperiod\bibinitdelim N\bibinitperiod}}}%
+      }
+      \name{editor}{1}{}{%
+        {{hash=d79b4ecda00e902b87e499875e90b15f}{%
+           family={Ramachandran},
+           familyi={R\bibinitperiod},
+           given={Vijaya},
+           giveni={V\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {ACM/SIAM}%
+      }
+      \strng{namehash}{ea925c5d7f1700742f142cfb49728da5}
+      \strng{fullhash}{ea925c5d7f1700742f142cfb49728da5}
+      \strng{bibnamehash}{ea925c5d7f1700742f142cfb49728da5}
+      \strng{authorbibnamehash}{ea925c5d7f1700742f142cfb49728da5}
+      \strng{authornamehash}{ea925c5d7f1700742f142cfb49728da5}
+      \strng{authorfullhash}{ea925c5d7f1700742f142cfb49728da5}
+      \strng{editorbibnamehash}{d79b4ecda00e902b87e499875e90b15f}
+      \strng{editornamehash}{d79b4ecda00e902b87e499875e90b15f}
+      \strng{editorfullhash}{d79b4ecda00e902b87e499875e90b15f}
+      \field{sortinit}{Y}
+      \field{sortinithash}{fd67ad5a9ef0f7456bdd9aab10fe1495}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the Fourth Annual {ACM/SIGACT-SIAM} Symposium on Discrete Algorithms, 25-27 January 1993, Austin, Texas, {USA}}
+      \field{title}{Data Structures and Algorithms for Nearest Neighbor Search in General Metric Spaces}
+      \field{year}{1993}
+      \field{pages}{311\bibrangedash 321}
+      \range{pages}{11}
+      \verb{urlraw}
+      \verb http://dl.acm.org/citation.cfm?id=313559.313789
+      \endverb
+      \verb{url}
+      \verb http://dl.acm.org/citation.cfm?id=313559.313789
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

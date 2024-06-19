@@ -1,5 +1,6 @@
 #ifndef STATISTICAL_INDECES_HH
 #define STATISTICAL_INDECES_HH
+/** @file statistical_indeces.hh */
 
 #include<sigmod/database.hh>
 

@@ -1,5 +1,6 @@
 #ifndef SCOREBOARD_HH
 #define SCOREBOARD_HH
+/** @file scoreboard.hh */
 
 #include <sigmod/config.hh>
 #include <sigmod/flags.hh>

@@ -1,5 +1,6 @@
 #ifndef DEBUG_HH
 #define DEBUG_HH
+/** @file debug.hh */
 
 #include <iostream>
 #include <string>

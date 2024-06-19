@@ -1,0 +1,498 @@
+\chapter{Soluzione vincente}
+La soluzione vincente si basa su grafi metrici.
+Più precisamente crea una struttura di indicizzazione a grafo ibrida, questa struttura 
+è composta da un insieme di grafi HNSW, ciascuno contenente un insieme di vettori 
+sufficientemente grande con metadati comuni. Ad esempio: crea un HNSW per ogni singola 
+categoria sufficientemente grande e un HNSW per intervallo di timestamp.
+
+\section{HNSW teorico}
+Hierarchical Navigable Small World Graphs (HNSW) è una struttura dati basata su 
+grafi metrici a livelli che permette di navigare
+lo spazio dei vettori attravero un cammino composto da archi che collegano due nodi 
+vicini. Ogni livello è una 
+rappresentazione approssimata dello spazio gentrico tramite un grafo metrico. Nel grafo ogni nodo rappresenta 
+un vettore e si hanno degli archi diretti che rappresentano la relazione di vicinanza,
+ovvero, dato un nodo ogni suo arco uscente porta ai $M$ nodi più vicini a quel nodo. La relazione 
+di vicinanza è diretta perché nel caso dell'arco $(a,b)$, non è detto che il nodo 
+$b$ abbia nei $M$ nodi più vicini il nodo $a$.
+
+Ogni livello rappresenta il livello di approssimazione dello spazio geometrico, 
+più il livello è alto allora maggiore è l'approssimazione, più il livello è basso 
+e più precisa sarà la rappresentazione dello spazio. Dato un livello $l$, il livello 
+successivo $l-1$ è un grafo composto da almeno gli stessi nodi del grafo sul livello 
+precedente con l'aggiunta di nuovi nodi collegati ai nodi già presenti secondo 
+la relazione di vicinanza (nel nostro caso si basa sulla distanza euclidea, Vedi 
+figura \ref{fig:hnsw}). 
+
+Questo permette di navigare lo spazio velocemente nel livello più alto non passando 
+per tutti i punti perché ogni nodo di un livello rappresenta una \textbf{Voronoi Cell} dello spazio grande 
+quanto la specificità del livello stesso. Nodi presenti in un grafo di livello 
+superiore rappresenteranno delle Voronoi Cell più grandi rispetto ai nodi 
+presenti in un grafo di un livello inferiore.
+
+\begin{figure}
+    \centering
+    \includegraphics*[width=0.5\textwidth]{img/hnsw.png}
+    \caption{Esempio grafico di un HNSW a $3$ livelli. Il percorso con le frecce blu corrisponde 
+    al percorso compiuto per cercare il nodo giallo nella struttura. 
+    Il livello $0$ rappresenta l'intero spazio metrico, mentre i livelli superiori sono delle 
+    approssimazioni. \cite{hnsw}}
+    \label{fig:hnsw}
+\end{figure}
+
+\subsection{Creazione di HNSW}
+
+Dato un insieme di vettori $V$, la costruzione di un generico HNSW  è un processo 
+iterativo, in cui si inserisce ciascun vettore uno alla volta. L'inserimento di 
+un vettore $q\in V$ nella struttura si articola nelle seguenti fasi:
+\begin{itemize}
+    \item \textbf{inizializzazione}: si seglie un nodo $ep$ di entry point nel livello massimo
+    e si seleziona il livello $l$ a partire dal quale si inserice il vettore $q$.
+    Più precisamente $l = \lfloor-\ln (U[0,1])\cdot m_l\rfloor$  e si inserirà $q$ 
+    in tutti i livelli da $l$ a $0$. $m_l$ è la costante di normalizzazione che 
+    limita $l\in [0, L_{max}]$, dove $L_{max}$ è il livello massimo della struttura.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.5\textwidth]{img/exp_decay_distr.png}
+        \caption{Andamento di una funzione di densità di decadimento esponenziale. 
+        \cite{exp_decay}}
+        \label{fig:exp_decay}
+    \end{figure}
+    \item \textbf{prima fase}: a partire dal livello $L_{max}$, si naviga il grafo 
+    a partire dal nodo $ep$ fino a quando non si trova il nodo $w$ più vicino a
+    $q$ (algoritmo greedy), successivamente si effettua la stessa operazione 
+    su livello $L_{max} - 1$, utilizzando come nodo di entry point il nodo $w$,
+    si itera il procedimento fino a quando non si trova l'entry point $w$ del livello $l$.
+    \item \textbf{seconda fase}: a partire dal livello $l$ si cercano i $W$ nodi 
+    più vicini a $q$ a partire dall'ultimo entry point trovato al termine della fase precedente ($|W| = efConstruction$),
+    sempre col medesimo algoritmo greedy accennato nella prima fase.
+    Successivamente si usa un'euristica che calcola dall'insieme dei $W$ nodi
+    l'insieme $N$ degli $M$ nodi più vicini a $q$ sempre sullo stesso layer $l$. 
+    Si creano degli edge bidirezionali tra i nodi $N$ e $q$. Successivamente si 
+    sistemano i collegamenti tra i vicini in modo che ogni nodo rispetti il vincolo 
+    di avere al massimo $M_{max}$ collegamenti, questo viene implementato rimuovendo 
+    degli edge tra due nodi nel vicinato di $q$. Infine si reitera il procedimento 
+    dal livello $l$ al livello $0$.
+\end{itemize}
+
+\begin{nota}
+    La scelta del livello dal quale inserire un nuovo vettore viene effettuata 
+    in modo randomico secondo una \textbf{distribuzione di decadimento esponenziale}. 
+    In sostanza si ha maggior probabilità di estrarre un livello $l$ vicino a $0$ 
+    piuttosto che un livello più vicino a $L_{max}$. (vedi figura \cite{exp_decay})
+\end{nota}
+
+\begin{nota}
+    L'algoritmo greedy accennato precedentemente permette di navigare il grafo 
+    ad un particolare livello a partire da un nodo di entrypoint $ep$ e trovare gli $ef$ 
+    nodi candidati vicini al vettore $q$. 
+    La ricerca avviene nel seguente modo:
+    \begin{itemize}
+        \item si tiene traccia dei nodi già visitati, dei nodi vicini a $q$. Inizialimente 
+        entrambi gli insiemi sono vuoti.
+        \item si parte dal nodo $ep$, si aggiunge $ep$ all'insieme dei nodi vicini a $q$,
+        si guardano tutti i vicini e si calcola la distanza da ciascun vicino a $q$,
+        si sceglie il vicino a distanza minima e ci si sposta in quel nodo, si 
+        aggiunge $ep$ all'insieme dei nodi visitati.
+        \item si reitera il punto precedente, evitando di visitare nodi già visitati e
+        fino a quando non si può più andare avanti, oppure si continua fino a quando 
+        non si arriva ad una iterazione massima. Se l'insieme dei vicini a $q$
+        superla $ef$ allora vengono rimossi i nodi più lontani da $q$.
+    \end{itemize} 
+\end{nota}
+
+Per la costruzione della struttura si richiedono i seguenti parametri:
+\begin{itemize}
+    \item $M_{max}$: numero massimo di edge uscenti da ogni nodo per un livello, questo 
+    potrebbe coincidere con $M$.
+    \item $L_{max}$: livello massimo della struttura.
+    \item $efConstruction$: specifica il numero dei nodi candidati ad essere i vicini 
+    del vettore $q$. Questo parametro permette di variare la recall e il tempo di 
+    costruzione della struttura.
+\end{itemize} 
+
+
+
+\subsection{Ricerca nella struttura}
+La ricerca di una query $q$ in un generico HNSW richiede i seguenti parametri:
+\begin{itemize}
+    \item $K$: numero di vicini alla query $q$ da cercare nella struttura
+    \item $ef$: numero di candidati vicini da considerare quando si naviga sui singoli 
+    grafi di ciascun livello.
+\end{itemize}
+
+La ricerca si articola nei seguenti passi:
+\begin{itemize}
+    \item si sceglie randomicamente un entry point $ep$ nel livello massimo
+    \item nel livello massimo si cercano gli $ef$ migliori vicini alla query 
+    $q$ mediante l'algoritmo greedy di graph traversal usato in fase di costruzione
+    \item si estrae dai migliori $ef$ vicini alla query il più vicino e lo si usa 
+    come $ep$ per il grafo al livello inferiore.
+    \item si reitera il procedimento fino a quando non si ottengono gli $ef$ vicini 
+    alla query al livello $0$. In questo caso si ritornano i migliori $K$ vicini.
+\end{itemize}  
+
+\section{Creazione della struttura a grafo ibrida}
+Per prima cosa vene letto tutto il dataset e viene salvato
+all'interno di $3$ array:
+\begin{itemize}
+    \item \texttt{base\_vecs}: array contenente i coefficienti di tutti i vettori del dataset
+    di dimensione $10^7\cdot 100$.
+    \item \texttt{base\_labels}: array contente le labels di tutti i vettori, ovvero un 
+    vettore di $10^7$ elementi.
+    \item \texttt{base\_timestamps}: array contente i timestamps di tutti i vettori, ovvero un 
+    vettore di $10^7$ elementi.
+\end{itemize} 
+
+\begin{nota}
+    La posizione $i$ indica  l'informazione dell'$i$-esimo vettore nel dataset.
+\end{nota}
+
+Successivamente si creano degli array di appoggio che specificano l'ordinamento 
+del dataset rispetto a diversi criteri di ordinamento:
+\begin{itemize}
+    \item \texttt{sorted\_base\_ids}: vettore contenente gli indici dei vettori ordinati 
+    per categoria crescente e successivamente per timestamps. Quindi per ogni $i\le j\in \mathbb{N}$,
+    allora il numero della categoria associato al vettore $sorted\_base\_ids[i]$
+    è minore rispetto al numero della categoria del vettore $sorted\_base\_ids[j]$,
+    in caso di categorie uguali allora si ordina per timestamps.
+    \item \texttt{sorted\_base\_ids\_by\_time}: vettore contenente gli indici dei vettori ordinati 
+    per timestamps spostando i spostando tutti i vettori della categoria più grande all'inizio 
+    del vettore. In questo modo all'inizio del vettore si avranno solo vettori 
+    ordinati per timestamps della categoria più grande, successivamente si hanno 
+    tutti gli altri vettori ordinati per timestamp. 
+    \item \texttt{sorted\_base\_ids\_by\_full\_time}: vettore contenente gli indici dei vettori ordinati 
+    per timestamps.
+\end{itemize}
+
+\begin{nota}
+    L'ordinamento dei vettori della categoria più grande in sorted\_base\_ids\_by\_time 
+    viene replicato dal vettore sorted\_base\_ids perché in caso ci fossero vettori 
+    della categoria più grande con lo stesso timestamp allora questi possono avere 
+    un ordinamento diverso tra i due indici.
+\end{nota}
+
+In aggiunta viene creata una $c\_map$, ovvero una mappa delle categorie ovvero 
+un array di coppie ordinate:
+\begin{equation}
+    category\_map[c] = \langle i, dimensione\_categoria\_c\rangle
+\end{equation} 
+dove $i = sorted\_base\_ids[v]$ con $v$ ultimo vettore della categoria $c$, 
+mentre $dimensione\_categoria\_c$ specifica il numero di vettori presenti nella 
+categoria $c$. Da notare che la coppia viene aggiunta all'array solo quando $c$ 
+ha almeno $450000$ vettori.
+
+Successivamente si costruisce una $t\_map$, ovvero una mappa dei timestamp ovvero 
+un array di coppie ordinate:
+\begin{equation}
+    t\_map[i] = \langle l, dimensione\_intervallo\rangle
+\end{equation} 
+dove:
+\begin{itemize}
+    \item $i\in \{0,\dots,9\}$ specifica l'intervallo di timestamp $[0.1*i, 0.1*(i+1)]$
+    \item $l= timestamps\_by\_full\_time[v]$, $v$ è il primo vettore con il timestamp nell'intervallo cercato
+    \item $dimensione\_intervallo$ il numero di vettori nell'intervallo
+\end{itemize}
+
+In seguito viene letto il query set e viene salvato all'interno di due array:
+\begin{itemize}
+    \item \texttt{query\_vecs}: array contente le componenti dei vettori di query ovvero 
+    $10^6 \cdot 100$.
+    \item \texttt{query\_metas}: array contente i metadati delle query, ovvero la tipologia,
+    la categoria e l'intervallo di timestamp.
+    $10^6 \cdot 4$.
+\end{itemize}
+
+Successivamente si creano degli array di appoggio:
+\begin{itemize}
+    \item \texttt{sorted\_ids}: vettore degli indici dei delle query ordinate per tipo, 
+    categoria, lower bound e upper bound dell'intervallo di timestamp
+    \item \texttt{category\_query}: mappa che associa per ogni categoria un vettore di 
+    indici di query che afferiscono a quella categoria.
+\end{itemize}
+
+Da notare che la $c\_map$, $category\_query$ e $t\_map$ sono tutte mappe implementate 
+come \texttt{unordered\_map}.
+
+Dopo la lettura ordinata del dataset e del queryset, è stato applicato un passo di 
+\textbf{quantizzazione scalare simmetrica} in modo da ridurre lo spazio occupato dalle componenti, 
+più precisamente si riduce da $400B$ a $112B$, trasformando tutte le combonenti in 
+un byte. Ogni vettore occupa $112B$ perché $100B$ sono per le $100$ componenti mentre i restanti $12B$
+sono posti a zero e servono ad un duplice scopo: avere un'allineamento a $32bits$/$64bits$ per questioni
+di indirizzamento (altrimenti non ci sono assicurazioni su come compilatore intende allineare la memoria)
+e avere contemporaneamente un allineamento a $16B$ per poter sfruttare le operazioni del \textbf{SSE} (estensione SIMD
+che permette di operare in parallelo su registri a $128bits$).
+
+In senguito è stato creato un HSNW per i vettori 
+afferenti alla categoria più grande, uno per i vettori afferenti a categorie che 
+contengono almento $500000$ vettori e uno per ogni intervallo di timestamp della 
+$t\_map$. Gli HNSW vengono costruiti sulle codifiche dei vettori.
+
+In aggiunta, vengono calcolate tutte le codifiche della quantizzazione scalare 
+di tutti i vettori del dataset. Inoltre, si creano due vettori di ordinamento 
+che specificano l'ordinamento delle condifiche:
+\begin{itemize}
+    \item \texttt{sorted\_both}: in posizione $i$ contiene i metadati dell'$i$-esima
+    codifica dei vettori del dataset secondo l'ordinamento per categoria e successivamente
+    per timestamp.
+    \item \texttt{sorted\_timestamp}: in posizione $i$ contiene i metadati dell'$i$-esima
+    codifica dei vettori del dataset secondo l'ordinamento per timestamp.
+\end{itemize}
+
+%La struttura di indicizzazione definita dagli autori è composta da:
+%\begin{itemize}
+%    \item \texttt{base\_vecs}
+%    \item \texttt{base\_labels}
+%    \item \texttt{sorted\_base\_ids}
+%    \item \texttt{sorted\_base\_ids\_by\_time} 
+%    \item \texttt{sorted\_base\_ids\_by\_full\_time}
+%    \item \texttt{sorted\_both}
+%    \item \texttt{sorted\_timestamp}
+%    \item \texttt{c\_map}
+%    \item \texttt{t\_map}
+%    \item un grafo HNSW per la categoria più grande.
+%    \item un grafo HNSW per ogni categoria più grande di $500000$ vettori.
+%    \item un grafo HNSW per ogni intervallo di timestamp, in totale $10$.
+%\end{itemize}
+
+\subsection{Quantizzazione Scalare Simmetrica}
+
+Per poter ridurre i dati di dimensionalit\`a si hanno due passi:
+\begin{itemize}
+    \item \textbf{training}: si allena l'algoritmo per definire gli iperparametri
+    \item \textbf{codifica}: si codificano i vettori usando i parametri trovati nella 
+    fase precedente.
+\end{itemize}
+
+La fase di training si esegue su un sottoinsieme di vettori del dataset e permette 
+di definire l'unico iperparametro $\alpha$. L'iperparametro viene definito come 
+il valore assoluto del coefficiente in valore assoluto maggiore di tutti i coefficienti 
+dei vettori del training set.
+
+In seguito si codificano tutti i vettori del dataset dividendo ogni coefficiente 
+per $\alpha$ e nel caso i coefficienti "normalizzati" uscissero dall'intervallo 
+$[-1,1]$ allora di riportano all'estremo più vicino (i valori eccedenti gli estremi 
+vengono riassegnati all'estremo che superano, ex: $-5 \rightarrow -1$). Successivamente 
+si moltiplica ciascun coefficiente per $127$ e si converte ad intero, in questo modo 
+si ottengono $255$ valori possibili per ogni coefficiente nell'intervallo $[-127,127]$.
+
+La quantizzazione \`e detta simmetrica perch\`e ogni float a $32bit$ viene compresso in un valore intero a $8bit$ nell'intervallo $[-127, 127]$.
+Viceversa nella quantizzazione asimmetrica (implementata ma non utilizzata dagli autori) i valori sarebbero compressi nell'intervallo $[0, 255]$.
+
+\subsection{Implementazione di HNSW}
+
+\paragraph{Configurazione}
+
+Vengono costruiti un grafo HNSW per la categoria $C_b$ pi\`u grande, uno per ogni categoria $C_i \ne C_b$ con $|C_i| > 500000$ e infine uno per ogni intervallo di timestamp nella $t\_map$.
+I parametri di costruzione degli HNSW specificati dagli autori sono $M = 28$ e $efConstruction = 200$.
+In generale il numero di massimo di layer ottenibili nell'HNSW scala come $\frac 1 {ln(M)}$, ovvero con una probabilit\`a
+ molto piccola verr\`a estratto un layer superiore allo zero
+ (si richiama la sezione d'introduzione su HNSW: la frazione \`e moltiplicata per una variabile uniforme $x \; : \; [0,1]$).
+Con questa configurazione di parametri ci si pu\`o aspettare asintoticamente un numero molto basso di layer.
+
+\paragraph{Il Wrapper}
+
+Gli autori della soluzione hanno sfruttato l'implementazione di HNSW della libreria \href{https://github.com/zilliztech/pyglass/tree/master}{pyglass} creando un wrapper per le strutture definite dalla libreria.
+Questo wrapper applica la quantizzazione scalare simmetrica a $8$ bit descritta precedentemente per sfruttare le operazioni vettoriali del processore, velocizzando il calcolo delle distanze.
+Quindi aggiunge i punti sequenzialmente ma sfruttando la parallelizzazione: questo grazie alla presenza e uso di lock all'interno dell'implementazione dell'HNSW di \textit{pyglass}.
+Il primo punto inserito \`e per\`o escluso dalla parallelizzazione, altrimenti eseguendo in parallelo verrebbero aggiungiunti fino a 32 nodi come entry point.
+Dopo aver inserito tutti i dati, il wrapper costruisce un grafo che copia sostanzialmente il Layer 0 dell'HNSW, tracciando oltre agli indici dei nodi puntati dagli archi il timestamp di ogni nodo bersaglio.
+Questo grafo contiene anche un \textbf{Initializer} utilizzato in fase di ricerca per inizializzare il pool di candidati nodi vicini.
+
+\paragraph{La Libreria}
+
+L'algoritmo di inserimento dei punti implementato dalla libreria ricalca essenzialmente gli algoritmi presentati nella sezione precedente e presentati dal paper ufficiale di HNSW, tuttavia applica una serie di ottimizzazioni che lo rendono pi\`u veloce di una implementazione naive.
+
+Per cominciare, la fase iniziale di ricerca per l'entry point pi\`u vicino viene effettuata tramite una variante della ricerca su Layer che non tiene traccia di tutti i nodi identificati e che sono candidati ma solo del pi\`u vicino, quindi ogni iterazione all'interno di un livello tiene conto solo dell'euristicamente "migliore" vicino.
+Questo ha l'effetto di velocizzare quella fase a discapito della precisione, ragion per cui nella fase successiva si tiene traccia di una coda di candidati per evitare di perdere informazioni.
+
+Nella funzione di ricerca su layer vera e propria, tra gli accorgimenti troviamo delle istruzioni Streaming SIMD Extension che permettono all'hardware di precaricare le pagine con i dati dei nodi da usare nella Cache e la possibilit\`a di operare in parallelo sui dati quantizzati, il che velocizza i tempi di accesso e calcolo delle distanze in maniera sensibile.
+A differenza del paper, nella fase di aggiornamento dei collegamenti in un layer si ritarda l'inserimento dell'arco dal vicino i-esimo al punto che si sta inserendo e si sfrutta l'euristica di selezione di migliori M vicini per ridurre gli archi del nodo vicino e solo successivamente aggiornare le liste di adiacenza (l'unica aggiornata immediatamente \`e quella del nodo in inserimento).
+
+Infine il fatto di inserire parallelamente i punti permette ad ogni sottoricerca di considerare meno punti e questo snellisce di poco l'aggiunta di nuovi nodi al grafo.
+Questo \`e possibile solo tramite l'utilizzo di un lock per ogni lista di adiacenza, un lock per la tabella degli identificatori interni all'HNSW e un lock "globale" per la definizione dell'entry point e del massimo livello nel grafo gerarchico.
+Quando un thread deve leggere o scrivere dati da uno di questi punti, acquisisce il lock e lo mantiene fino al termine dell'operazione locale, quindi lo rilascia in modo che gli altri 31 thread possano procedere concorrentemente.
+Euristicamente visto che c'\`e variabilit\`a sul vicinato del punto in inserimento e sul livello in cui si parte, la costruzione rimane concorrente invece che regredire a sequenziale.
+
+\section{Ricerca nella struttura di indicizzazione}
+
+La ricerca nella struttura a grafo ibrida ha diverse strategie in base alle singole 
+query. In generale si effettua una ricerca sfruttando le codifiche dei vettori, 
+in questo caso si estrae un insieme di vettori maggiore rispetto a quelli richiesti 
+dalla challenge, in generale almeno $140$. Poi in un secondo momento si raffina 
+il risultato andando ad estrare da questi $140$ i migliori $100$ usando la loro 
+rappresentazione nello spazio originale non quantizzato. 
+
+La prima operazione della ricerca si basa sull'ordinamento di tutte le query 
+secondo due criteri differenti:
+\begin{itemize}
+    \item il primo per le label e poi per timestamp
+    \item il secondo per timestamp
+\end{itemize} 
+Successivamente per ogni query viene calcolata la sua codifica usando la quantizzazione 
+scalare sui coefficienti del vettore di query.
+
+In seguito, viene calcolata la selettività di ciascuna query, per selettività
+si intende il numero totale di vettori candidati ad essere potenziali vicini alla 
+query rispetto i parametri di ricerca sui metadati. 
+La selettività viene calcolata in tempo costante confrontando solo i metadati in 
+base alla tipologia di query, sfruttando la $c\_map$ e la $t\_map$. 
+
+La selettività di una query determina, insieme ai metadati della query, la strategia 
+da adottare in fase di ricerca.
+
+La \textbf{prima strategia} di ricerca è nel caso in cui la query è di tipo $1,2,3$ 
+e la sua selettività è inferiore rispettivamente a $500000$, per le prime due tipologie, e $800000$, 
+per l'ultimo tipo di query. In questo caso 
+si effettua una ricerca esaustiva sfruttando le codifiche dei vettori candidati 
+e gli array di ordinamento delle codifiche (\texttt{sorted\_both} e \texttt{sorted\_timestamp}).
+Durante la ricerca si estraggono $140$ vettori vicini al vettore di query nello 
+spazio delle condifiche e infine, di questi vettori, si scelgono $100$ vettori 
+più vicini alla query nello spazio originale. 
+
+La \textbf{seconda strategia} di ricerca è per le query di tipo $1$ che ha una selettività 
+maggiore di $500000$ vettori. In questo caso la ricerca si effettua nel grafo 
+HNSW della stessa categoria del metadato della query. I parametri di ricerca nell'HNSW
+sono i seguenti 
+$$K = 140 \qquad M= \lceil1800+(700)/(maxc\_size - minc\_size)dim\_cat\rceil$$
+Dove:
+\begin{itemize}
+    \item $maxc\_size$: è la dimensione della categoria più grande presente 
+    nel dataset.
+    \item $minc\_size$: dimensione della categoria più piccola presente.
+    nel dataset
+    \item $dim\_cat$: dimensione della categoria in cui afferisce la query.
+\end{itemize}
+Dal risultato estratto dal grafo si effettua un raffinamento andando ad estrarre 
+i $100$ migliori vettori nello spazio originale.
+
+La \textbf{terza strategia} di ricerca è per le query di tipo $3$ che ha una selettività 
+maggiore di $800000$ vettori. In questo caso la strategia è simile alla seconda 
+ma leggermente differente, non si visitano i nodi che hanno timestamp fuori dall'intervallo 7
+di query. Questo è reso possibile perché il grafo è fortemente connesso quindi 
+si riesce a visitare i vicini di un nodo escluso precedentemente attraverso un altro 
+nodo che ha timestamp all'interno dell'intervallo di query.
+
+$$K = 150 \qquad M= \lceil1800+(1000)/(maxc\_size - minc\_size)dim\_cat\rceil$$
+
+La \textbf{quarta strategia} di ricerca è per le query di tipo $0$. In questo caso 
+si effettua una ricerca parallela nei $10$ HNSW dei sotto-intervalli di timestamp 
+usando per ognuna i seguenti parametri:
+$$M=450 \qquad K=150$$
+In questo modo si ottengono $150\cdot 10$ vicini alla query nello spazio delle 
+codifiche, successivamente si raffinano i risultati estraendo i migliori $100$ 
+vettori rispetto allo spazio originale.
+
+La \textbf{quinta strategia} di ricerca è per la query di tipo $2$ che ha una 
+superiore a $500000$. In questa strategia si sfruttano gli HNSW creati per i $10$
+sottointervalli di timestamp, più precisamente si controlla la copertura dell'intervallo 
+$[l,r]$ della query rispetto ai sottointervalli $[l',r']$ e se $[l,r]\cap [l',r']$ 
+allora si ricerca nell'HNSW del sottointervallo $[l',r']$. 
+In particolare in base alla selettività della query variano i parametri di ricerca:
+\begin{itemize}
+    \item se la query ha una selettività inferiore a $2000000$ di vettori, allora 
+    per un generico sottointervallo $[l',r']$ abbiamo le seguenti casistiche:
+    \begin{itemize}
+        \item $[l,r]\cap [l',r'] = \emptyset$: si ignora il sottointervallo perché 
+        l'HNSW contiene solo vettori in $[l',r']$ che sono fuori dall'intervallo 
+        di query.
+        \item $[l,r] = [l',r'] \lor  [l',r'] \subseteq [l,r]$: tutti i vettori 
+        del sottointervallo solo potenziali candidati, quindi si effettua una ricerca nell'HNSW
+        utilizzando parametri $M=780$ e $K=150$.
+        \item $[l',r'] \cap [l,r] \ne \emptyset, [l',r'] \not \subseteq [l,r]$: 
+        solo una parte dei vettori sono dei potenziali candidati, quindi in base 
+        all'ampiezza di $[l',r'] \cap [l,r]$ si hanno diverse strategie:
+        \begin{itemize}
+            \item se l'intersezione è inferiore al $50\%$ di $[l',r']$ allora si effettua una 
+            ricerca esaustiva delle $150$ codifiche più vicine alla codifica del 
+            vettore di query. Per fare ciò si sfrutta la $t\_map$ e 
+            l'ordinamento delle codifiche rispetto il timestamp.
+            \item se l'intersezione è superiore al $50\%$ di $[l',r']$ allora si effettua una 
+            ricerca nell'HNSW del sottointervallo $[l',r']$ con i parametri $M=1180$ e $K=150$.
+        \end{itemize}
+    \end{itemize}
+    \item se la query ha una selettività superiore a $2000000$ di vettori, allora 
+    per un generico sottointervallo $[l',r']$ abbiamo le stesse casistiche 
+    del caso con selettività inferiore a $2000000$, con la differenza che cambia
+    la soglia per la ricerca esaustiva e i parametri della ricerca nel grafo. Più 
+    precisamente:
+    \begin{itemize}
+        \item se $[l',r'] \not \subseteq [l,r]$ allora si ignora il sottointervallo.
+        \item se $[l,r] = [l',r'] \lor  [l',r'] \subseteq [l,r]$:
+        \begin{itemize}
+            \item se la query seleziona fino a $3000000$ vettori allora ricerca 
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=780$
+            \item se la query seleziona da $3000000$ a $6000000$ vettori allora ricerca 
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=630$
+            \item se la query seleziona sopra $6000000$ vettori allora ricerca 
+            nell'HNSW di $[l',r']$ con $K=150$ e $M=480$
+        \end{itemize}
+        \item se $[l',r'] \cap [l,r] \ne \emptyset, [l',r'] \not \subseteq [l,r]$:
+        \begin{itemize}
+            \item se l'intersezione è inferiore al $20\%$ di $[l',r']$ allora si effettua una 
+            ricerca esaustiva delle $150$ codifiche più vicine alla codifica del 
+            vettore di query. Per fare ciò si sfrutta la $t\_map$ e 
+            l'ordinamento delle codifiche rispetto il timestamp.
+            \item se l'intersezione è superiore al $20\%$ di $[l',r']$ allora si effettua una 
+            ricerca nell'HNSW del sottointervallo $[l',r']$ usando i seguenti parametri:
+            \begin{itemize}
+                \item se la query seleziona fino a $3000000$ vettori allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=150$ e $M=1180$
+                \item se la query seleziona da $3000000$ a $6000000$ vettori allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=150$ e $M=780$
+                \item se la query seleziona sopra $6000000$ vettori allora ricerca 
+                nell'HNSW di $[l',r']$ con $K=150$ e $M=680$
+            \end{itemize}
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+Quindi alla fine si producono un totale di $150$ vettori per ogni sottointervallo
+$[l',r']$ con intersezione non nulla con l'intervallo di query e, in conclusione, 
+si raffina il risultato estraendo i migliori $100$ vettori più vicini alla query 
+nello spazio originale.
+
+\subsection{Considerazioni sulla ricerca}
+
+Dal momento che sono state definite diverse strategie di ricerca nidificate
+\`e piuttosto complicato la sua analisi di complessità di ricerca di una query,
+quindi il risultato mostrato in questa sezione \`e da intendersi come qualitativo.
+
+L'osservazione più naturale che nasce dopo aver visto per la prima volta la ricerca
+è che la quantizzazione è l'elemento chiave. Infatti calcolare la distanza sugli 
+elementi quantizzazioni risulta nettamente più efficiente rispetto a calcolare la 
+distanza sugli elementi, questo permette quindi agli autori di effettuare ricerche 
+esaustive su numerosi elementi, cosa che noi non potevamo permetterci di fare.
+
+Inoltre, la ricerca consiste alla fine nell'effettuare una ricerca esausiva 
+oppure nell'effettuare una ricerca nell'HNSW. In generale la ricerca esaustiva è 
+lineare ma limitata a massimo $1000000$ di vettori (nel caso della ricerca di una 
+query di tipo 2), difficile che possa capitare dal momento che sarebbero tutti 
+all'interno di un sottointervallo. Al contrario la ricerca nell'HNSW si effettua 
+in tempo logaritmico e questo permette di velocizzare le ricerche per query ad 
+alta selettività, in aggiunta mentre si effettua la ricerca nel grafo spesso vengono 
+applicata delle ottimizzazioni per scartare alcuni nodi evitando di calcolare 
+ulteriori distanze. 
+
+Alla luce di queste osservazioni si deriva che per una singola query
+nel caso migliore abbiamo una complessit\`a di $\mathcal{O}(\log |D|)$,
+mentre nel caso peggiore si riduce ad un semplice tempo sublineare
+$\mathcal{O}(|D|)$. Nonostante il tempo complessivo scali al massimo come
+$\mathcal{O}(|D| \times |Q|)$, se si assume una distribuzione uniforme del tipo di query
+e della dimensione della categoria e del range di timestamp, l'algoritmo usa una ricerca
+logaritmica per pi\`u della met\`a del tempo. Se si aggiunge l'uso della quantizzazione
+simmetrica e della parallelizzazione l'approccio presentato raggiunge velocit\`a impressionanti
+mantenendo al contempo un'eccellente accuratezza (pari al 100\%, dalla piattaforma Sigmod).
+
+%Tempi di ricerca:
+% - Per query di tipo 0
+%   Log(|D|)
+% - Per query di tipo 1
+%   <  500000 -> O(\frac {|D|} {20}) -> D/20 = 500000
+%   >= 500000 -> Log(|D|)
+% - Per query di tipo 2
+%   <  500000 -> O(\frac {|D|} {20}) -> D/20 = 500000
+%   >= 500000 -> Log(|D|)
+% - Per query di tipo 3
+%   <  500000 -> O(\frac {|D|} {12.5}) -> D/12.5 = 800000
+%   >= 500000 -> Log(|D|)

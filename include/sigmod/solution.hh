@@ -1,5 +1,6 @@
 #ifndef SOLUTION_HH
 #define SOLUTION_HH
+/** @file solution.hh */
 
 #include <sigmod/config.hh>
 #include <sigmod/database.hh>

@@ -1,5 +1,6 @@
 #ifndef TREE_UTILS_HH
 #define TREE_UTILS_HH
+/** @file tree_utils.hh */
 
 #include <sigmod/config.hh>
 #include <sigmod/database.hh>

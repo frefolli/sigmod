@@ -63,24 +63,12 @@ output.bin format: The evaluation process expects "output.bin" to be a binary fi
 
 Please format "output.bin" accordingly. You can check out our provided baseline solution on how to produce a valid "output.bin".
 
-## Benchmarks
+## Approach
 
-![Rilevamento di 1000 query con Ball Forest e C Map su Contest 1/10m](rilevamenti-1000-query-con-c-map-contest-1-10m.png)
+Our strategy was based on Locality Sensitive Hashing with the addition of an extra indexing structure: a so-called ___c_map___, defined as $CategoryID \rightarrow [Index, Index]$, the map of ranges of data sorted by category, then by timestamps and finally by fields.
 
-## Approach & Ideas
+### Results
 
-For now i sort the database by C and then index it's values in a $C \rightarrow [start, end]$ mapping. Then if such criterion is used, i restrict the search on those intervals.
+We eventually got to ship "successfully" a solution to the Sigmod platform achieving the 17th Position. Not good, not bad, just cool. (still better than Milano Statale btw)
 
-I would like to do something similar also for T, but i don't know how to join them.
-
-For now also T is "indexed" by using the same sorting used for C and seeking for high/low range. This saves up to 65% of search time for the case of having both C(v) and T(l, r) in query. For reference, *contest* datasets now spends 2s vs old 28s on such type of queries with this shortcut.
-
-I've optimized checks against *query_type* and now it takes slightly less than before. It's also more readable i guess.
-
-I was thinking to indexing the vector space by dividing it in logical sections, peeking the most accurate for the query and then expanding the search to nearest sections.
-
-## Schedule
-
-Ball Trees and KD Trees have 1.0 recall (established by Exaustive) if ignoring checks. They both have implemented two filters on *C_MAP*: *BY_C* and *BY_C_AND_T* (this limited to *C*).
-
-They should have the support for discarding wront T values.
+![leaderboard](doc/images/leaderboard.png)

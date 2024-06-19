@@ -1,5 +1,6 @@
 #ifndef WORKFLOW_HH
 #define WORKFLOW_HH
+/** @file workflow.hh */
 
 #include <string>
 
