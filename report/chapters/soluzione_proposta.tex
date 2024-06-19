@@ -388,7 +388,7 @@ Lo pseudocodice è mostrato nel listato \ref{list:ricerca_lsh_forest}.
                 \Return{$searchLsh(LSHF.general, D, q)$}
             }
             \Case{$query.type == 1\lor query.type == 3$}{
-                \If{$LSHF.mapped[c].hashtable != null$}{
+                \If{$LSHF.mapped[c].hashtable \ne null$}{
                     \Return{$searchLsh(LSHF.mapped[c],D, q)$}
                 }\Else{
                     \Return{$ExaustiveSearch(D, q)$}
@@ -422,7 +422,6 @@ Lo pseudocodice è mostrato nel listato \ref{list:ricerca_lsh_forest}.
                     \For{$i=1$ \KwTo $NHashTable$}{
                         $h_q = hash(LSH.hashtable[i],q)$\;
                         $bucket = LSH.hashtable[i].bucket[h_q]$\;
-                        $[idx_l, idx_r] = dicotomicSearch(D, bucket, q.l, q.r)$\;
 
                         \For{$idx\in bucket$}{
                             \If{$\lnot results.has(v)$}{
@@ -566,9 +565,6 @@ Al contrario il parametro LSH\_TABLES è stato deciso in base ai vincoli di temp
 richiesti dalla challenge, è stato scelto il valore $20$, ovvero il valore con la 
 recall maggiore che permettesse di rispettare i vincoli di tempo. 
 
-
-
-
 \section{Considerazioni}
 LSH Forest è stato l'unico metodo che ci ha permesso di produrre una soluzione 
 conforme ai limiti di $20$ minuti della challenge con recall maggiore rispetto
@@ -585,3 +581,6 @@ degli iperpiani, in modo tale che ogni suddivisione dello spazio sia il più dif
 possibile, permettendo quindi di esplorare uno spazio più ampio di vettori 
 sempre idealmente vicini alla query e riducendo il calcolo di distanze 
 calcolate già in altre suddivisioni. 
+
+Il codice contenente l'implementazione in C++ della soluzione dispiegata e la presente relazione
+sono reperibili in un repository su Github: \href{https://github.com/frefolli/sigmod}{https://github.com/frefolli/sigmod}.
