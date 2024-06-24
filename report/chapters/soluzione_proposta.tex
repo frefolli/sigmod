@@ -262,9 +262,7 @@ L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{lis
                 $lsh.hashtable[i].hp = hp$\;
                 $hashes$ is array\;
                 \For{$j=1$ \KwTo $|length|$}{
-                    \For{$k=1$ \KwTo $|hp|$}{
-                        $hashes[j] = hash(hp[k], D[start\_idx\_cat + j])$\;
-                    }
+                  $hashes[j] = hash(hp, D[start\_idx\_cat + j])$\;
                 }
                 $lsh.hashtable[i].hashes = hashes$\;
                 \For{$j=1$ \KwTo $|D|$}{
@@ -445,12 +443,12 @@ La complessità della ricerca varia in base alle query che si devono cercare e d
 composizione del dataset:
 \begin{itemize}
     \item \textbf{query senza filtraggio}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
-    trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio) e 
+    trovare il bucket con lo stesso hash è $\mathcal{O}(2^{k'})$ (costante nel caso medio) e 
     si calcolano un totale di $\mathcal{O}(|b|)$ ($|b|$ numero di vettori nel bucket). 
     Questo viene ripetutto per tutte le $20$ hash table che a livello asintotico rimane $\mathcal{O}(|D|)$
     o nel caso medio $\Theta(|b|)$.
     \item \textbf{query con filtraggio sul timestamp}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
-    trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio),
+    trovare il bucket con lo stesso hash è $\mathcal{O}(2^{k'})$ (costante nel caso medio),
     ricerca dicotomica dei due vettori nel bucket $\mathcal{O}(\log(|b|))$ ($|b|$ numero di vettori nel bucket) 
     e, supponendo che l'intervallo di timestamp sia grande $|t|\le |b|$ vettori, 
     si calcolano un totale di $\mathcal{O}(|t|)$. 
