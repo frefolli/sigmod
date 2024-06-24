@@ -62,7 +62,7 @@ A livello di complessità è insostenibile, infatti supponendo nel caso peggiore
 di avere solo query del tipo $0$, significa che si calcoleranno un totale di 
 $\mathcal{O}(|Q| \cdot |D|)$ distanze, con l'aggiunta della complessità di creazione
 della soluzione. La creazione della soluzione può essere trattata mediante l'ausilio 
-di un max-heap, contenente le coppie vettore database e distanza vettore-query ($D\times \mathbb{R}_+$),
+di un min-heap, contenente le coppie vettore database e distanza vettore-query ($D\times \mathbb{R}_+$),
 la dimensione può essere considerata fissa a $K(=100)$, questo significa che l'inserimento 
 della singola coppia comporta una complessità $\mathcal{O}(K)$. Dal momento che 
 si tenterà di inserire $\mathcal{O}(|D|)$ coppie allora la costruzione della 

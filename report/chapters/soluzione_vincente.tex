@@ -180,7 +180,7 @@ un array di coppie ordinate:
 dove $i = sorted\_base\_ids[v]$ con $v$ ultimo vettore della categoria $c$, 
 mentre $dimensione\_categoria\_c$ specifica il numero di vettori presenti nella 
 categoria $c$. Da notare che la coppia viene aggiunta all'array solo quando $c$ 
-ha almeno $450000$ vettori.
+ha almeno $500000$ vettori.
 
 Successivamente si costruisce una $t\_map$, ovvero una mappa dei timestamp ovvero 
 un array di coppie ordinate:
@@ -199,8 +199,7 @@ In seguito viene letto il query set e viene salvato all'interno di due array:
     \item \texttt{query\_vecs}: array contente le componenti dei vettori di query ovvero 
     $10^6 \cdot 100$.
     \item \texttt{query\_metas}: array contente i metadati delle query, ovvero la tipologia,
-    la categoria e l'intervallo di timestamp.
-    $10^6 \cdot 4$.
+    la categoria e l'intervallo di timestamp; in totale $10^6 \cdot 4$.
 \end{itemize}
 
 Successivamente si creano degli array di appoggio:
@@ -226,7 +225,7 @@ che permette di operare in parallelo su registri a $128bits$).
 In senguito è stato creato un HSNW per i vettori 
 afferenti alla categoria più grande, uno per i vettori afferenti a categorie che 
 contengono almento $500000$ vettori e uno per ogni intervallo di timestamp della 
-$t\_map$. Gli HNSW vengono costruiti sulle codifiche dei vettori.
+$t\_map$. 
 
 In aggiunta, vengono calcolate tutte le codifiche della quantizzazione scalare 
 di tutti i vettori del dataset. Inoltre, si creano due vettori di ordinamento 
@@ -238,6 +237,10 @@ che specificano l'ordinamento delle condifiche:
     \item \texttt{sorted\_timestamp}: in posizione $i$ contiene i metadati dell'$i$-esima
     codifica dei vettori del dataset secondo l'ordinamento per timestamp.
 \end{itemize}
+
+Gli HNSW vengono costruiti sulle codifiche dei vettori.
+
+
 
 %La struttura di indicizzazione definita dagli autori è composta da:
 %\begin{itemize}
@@ -271,7 +274,7 @@ dei vettori del training set.
 
 In seguito si codificano tutti i vettori del dataset dividendo ogni coefficiente 
 per $\alpha$ e nel caso i coefficienti "normalizzati" uscissero dall'intervallo 
-$[-1,1]$ allora di riportano all'estremo più vicino (i valori eccedenti gli estremi 
+$[-1,1]$ allora si riportano all'estremo più vicino (i valori eccedenti gli estremi 
 vengono riassegnati all'estremo che superano, ex: $-5 \rightarrow -1$). Successivamente 
 si moltiplica ciascun coefficiente per $127$ e si converte ad intero, in questo modo 
 si ottengono $255$ valori possibili per ogni coefficiente nell'intervallo $[-127,127]$.
@@ -326,7 +329,7 @@ rappresentazione nello spazio originale non quantizzato.
 La prima operazione della ricerca si basa sull'ordinamento di tutte le query 
 secondo due criteri differenti:
 \begin{itemize}
-    \item il primo per le label e poi per timestamp
+    \item il primo per categoria e poi per timestamp
     \item il secondo per timestamp
 \end{itemize} 
 Successivamente per ogni query viene calcolata la sua codifica usando la quantizzazione 
@@ -368,7 +371,7 @@ i $100$ migliori vettori nello spazio originale.
 
 La \textbf{terza strategia} di ricerca è per le query di tipo $3$ che ha una selettività 
 maggiore di $800000$ vettori. In questo caso la strategia è simile alla seconda 
-ma leggermente differente, non si visitano i nodi che hanno timestamp fuori dall'intervallo 7
+ma leggermente differente, non si visitano i nodi che hanno timestamp fuori dall'intervallo
 di query. Questo è reso possibile perché il grafo è fortemente connesso quindi 
 si riesce a visitare i vicini di un nodo escluso precedentemente attraverso un altro 
 nodo che ha timestamp all'interno dell'intervallo di query.
@@ -454,8 +457,8 @@ nello spazio originale.
 
 \subsection{Considerazioni sulla ricerca}
 
-Dal momento che sono state definite diverse strategie di ricerca nidificate
-\`e piuttosto complicato la sua analisi di complessità di ricerca di una query,
+Dal momento che sono state definite diverse strategie di ricerca nidificate,
+\`e piuttosto complicato effettuare un'analisi di complessità per una query,
 quindi il risultato mostrato in questa sezione \`e da intendersi come qualitativo.
 
 L'osservazione più naturale che nasce dopo aver visto per la prima volta la ricerca
@@ -471,7 +474,7 @@ query di tipo 2), difficile che possa capitare dal momento che sarebbero tutti
 all'interno di un sottointervallo. Al contrario la ricerca nell'HNSW si effettua 
 in tempo logaritmico e questo permette di velocizzare le ricerche per query ad 
 alta selettività, in aggiunta mentre si effettua la ricerca nel grafo spesso vengono 
-applicata delle ottimizzazioni per scartare alcuni nodi evitando di calcolare 
+applicate delle ottimizzazioni per scartare alcuni nodi evitando di calcolare 
 ulteriori distanze. 
 
 Alla luce di queste osservazioni si deriva che per una singola query
