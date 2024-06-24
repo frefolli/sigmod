@@ -241,7 +241,7 @@ L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{lis
         $c\_map = index(D)$\;
         $LSHF.general = createLsh(D,0,|D| - 1)$\;
         \For{$\forall c\in C$}{
-            \If{$c\_map[c].end - c\_map[c].start > 2000$}{
+            \eIf{$c\_map[c].end - c\_map[c].start > 2000$}{
                 $lsh = createLsh(D,c\_map[c].start,c\_map[c].end)$\;
             }{
                 $lsh = Null$\;
@@ -388,9 +388,9 @@ Lo pseudocodice è mostrato nel listato \ref{list:ricerca_lsh_forest}.
                 \Return{$searchLsh(LSHF.general, D, q)$}
             }
             \Case{$query.type == 1\lor query.type == 3$}{
-                \If{$LSHF.mapped[c].hashtable \ne null$}{
+                \eIf{$LSHF.mapped[c].hashtable \ne null$}{
                     \Return{$searchLsh(LSHF.mapped[c],D, q)$}
-                }\Else{
+                }{
                     \Return{$ExaustiveSearch(D, q)$}
                 }
             }
