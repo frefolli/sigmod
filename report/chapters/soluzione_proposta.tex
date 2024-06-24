@@ -196,7 +196,7 @@ Si \`e anche pensato alla possibilit\`a di identificare a runtime i bucket adiac
 Questa operazione pu\`o essere fatta semplicemente considerando la \textbf{distanza di hamming} di due hash: con $HD = 1$ i due hash differiranno del posizionamento rispetto ad un iperpiano, di conseguenza esplorando tutti gli hash con questa distanzia stiamo visitando gli spazi adiacenti. Questo corrisponde ad effetturare uno xor dell'hash con $k$ bitmask del tipo $0^i10^j$, con $i + j + 1 = k$.
 Il problema principale di questa strategia non \`e nella sua implementazione quanto nel fatto che rappresenta un'ennesima euristica basata sulla fortuna: se una query viene mappata in un bucket con pochi vettori e poi esplorando gli adiacenti ci imbattessimo in un bucket con molti vettori andremmo a peggiorare notevolmente l'esecuzione senza avere la certezza di trovare pi\`u vicini.
 
-Sperimentalmente si `e rilevato che l’aumento della recall `e relativamente insignificante rispetto all'aumento dei tempi di ricerca.
+Sperimentalmente si \`e rilevato che l’aumento della recall \`e relativamente insignificante rispetto all'aumento dei tempi di ricerca.
 
 \section{LSH Forest}
 L'approccio di LSH Forest è di velocizzare le query che filtrano sulla categoria,
@@ -515,7 +515,7 @@ Per ogni esecuzione sono state salvate le seguenti metriche:
     del tempo di costruzione dell'LSH Forest in base al numero di LSH.
     \item \textbf{run time}: tempo di ricerca delle $4000$ query nella struttura.
     \item \textbf{recall}: confronto della soluzione ottenuta dalla ricerca con 
-    la soluzioen dell'algoritmo esaustivo.
+    la soluzione dell'algoritmo esaustivo.
 \end{itemize}
 
 I risultati sono stati rappresentati all'interno di un grafico visibile nella figura 
