@@ -463,14 +463,14 @@ composizione del dataset:
     nel caso peggiore $|t|=|c|$. 
     \item \textbf{query con filtraggio solo sulla categoria} (categoria grande):
     il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
-    trovare il bucket con lo stesso hash è $\mathcal{O}(|c|)$ (costante nel caso medio), con
+    trovare il bucket con lo stesso hash è $\mathcal{O}(2^{k'})$ (costante nel caso medio), con
     $|c|$ dimensione della categoria, e 
     si calcolano un totale di $\mathcal{O}(|b|)$ distanze ($|b|$ numero di vettori nel bucket).
     Questo ripetuto per tutte le $20$ hash table che a livello asintotico rimane $\mathcal{O}(|c|)$
     o nel caso medio $\Theta(|b|)$.
     \item \textbf{query con filtraggio solo sulla categoria e sul timestamp} (categoria grande): 
     il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
-    trovare il bucket con lo stesso hash è $\mathcal{O}(|c|)$ (costante nel caso medio), con
+    trovare il bucket con lo stesso hash è $\mathcal{O}(2^{k'})$ (costante nel caso medio), con
     $|c|$ dimensione della categoria, 
     ricerca dicotomica dei due vettori nel bucket $\mathcal{O}(\log(|b|))$ ($|b|$ numero di vettori nel bucket) 
     e, supponendo che l'intervallo di timestamp sia grande $|t|\le |b|$ vettori, 
