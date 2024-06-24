@@ -241,7 +241,7 @@ L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{lis
         $c\_map = index(D)$\;
         $LSHF.general = createLsh(D,0,|D| - 1)$\;
         \For{$\forall c\in C$}{
-            \If{$c\_map[c].end - c\_map[c].start > 2000$}{
+            \eIf{$c\_map[c].end - c\_map[c].start > 2000$}{
                 $lsh = createLsh(D,c\_map[c].start,c\_map[c].end)$\;
             }{
                 $lsh = Null$\;
@@ -262,9 +262,7 @@ L'algoritmo finale di costruzione di LSH Forest è mostrato nel listato \ref{lis
                 $lsh.hashtable[i].hp = hp$\;
                 $hashes$ is array\;
                 \For{$j=1$ \KwTo $|length|$}{
-                    \For{$k=1$ \KwTo $|hp|$}{
-                        $hashes[j] = hash(hp[k], D[start\_idx\_cat + j])$\;
-                    }
+                  $hashes[j] = hash(hp, D[start\_idx\_cat + j])$\;
                 }
                 $lsh.hashtable[i].hashes = hashes$\;
                 \For{$j=1$ \KwTo $|D|$}{
@@ -388,9 +386,9 @@ Lo pseudocodice è mostrato nel listato \ref{list:ricerca_lsh_forest}.
                 \Return{$searchLsh(LSHF.general, D, q)$}
             }
             \Case{$query.type == 1\lor query.type == 3$}{
-                \If{$LSHF.mapped[c].hashtable \ne null$}{
+                \eIf{$LSHF.mapped[c].hashtable \ne null$}{
                     \Return{$searchLsh(LSHF.mapped[c],D, q)$}
-                }\Else{
+                }{
                     \Return{$ExaustiveSearch(D, q)$}
                 }
             }
@@ -445,12 +443,12 @@ La complessità della ricerca varia in base alle query che si devono cercare e d
 composizione del dataset:
 \begin{itemize}
     \item \textbf{query senza filtraggio}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
-    trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio) e 
+    trovare il bucket con lo stesso hash è $\mathcal{O}(2^{k'})$ (costante nel caso medio) e 
     si calcolano un totale di $\mathcal{O}(|b|)$ ($|b|$ numero di vettori nel bucket). 
     Questo viene ripetutto per tutte le $20$ hash table che a livello asintotico rimane $\mathcal{O}(|D|)$
     o nel caso medio $\Theta(|b|)$.
     \item \textbf{query con filtraggio sul timestamp}: il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
-    trovare il bucket con lo stesso hash è $\mathcal{O}(|D|)$ (costante nel caso medio),
+    trovare il bucket con lo stesso hash è $\mathcal{O}(2^{k'})$ (costante nel caso medio),
     ricerca dicotomica dei due vettori nel bucket $\mathcal{O}(\log(|b|))$ ($|b|$ numero di vettori nel bucket) 
     e, supponendo che l'intervallo di timestamp sia grande $|t|\le |b|$ vettori, 
     si calcolano un totale di $\mathcal{O}(|t|)$. 
@@ -460,20 +458,20 @@ composizione del dataset:
     si calcolano al massimo $\mathcal{O}(|c|)$ distanze, dove $|c|$ indica la dimensione 
     della categoria che per definizione sono $|c|\le 2000$.
     \item \textbf{query con filtraggio solo sulla categoria e sul timestamp} (categoria piccola): 
+    la ricerca dicotomica nel range della categoria impiega $\mathcal{O}(log(|c|))$ e
     si calcolano al massimo $\mathcal{O}(|t|)$ distanze, dove $|t|$ è il numero 
     di vettori che hanno timestamp incluso nell'intervallo specificato dalla query,
     nel caso peggiore $|t|=|c|$. 
     \item \textbf{query con filtraggio solo sulla categoria} (categoria grande):
     il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
-    trovare il bucket con lo stesso hash è $\mathcal{O}(|c|)$ (costante nel caso medio), con
-    $|c|$ dimensione della categoria, e 
+    trovare il bucket con lo stesso hash è $\mathcal{O}(2^{k'})$ (costante nel caso medio), e 
     si calcolano un totale di $\mathcal{O}(|b|)$ distanze ($|b|$ numero di vettori nel bucket).
-    Questo ripetuto per tutte le $20$ hash table che a livello asintotico rimane $\mathcal{O}(|c|)$
+    Questo ripetuto per tutte le $20$ hash table che a livello asintotico rimane $\mathcal{O}(|c|)$, con
+    $|c|$ dimensione della categoria,
     o nel caso medio $\Theta(|b|)$.
     \item \textbf{query con filtraggio solo sulla categoria e sul timestamp} (categoria grande): 
     il calcolo dell'hash è approssimato a $\mathcal{O}(1)$,
-    trovare il bucket con lo stesso hash è $\mathcal{O}(|c|)$ (costante nel caso medio), con
-    $|c|$ dimensione della categoria, 
+    trovare il bucket con lo stesso hash è $\mathcal{O}(2^{k'})$ (costante nel caso medio), 
     ricerca dicotomica dei due vettori nel bucket $\mathcal{O}(\log(|b|))$ ($|b|$ numero di vettori nel bucket) 
     e, supponendo che l'intervallo di timestamp sia grande $|t|\le |b|$ vettori, 
     si calcolano un totale di $\mathcal{O}(|t|)$.
@@ -583,4 +581,5 @@ sempre idealmente vicini alla query e riducendo il calcolo di distanze
 calcolate già in altre suddivisioni. 
 
 Il codice contenente l'implementazione in C++ della soluzione dispiegata e la presente relazione
-sono reperibili in un repository su Github: \href{https://github.com/frefolli/sigmod}{https://github.com/frefolli/sigmod}.
+s
+  subgraph S0["per ogni hashtable"]ono reperibili in un repository su Github: \href{https://github.com/frefolli/sigmod}{https://github.com/frefolli/sigmod}.
